@@ -423,7 +423,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v14 · 2026-10-03";
+  var APP_VERSION = "v15 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -682,6 +682,50 @@
   // onboarding has ever run (render() gates the whole app behind onboarding,
   // so in practice this fallback is never actually shown to anyone).
   function getPhases() { return (state.profile && state.profile.sex === "female") ? PHASES_WOMEN : PHASES_MEN; }
+
+  // Plain-language setup/execution/cue for every named lift and accessory
+  // movement in both tracks, keyed by exact exercise name. Shown on the
+  // live step screen and in the Manual so nobody has to already know what
+  // a "Pallof Press" is before they can do one.
+  var EX_HOWTO = {
+    "Barbell Back Squat": "Bar racked across your upper back (not your neck), feet shoulder-width, toes slightly out. Break at the hips and knees together, sit down until your thighs are at least parallel to the floor, then drive back up through your whole foot. Keep your chest up and knees tracking over your toes.",
+    "Flat Bench Press": "Lie on the bench, feet flat on the floor, shoulder blades pulled back and down. Lower the bar to your mid-chest under control, elbows at roughly 45° to your torso, then press it back up to lockout over your shoulders.",
+    "Assisted Pull-ups": "Loop a resistance band over the bar and under one knee or foot (or use an assist machine) to remove just enough bodyweight that you can complete every rep in full. Pull your chest toward the bar, then lower all the way to a dead hang each rep — don't stop at the halfway point.",
+    "Farmer's Walk": "Pick up a heavy dumbbell, kettlebell, or loaded jug/jerry can in each hand and walk a measured distance with tall posture — shoulders back, core braced. Take controlled steps; don't let the weights pull you into a lean.",
+    "Forearm Plank": "Forearms on the floor, elbows under your shoulders, body in one straight line from head to heels. Squeeze your glutes and brace your abs — don't let your hips sag or pike up. Breathe normally through the hold.",
+    "Calf Raise": "Standing, rise up onto the balls of your feet as high as you can, pause a beat at the top, then lower slowly until your heels are back on the floor. Keep your legs straight, not locked-stiff.",
+    "Band Pull-Apart": "Hold a light resistance band at shoulder height, arms straight out in front of you. Pull it apart by driving your shoulder blades together, hold a second, then return under control. Don't shrug your shoulders up toward your ears.",
+    "Conventional Deadlift": "Bar over your mid-foot, shins almost touching it, grip just outside your legs. Hips down, chest up, back flat — brace hard, then drive the floor away with your legs, keeping the bar close to your shins, and finish by driving your hips through to stand tall. Lower it back down the same path.",
+    "Standing Overhead Press": "Bar at your collarbones, grip just outside shoulder width. Brace your core and glutes, press the bar straight up — tuck your head back slightly so it clears your face — until your arms lock out overhead. Lower it back to your collarbones under control.",
+    "Bent-Over Barbell Row": "Hinge at the hips until your torso is near-horizontal, knees slightly bent, back flat. Pull the bar up into your lower ribs, driving your elbows back and squeezing your shoulder blades together, then lower it under control without letting your back round.",
+    "Strict Push-ups": "Hands just outside shoulder width, body in one straight line from head to heels, no sagging hips. Lower your chest to within a fist's width of the floor, elbows tracking back at roughly 45°, then press back up to full lockout.",
+    "Hanging Knee Raises": "Hang from a pull-up bar with a full grip. Curl your knees up toward your chest by rounding your lower back and tilting your pelvis, then lower back to a dead hang under control — don't swing, let your abs do the work.",
+    "Banded Lateral Walk": "Loop a light band around your ankles or just above your knees, feet hip-width, knees slightly bent. Step sideways keeping tension on the band the whole time and your knees pointed forward, not caving in, for the prescribed steps each direction.",
+    "Pallof Press": "Anchor a band or cable at chest height to your side, hold it at your sternum with both hands. Press it straight out in front of you and hold — the band will try to rotate your torso toward the anchor, your job is to resist that and stay square — then pull back in.",
+    "Bulgarian Split Squat": "Stand a couple of feet in front of a bench, rest the top of one foot on it behind you. Lower straight down on the front leg until your back knee nearly grazes the floor, torso upright, then drive back up through the front heel.",
+    "Weighted Dips": "On parallel bars, hold a dip belt or dumbbell between your feet for added load. Lower under control until your shoulders dip just below your elbows, elbows tracking back, then press back up to full lockout — lean slightly forward to keep the stress off your shoulders.",
+    "Strict Pull-ups": "Full grip on the bar, start from a complete dead hang. Pull your chest up toward the bar by driving your elbows down and back, without kipping or swinging your legs, then lower all the way back to a dead hang each rep.",
+    "Sandbag Bear-Hug Carry": "Hug a sandbag (or any heavy, awkward load) tight against your chest, elbows down. Walk the measured distance with short, controlled steps, torso upright — the load will try to pull you forward, resist that.",
+    "Hollow Body Hold": "Lie on your back, press your lower back into the floor, then lift your shoulders and legs a few inches off the ground, arms reaching overhead or by your sides. Hold that shape without letting your lower back arch off the floor.",
+    "Romanian Deadlift": "Start standing with the bar at hip height. Push your hips straight back, soft bend in your knees, bar close to your legs, until you feel a strong stretch in your hamstrings — don't round your back to get lower. Drive your hips forward to stand back up.",
+    "Single-Arm DB Row": "One hand and knee on a bench for support, other foot on the floor, dumbbell hanging straight down from the free arm. Pull the dumbbell up to your hip, elbow driving back, squeeze at the top, then lower it all the way back to a full stretch.",
+    "Push Press": "Bar at your collarbones like the overhead press, but dip your knees a few inches and drive explosively through your legs as you press the bar overhead. Lock out overhead, then lower under control.",
+    "Kettlebell Swings": "Hinge at the hips (not a squat) to swing the kettlebell back between your legs, then snap your hips forward to send it up to roughly chest height, arms just along for the ride. Let it swing back down and repeat — your hips do the work, not your arms.",
+    "L-Sit Progressions": "Supported on the floor or parallel bars, press your hands down to lift your hips off the ground, legs out straight in front of you (or tucked in, as the easier version), forming an “L” with your body. Hold as long as prescribed, shoulders down away from your ears.",
+    "Pistol Squats": "Standing on one leg, the other held straight out in front, squat straight down on the standing leg as low as you can with control, then drive back up without the raised leg touching down. Too hard at full depth? Hold onto something for balance or squat to a box and build depth over time.",
+    "Muscle-Up Progressions": "A muscle-up is a pull-up that transitions into a dip above the bar. Build it from strict pull-ups and dips trained separately first, then false-grip pull-ups (thumbs over the bar) pulled explosively high enough to roll your chest over the bar — don't jump straight to a kipping version as a shortcut.",
+    "Handstand Push-ups": "Feet up against a wall for support, hands on the floor shoulder-width apart. Lower your head toward the floor under control, elbows tracking forward, then press back up to full arm extension. Can't yet lower under control? Work a partial range and add depth over time.",
+    "Heavy Sled Push/Pull": "Load a sled (or any heavy object you can push or drag) and drive it forward in low, powerful steps for the push, or walk backward pulling it by a rope/strap for the pull. Stay low with a forward lean on the push; keep constant tension on the pull.",
+    "Dragon Flags": "Lying on a bench, grip behind your head for anchor. Keeping your body rigid in one straight line, lower your whole body toward the bench under control, pivoting only at your shoulder blades, then raise back up. Start with bent knees until you can control the full lowered position.",
+    "Heavy Sandbag Cleans": "Squat down and hug the sandbag against your body, then explosively stand and pull it up using your hips and legs — not just your arms — to get it to your chest or shoulder in one motion. Set it back down under control and reset before the next rep.",
+    "Front Squat": "Bar rests across the front of your shoulders, elbows lifted high so your upper arms are near parallel to the floor. Squat down keeping your torso upright — the front-loaded bar won't let you lean forward the way a back squat does — then drive back up.",
+    "Weighted Pull-ups": "Same as a strict pull-up, with weight added via a dip belt, vest, or a dumbbell held between your feet. Full dead hang to chin-over-bar, no kipping, every rep — add weight only once bodyweight pull-ups are solid.",
+    "Suitcase Carries": "Hold a heavy dumbbell or kettlebell in just one hand, down at your side like a suitcase. Walk the measured distance keeping your torso upright and level — resisting the pull to lean toward the loaded side is the whole point.",
+    "Front Lever Progressions": "Hanging from a bar, the goal is to pull your body up into a horizontal line, holding yourself there with back and core strength. Build toward it with tuck holds (knees pulled to chest) and advanced-tuck or single-leg variations before attempting the full straight-body hold.",
+    "Face Pull (band or cable)": "Set a band or cable at roughly head height. Pull it toward your face, leading with your elbows high and out wide, squeezing your shoulder blades together at the end — this targets the rear shoulders and upper back that pressing work doesn't reach.",
+    "Lateral Bound, Stick the Landing": "Standing on one leg, jump sideways onto the other leg, landing as softly and quietly as possible — knee bent, tracking straight over your toes, not caving inward. Hold that landing for a full second or two before the next bound; control on landing matters more than distance."
+  };
+
   var RUCK_DOSING = {
     1: {load:"10–15%", duration:"30–40m"},
     2: {load:"20–30%", duration:"40–50m"},
@@ -1753,6 +1797,10 @@
         html += '<table class="moves-table" style="margin-bottom:12px"><tr><th>Movement</th><th>Sets</th><th>Rest</th></tr>';
         wk.exercises.forEach(function(e){ html += '<tr><td>' + esc(e.name) + '</td><td>' + esc(e.sets) + '</td><td>' + esc(e.rest) + '</td></tr>'; });
         html += '</table>';
+        html += '<p class="mn-label">How To Do Each Move</p>';
+        html += '<div style="margin-bottom:12px">' + wk.exercises.map(function(e){
+          return '<p class="mn-cardbody" style="margin-bottom:8px"><strong style="color:var(--ink)">' + esc(e.name) + '</strong> — ' + esc(EX_HOWTO[e.name] || '') + '</p>';
+        }).join('') + '</div>';
         html += '<p class="mn-label olive">Stretch</p>';
         html += '<ul class="item-list" style="margin:0">' + wk.stretch.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
         html += '</div></div>';
@@ -1789,6 +1837,9 @@
     if (step.kind === "exercise") {
       html += '<div class="step-kind">Exercise</div>';
       html += '<div class="ex-header"><div class="ex-icon">' + EX_ICONS[exerciseIconKey(step.title)] + '</div><h2 class="step-title">' + esc(step.title) + '</h2></div>';
+      if (EX_HOWTO[step.title]) {
+        html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(EX_HOWTO[step.title]) + '</p></div>';
+      }
       html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
       if (step.isMainLift) {
         var lastW = state.settings.lastWeights && state.settings.lastWeights[step.title];
