@@ -128,6 +128,10 @@
     font-family: 'IBM Plex Sans', sans-serif; font-size: 13.5px;
     opacity: 1; transition: opacity 0.5s ease;
   }
+  /* Needs higher specificity than the display:flex above, or the [hidden]
+     attribute's default display:none never wins and the toast — despite
+     JS correctly marking it hidden — stays on screen forever. */
+  .sw-update-toast[hidden] { display: none; }
   .sw-update-toast.fade-out { opacity: 0; }
 
   /* ---- buttons ---- */
@@ -400,7 +404,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v8 · 2026-10-03";
+  var APP_VERSION = "v9 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -1677,9 +1681,13 @@
   function showIroncladUpdatedToast() {
     var el = document.getElementById("sw-update-toast");
     if (!el) return;
+    el.classList.remove("fade-out");
     el.hidden = false;
     setTimeout(function(){ el.classList.add("fade-out"); }, 2200);
-    setTimeout(function(){ el.hidden = true; el.classList.remove("fade-out"); }, 2700);
+    setTimeout(function(){
+      el.hidden = true;          // actually removes it from layout (see [hidden] rule above)
+      el.classList.remove("fade-out"); // reset opacity for next time, now safely off-screen
+    }, 2700);
   }
 
   // Guards against an update-reload loop (e.g. if the host's CDN briefly
