@@ -423,7 +423,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v12 · 2026-10-03";
+  var APP_VERSION = "v13 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -609,7 +609,7 @@
           tendon: "Bulgarian Split Squat hold, bottom position (alternate legs)",
           exercises: [
             {name:"Bulgarian Split Squat", sets:"3×8–10/leg", rest:"2m", main:true},
-            {name:"Weighted Dips (or Bench Dips)", sets:"3×6–8", rest:"2m"},
+            {name:"Weighted Dips", sets:"3×6–8", rest:"2m"},
             {name:"Strict Pull-ups", sets:"3×5–8", rest:"2m"},
             {name:"Lateral Bound, Stick the Landing", sets:"3×6/side", rest:"90s"},
             {name:"Sandbag Bear-Hug Carry", sets:"3×40m", rest:"90s"},
@@ -648,7 +648,7 @@
           exercises: [
             {name:"Pistol Squats", sets:"3×5/leg", rest:"2m", main:true},
             {name:"Muscle-Up Progressions", sets:"4×3–5", rest:"3m"},
-            {name:"Handstand Push-ups (wall-assisted OK)", sets:"3×5–8", rest:"2m"},
+            {name:"Handstand Push-ups", sets:"3×5–8", rest:"2m"},
             {name:"Heavy Sled Push/Pull", sets:"4×20m", rest:"2m"},
             {name:"Dragon Flags", sets:"3×5–8", rest:"90s"},
             {name:"Face Pull (band or cable)", sets:"3×15", rest:"60s"},
@@ -847,7 +847,8 @@
     "Calf Raise":"CALF",
     "Band Pull-Apart":"BAND", "Banded Lateral Walk":"BAND",
     "Kettlebell Swings":"SWING",
-    "Hanging Knee Raises":"HANG", "Front Lever Progressions":"HANG"
+    "Hanging Knee Raises":"HANG", "Front Lever Progressions":"HANG",
+    "Face Pull (band or cable)":"PULL", "Lateral Bound, Stick the Landing":"SQUAT"
   };
 
   function exerciseIconKey(name) {
@@ -954,7 +955,7 @@
     var ageEl = document.getElementById("onb-age"), weightEl = document.getElementById("onb-weight");
     var age = ageEl && ageEl.value !== "" ? parseInt(ageEl.value, 10) : NaN;
     var weightKg = weightEl && weightEl.value !== "" ? parseFloat(weightEl.value) : NaN;
-    if (!d.sex || !d.level || !d.equipment || isNaN(age) || age < 10 || age > 100 || isNaN(weightKg) || weightKg <= 0) {
+    if (!d.sex || !d.level || !d.equipment || isNaN(age) || age < 10 || age > 100 || isNaN(weightKg) || weightKg <= 0 || weightKg > 300) {
       state.onboardError = "Pick an option for each question above, and enter a valid age and weight, before starting.";
       render();
       return;
