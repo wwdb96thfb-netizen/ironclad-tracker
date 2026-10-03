@@ -304,6 +304,18 @@
   .instr-card p { margin: 0; font-size: 15px; line-height: 1.5; }
   .instr-card p + p { margin-top: 10px; color: var(--ink-soft); font-size: 13.5px; }
 
+  .sketch-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .sk-svg { width: 100%; max-width: 280px; display: block; margin: 0 auto; }
+  .sk-svg path, .sk-svg .sk-leg { stroke: var(--ink); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .sk-svg circle.sk-head { fill: var(--ink); stroke: none; }
+  .sk-svg .sk-back { stroke: var(--ink-faint); stroke-width: 2.4; }
+  .sk-svg .sk-prop { stroke: var(--rust); stroke-width: 2; fill: none; }
+  .sk-svg .sk-prop-fill { fill: var(--rust); stroke: none; }
+  .sk-svg .sk-ground { stroke: var(--line-strong); stroke-width: 1.5; }
+  .sk-svg .sk-div { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
+  .sk-svg .sk-label { fill: var(--ink-faint); font-family: 'JetBrains Mono', monospace; font-size: 7px; text-transform: uppercase; letter-spacing: 0.04em; text-anchor: middle; }
+  .manual-sketch { margin: 6px 0 2px; }
+
   .tendon-box { background: var(--surface); border: 1px dashed var(--amber); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
   .tendon-box p { margin: 0; font-size: 15px; line-height: 1.4; }
 
@@ -423,7 +435,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v15 · 2026-10-03";
+  var APP_VERSION = "v16 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -915,6 +927,151 @@
     if (/swing/.test(n)) return "SWING";
     if (/hang/.test(n)) return "HANG";
     return "CORE";
+  }
+
+  // ---- Original line-sketch illustrations ----
+  // Simple two-frame (Start/Finish) stick-figure diagrams, hand-drawn as
+  // plain coordinates — not photos or stock art, so nothing to license and
+  // nothing that needs a network connection or extra download. Side-view
+  // poses use a single near-side arm/leg (plus a faint far-side limb for
+  // split stances); a handful of exercises that move side-to-side in front
+  // of the body are drawn front-on instead (see EX_SKETCH_VIEW below).
+  // Local coordinate frame for every pose: x -25..25, y 0..70, ground at 70.
+  function J(h, sh, el, ha, hi, kn, ft, extra) {
+    var j = { h:h, sh:sh, el:el, ha:ha, hi:hi, kn:kn, ft:ft };
+    if (extra) { for (var k in extra) j[k] = extra[k]; }
+    return j;
+  }
+  function pBar(pt, halfw) {
+    halfw = halfw || 9;
+    var x1 = pt[0]-halfw, x2 = pt[0]+halfw, y = pt[1];
+    return '<path class="sk-prop" d="M'+x1+' '+y+' L'+x2+' '+y+' M'+x1+' '+(y-3)+' L'+x1+' '+(y+3)+' M'+x2+' '+(y-3)+' L'+x2+' '+(y+3)+'"/>';
+  }
+  function pPullbar(y) { y = y||2; return '<line class="sk-prop" x1="-20" y1="'+y+'" x2="20" y2="'+y+'"/>'; }
+  function pBench(cx, cy, w) { w = w||24; return '<rect class="sk-prop" x="'+(cx-w/2)+'" y="'+cy+'" width="'+w+'" height="4" rx="1"/>'; }
+  function pDipbars(pt) { return '<path class="sk-prop" d="M'+(pt[0]-3)+' '+(pt[1]-7)+' L'+(pt[0]-3)+' '+(pt[1]+5)+' M'+(pt[0]+3)+' '+(pt[1]-7)+' L'+(pt[0]+3)+' '+(pt[1]+5)+'"/>'; }
+  function pBell(pt) { return '<circle class="sk-prop" cx="'+pt[0]+'" cy="'+(pt[1]+3)+'" r="3"/>'; }
+  function pBox(cx, cy, w, h) { w=w||14; h=h||9; return '<rect class="sk-prop" x="'+(cx-w/2)+'" y="'+(cy-h)+'" width="'+w+'" height="'+h+'" rx="1.5"/>'; }
+  function pWall(x) { return '<line class="sk-prop" x1="'+x+'" y1="0" x2="'+x+'" y2="70"/>'; }
+  function pHangWeight(hip) { return '<line class="sk-prop" x1="'+hip[0]+'" y1="'+(hip[1]+2)+'" x2="'+hip[0]+'" y2="'+(hip[1]+7)+'"/><circle class="sk-prop" cx="'+hip[0]+'" cy="'+(hip[1]+10)+'" r="2.6"/>'; }
+  function pBand(x1, y1, x2, y2) {
+    var mx = (x1+x2)/2, my = (y1+y2)/2;
+    return '<path class="sk-prop" d="M'+x1+' '+y1+' L'+(mx-2)+' '+(my-4)+' L'+(mx+2)+' '+(my+4)+' L'+x2+' '+y2+'"/>';
+  }
+  function pBandPts(a, b) { return pBand(a[0], a[1], b[0], b[1]); }
+
+  function figureSideSVG(j) {
+    var s = '';
+    if (j.kn2 && j.ft2) s += '<path class="sk-leg sk-back" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn2[0]+' '+j.kn2[1]+' L'+j.ft2[0]+' '+j.ft2[1]+'"/>';
+    s += '<path class="sk-leg" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn[0]+' '+j.kn[1]+' L'+j.ft[0]+' '+j.ft[1]+'"/>';
+    s += '<path d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.sh[0]+' '+j.sh[1]+'"/>';
+    if (j.el2 && j.ha2) s += '<path class="sk-back" d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el2[0]+' '+j.el2[1]+' L'+j.ha2[0]+' '+j.ha2[1]+'"/>';
+    s += '<path d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el[0]+' '+j.el[1]+' L'+j.ha[0]+' '+j.ha[1]+'"/>';
+    s += '<circle class="sk-head" cx="'+j.h[0]+'" cy="'+j.h[1]+'" r="5"/>';
+    return s;
+  }
+  function figureFrontSVG(f) {
+    var s = '';
+    s += '<path class="sk-leg" d="M'+f.hipL[0]+' '+f.hipL[1]+' L'+f.knL[0]+' '+f.knL[1]+' L'+f.ftL[0]+' '+f.ftL[1]+'"/>';
+    s += '<path class="sk-leg" d="M'+f.hipR[0]+' '+f.hipR[1]+' L'+f.knR[0]+' '+f.knR[1]+' L'+f.ftR[0]+' '+f.ftR[1]+'"/>';
+    s += '<path d="M'+f.hipL[0]+' '+f.hipL[1]+' L'+f.shL[0]+' '+f.shL[1]+' M'+f.hipR[0]+' '+f.hipR[1]+' L'+f.shR[0]+' '+f.shR[1]+' M'+f.shL[0]+' '+f.shL[1]+' L'+f.shR[0]+' '+f.shR[1]+'"/>';
+    s += '<path d="M'+f.shL[0]+' '+f.shL[1]+' L'+f.elL[0]+' '+f.elL[1]+' L'+f.haL[0]+' '+f.haL[1]+'"/>';
+    s += '<path d="M'+f.shR[0]+' '+f.shR[1]+' L'+f.elR[0]+' '+f.elR[1]+' L'+f.haR[0]+' '+f.haR[1]+'"/>';
+    s += '<circle class="sk-head" cx="'+f.h[0]+'" cy="'+f.h[1]+'" r="5"/>';
+    return s;
+  }
+  function poseSVG(pose) {
+    var fig = pose.view === "front" ? figureFrontSVG(pose.j) : figureSideSVG(pose.j);
+    return fig + (pose.props||[]).join('');
+  }
+  // Keyed by exact exercise name; each has a "start" and "finish" pose.
+  var EX_SKETCH = {
+    "Barbell Back Squat": { start:{j:J([0,10],[0,20],[-9,17],[-15,19],[0,38],[0,54],[0,70]), props:[pBar([0,19],9)]},
+      finish:{j:J([1,25],[1,34],[-8,31],[-14,33],[3,48],[12,52],[0,70]), props:[pBar([1,33],9)]} },
+    "Flat Bench Press": { start:{j:J([14,48],[8,51],[8,42],[8,36],[-8,51],[-16,56],[-16,68]), props:[pBench(0,53,34),pBar([8,36],9)]},
+      finish:{j:J([14,48],[8,51],[8,30],[8,20],[-8,51],[-16,56],[-16,68]), props:[pBench(0,53,34),pBar([8,20],9)]} },
+    "Assisted Pull-ups": { start:{j:J([0,16],[0,24],[3,14],[4,3],[0,42],[0,56],[0,70]), props:[pPullbar(2)]},
+      finish:{j:J([0,8],[0,14],[3,8],[4,3],[2,34],[2,52],[0,68]), props:[pPullbar(2)]} },
+    "Farmer's Walk": { start:{j:J([0,10],[0,20],[-2,30],[-3,42],[0,38],[6,54],[10,70],{kn2:[-4,56],ft2:[-8,70]}), props:[pBell([-3,42])]},
+      finish:{j:J([0,10],[0,20],[-2,30],[-3,42],[0,38],[-4,56],[-8,70],{kn2:[6,54],ft2:[10,70]}), props:[pBell([-3,42])]} },
+    "Forearm Plank": { start:{j:J([20,44],[8,46],[4,54],[0,62],[-8,48],[-18,56],[-24,62])},
+      finish:{j:J([20,44],[8,46],[4,54],[0,62],[-8,48],[-18,56],[-24,62])} },
+    "Calf Raise": { start:{j:J([0,10],[0,20],[-3,32],[-5,44],[0,38],[0,54],[0,70])},
+      finish:{j:J([0,6],[0,16],[-3,28],[-5,40],[0,34],[0,50],[0,70])} },
+    "Band Pull-Apart": { view:"front", start:{j:{h:[0,8],shL:[-9,20],shR:[9,20],hipL:[-7,38],hipR:[7,38],elL:[-6,24],haL:[-4,24],elR:[6,24],haR:[4,24],knL:[-7,54],ftL:[-7,70],knR:[7,54],ftR:[7,70]}, props:[pBandPts([-4,24],[4,24])]},
+      finish:{j:{h:[0,8],shL:[-9,20],shR:[9,20],hipL:[-7,38],hipR:[7,38],elL:[-14,22],haL:[-20,22],elR:[14,22],haR:[20,22],knL:[-7,54],ftL:[-7,70],knR:[7,54],ftR:[7,70]}, props:[pBandPts([-20,22],[20,22])]} },
+    "Conventional Deadlift": { start:{j:J([8,30],[6,36],[2,48],[0,60],[-2,46],[4,54],[0,70]), props:[pBar([0,60],9)]},
+      finish:{j:J([0,10],[0,20],[-3,30],[-4,40],[0,38],[0,54],[0,70]), props:[pBar([-4,40],9)]} },
+    "Standing Overhead Press": { start:{j:J([0,14],[0,24],[6,16],[9,20],[0,40],[4,52],[0,70]), props:[pBar([9,20],8)]},
+      finish:{j:J([0,10],[0,20],[4,6],[6,2],[0,38],[0,54],[0,70]), props:[pBar([6,2],8)]} },
+    "Bent-Over Barbell Row": { start:{j:J([14,30],[10,34],[6,42],[4,52],[-4,42],[2,54],[0,70]), props:[pBar([4,52],9)]},
+      finish:{j:J([14,30],[10,34],[2,36],[-2,38],[-4,42],[2,54],[0,70]), props:[pBar([-2,38],9)]} },
+    "Strict Push-ups": { start:{j:J([20,56],[10,57],[6,60],[2,65],[-6,58],[-16,60],[-22,63])},
+      finish:{j:J([20,40],[10,43],[6,52],[2,65],[-6,46],[-16,52],[-22,60])} },
+    "Hanging Knee Raises": { start:{j:J([0,16],[0,22],[3,14],[4,3],[0,42],[0,56],[0,70]), props:[pPullbar(2)]},
+      finish:{j:J([0,16],[0,22],[3,14],[4,3],[0,42],[10,38],[14,34]), props:[pPullbar(2)]} },
+    "Banded Lateral Walk": { view:"front", start:{j:{h:[0,8],shL:[-9,20],shR:[9,20],hipL:[-7,38],hipR:[7,38],elL:[-13,32],haL:[-15,44],elR:[13,32],haR:[15,44],knL:[-7,54],ftL:[-7,70],knR:[7,54],ftR:[7,70]}, props:[pBandPts([-7,70],[7,70])]},
+      finish:{j:{h:[-4,8],shL:[-13,20],shR:[5,20],hipL:[-11,38],hipR:[3,38],elL:[-17,32],haL:[-19,44],elR:[9,32],haR:[11,44],knL:[-16,54],ftL:[-16,70],knR:[-2,54],ftR:[-2,70]}, props:[pBandPts([-16,70],[-2,70])]} },
+    "Pallof Press": { start:{j:J([0,10],[0,20],[-6,24],[-10,26],[0,38],[0,54],[0,70]), props:[pBand(-25,26,-10,26)]},
+      finish:{j:J([0,10],[0,20],[8,24],[16,24],[0,38],[0,54],[0,70]), props:[pBand(-25,26,16,24)]} },
+    "Bulgarian Split Squat": { start:{j:J([4,12],[4,22],[0,32],[-2,42],[4,40],[8,54],[10,70],{kn2:[-8,52],ft2:[-14,52]}), props:[pBox(-14,54,14,4)]},
+      finish:{j:J([6,24],[6,34],[2,44],[0,54],[6,52],[14,56],[10,70],{kn2:[-6,58],ft2:[-14,54]}), props:[pBox(-14,54,14,4)]} },
+    "Weighted Dips": { start:{j:J([8,14],[6,20],[-2,26],[-4,34],[2,38],[2,54],[2,70]), props:[pDipbars([-4,34])]},
+      finish:{j:J([8,24],[6,30],[-2,34],[-4,34],[2,46],[2,58],[2,70]), props:[pDipbars([-4,34])]} },
+    "Strict Pull-ups": { start:{j:J([0,16],[0,24],[3,14],[4,3],[0,42],[0,56],[0,70]), props:[pPullbar(2)]},
+      finish:{j:J([0,8],[0,14],[3,8],[4,3],[2,34],[2,52],[0,68]), props:[pPullbar(2)]} },
+    "Sandbag Bear-Hug Carry": { start:{j:J([0,10],[0,20],[6,24],[8,30],[0,38],[6,54],[10,70],{kn2:[-4,56],ft2:[-8,70]}), props:[pBox(8,28,16,14)]},
+      finish:{j:J([0,10],[0,20],[6,24],[8,30],[0,38],[-4,56],[-8,70],{kn2:[6,54],ft2:[10,70]}), props:[pBox(8,28,16,14)]} },
+    "Hollow Body Hold": { start:{j:J([16,52],[10,54],[8,58],[2,60],[-4,58],[-14,50],[-22,46])},
+      finish:{j:J([16,52],[10,54],[8,58],[2,60],[-4,58],[-14,50],[-22,46])} },
+    "Romanian Deadlift": { start:{j:J([0,10],[0,20],[-3,30],[-4,42],[0,38],[0,54],[0,70]), props:[pBar([-4,42],9)]},
+      finish:{j:J([10,28],[8,32],[4,42],[2,52],[-2,42],[4,54],[0,70]), props:[pBar([2,52],9)]} },
+    "Single-Arm DB Row": { start:{j:J([16,28],[10,30],[6,40],[4,50],[-4,38],[-10,54],[-14,70]), props:[pBell([4,50]),pBench(14,30,14)]},
+      finish:{j:J([16,28],[10,30],[2,32],[-2,34],[-4,38],[-10,54],[-14,70]), props:[pBell([-2,34]),pBench(14,30,14)]} },
+    "Push Press": { start:{j:J([0,14],[0,24],[6,20],[9,24],[0,40],[4,52],[0,70]), props:[pBar([9,24],8)]},
+      finish:{j:J([0,10],[0,20],[4,6],[6,2],[0,38],[0,54],[0,70]), props:[pBar([6,2],8)]} },
+    "Kettlebell Swings": { start:{j:J([12,30],[10,34],[6,46],[4,58],[0,44],[6,56],[0,70]), props:[pBell([4,58])]},
+      finish:{j:J([0,10],[0,20],[4,22],[6,18],[0,38],[0,54],[0,70]), props:[pBell([6,18])]} },
+    "L-Sit Progressions": { start:{j:J([2,26],[-4,34],[-6,40],[-10,44],[-4,44],[2,46],[8,46]), props:[pDipbars([-10,44])]},
+      finish:{j:J([2,26],[-4,34],[-6,40],[-10,44],[-4,44],[12,44],[22,44]), props:[pDipbars([-10,44])]} },
+    "Pistol Squats": { start:{j:J([0,10],[0,20],[-6,26],[-10,30],[0,38],[0,54],[0,70],{kn2:[14,34],ft2:[22,30]})},
+      finish:{j:J([4,26],[4,36],[-2,42],[-6,46],[4,54],[10,58],[0,70],{kn2:[20,46],ft2:[24,44]})} },
+    "Muscle-Up Progressions": { start:{j:J([0,16],[0,24],[2,16],[4,3],[0,42],[0,56],[0,70]), props:[pPullbar(2)]},
+      finish:{j:J([6,10],[4,16],[0,22],[4,3],[4,30],[4,46],[2,62]), props:[pPullbar(2)]} },
+    "Handstand Push-ups": { start:{j:J([0,56],[0,48],[0,58],[0,68],[2,30],[6,14],[10,2]), props:[pWall(22)]},
+      finish:{j:J([0,64],[0,54],[-4,60],[0,68],[2,34],[6,18],[10,4]), props:[pWall(22)]} },
+    "Heavy Sled Push/Pull": { start:{j:J([16,40],[10,44],[14,50],[18,54],[-6,52],[-2,62],[2,70],{kn2:[-14,60],ft2:[-20,70]}), props:[pBox(20,54,14,10)]},
+      finish:{j:J([16,40],[10,44],[14,50],[18,54],[-6,52],[-14,60],[-20,70],{kn2:[-2,62],ft2:[2,70]}), props:[pBox(20,54,14,10)]} },
+    "Dragon Flags": { start:{j:J([-12,40],[-6,42],[-14,36],[-18,38],[6,56],[14,60],[20,62]), props:[pBench(-14,42,16)]},
+      finish:{j:J([-12,40],[-6,42],[-14,36],[-18,38],[2,30],[8,22],[14,14]), props:[pBench(-14,42,16)]} },
+    "Heavy Sandbag Cleans": { start:{j:J([10,36],[8,40],[4,46],[2,54],[0,48],[6,58],[0,70]), props:[pBox(2,56,16,10)]},
+      finish:{j:J([0,10],[0,20],[4,24],[6,22],[0,38],[0,54],[0,70]), props:[pBox(6,24,14,10)]} },
+    "Front Squat": { start:{j:J([0,10],[0,20],[8,14],[10,20],[0,38],[0,54],[0,70]), props:[pBar([10,20],9)]},
+      finish:{j:J([1,25],[1,34],[9,28],[11,34],[3,48],[12,52],[0,70]), props:[pBar([11,34],9)]} },
+    "Weighted Pull-ups": { start:{j:J([0,16],[0,24],[3,14],[4,3],[0,42],[0,56],[0,70]), props:[pPullbar(2),pHangWeight([0,42])]},
+      finish:{j:J([0,8],[0,14],[3,8],[4,3],[2,34],[2,52],[0,68]), props:[pPullbar(2),pHangWeight([2,34])]} },
+    "Suitcase Carries": { view:"front", start:{j:{h:[2,8],shL:[-9,20],shR:[9,20],hipL:[-6,38],hipR:[8,38],elL:[-12,30],haL:[-14,36],elR:[14,34],haR:[16,48],knL:[-6,54],ftL:[-6,70],knR:[8,54],ftR:[8,70]}, props:[pBell([16,48])]},
+      finish:{j:{h:[2,8],shL:[-9,20],shR:[9,20],hipL:[-6,38],hipR:[8,38],elL:[-12,30],haL:[-14,36],elR:[14,34],haR:[16,48],knL:[-6,54],ftL:[-6,70],knR:[8,54],ftR:[8,70]}, props:[pBell([16,48])]} },
+    "Front Lever Progressions": { start:{j:J([0,15],[0,22],[2,14],[4,3],[0,24],[6,20],[10,18]), props:[pPullbar(2)]},
+      finish:{j:J([0,10],[0,18],[2,12],[4,3],[10,20],[20,18],[24,16]), props:[pPullbar(2)]} },
+    "Face Pull (band or cable)": { view:"front", start:{j:{h:[0,8],shL:[-9,20],shR:[9,20],hipL:[-7,38],hipR:[7,38],elL:[-6,26],haL:[-4,26],elR:[6,26],haR:[4,26],knL:[-7,54],ftL:[-7,70],knR:[7,54],ftR:[7,70]}},
+      finish:{j:{h:[0,8],shL:[-9,20],shR:[9,20],hipL:[-7,38],hipR:[7,38],elL:[-20,18],haL:[-14,12],elR:[20,18],haR:[14,12],knL:[-7,54],ftL:[-7,70],knR:[7,54],ftR:[7,70]}} },
+    "Lateral Bound, Stick the Landing": { view:"front", start:{j:{h:[-4,10],shL:[-12,22],shR:[4,22],hipL:[-8,40],hipR:[6,40],elL:[-16,34],haL:[-18,44],elR:[0,30],haR:[2,38],knL:[-8,56],ftL:[-8,70],knR:[10,50],ftR:[16,46]}},
+      finish:{j:{h:[-6,16],shL:[-14,28],shR:[-2,28],hipL:[-10,46],hipR:[4,46],elL:[-18,38],haL:[-20,46],elR:[-4,36],haR:[-2,44],knL:[-14,56],ftL:[-10,70],knR:[6,50],ftR:[12,54]}} }
+  };
+  function renderExerciseSketch(name) {
+    var sk = EX_SKETCH[name];
+    if (!sk) return "";
+    sk.start.view = sk.view; sk.finish.view = sk.view;
+    var h = 80;
+    var svg = '<svg class="sk-svg" viewBox="0 0 160 ' + h + '" aria-hidden="true">';
+    svg += '<line class="sk-ground" x1="4" y1="70" x2="76" y2="70"/><line class="sk-ground" x1="84" y1="70" x2="156" y2="70"/>';
+    svg += '<line class="sk-div" x1="80" y1="2" x2="80" y2="70"/>';
+    svg += '<g transform="translate(40,0)">' + poseSVG(sk.start) + '</g>';
+    svg += '<g transform="translate(120,0)">' + poseSVG(sk.finish) + '</g>';
+    svg += '<text class="sk-label" x="40" y="' + (h-3) + '">Start</text><text class="sk-label" x="120" y="' + (h-3) + '">Finish</text>';
+    svg += '</svg>';
+    return svg;
   }
 
   /* ============================================================
@@ -1799,7 +1956,8 @@
         html += '</table>';
         html += '<p class="mn-label">How To Do Each Move</p>';
         html += '<div style="margin-bottom:12px">' + wk.exercises.map(function(e){
-          return '<p class="mn-cardbody" style="margin-bottom:8px"><strong style="color:var(--ink)">' + esc(e.name) + '</strong> — ' + esc(EX_HOWTO[e.name] || '') + '</p>';
+          return '<div class="card" style="margin-bottom:10px;padding:12px 14px"><p class="mn-cardhead" style="margin-bottom:4px">' + esc(e.name) + '</p><p class="mn-cardbody">' + esc(EX_HOWTO[e.name] || '') + '</p>' +
+            (EX_SKETCH[e.name] ? '<div class="sketch-wrap manual-sketch">' + renderExerciseSketch(e.name) + '</div>' : '') + '</div>';
         }).join('') + '</div>';
         html += '<p class="mn-label olive">Stretch</p>';
         html += '<ul class="item-list" style="margin:0">' + wk.stretch.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
@@ -1838,7 +1996,8 @@
       html += '<div class="step-kind">Exercise</div>';
       html += '<div class="ex-header"><div class="ex-icon">' + EX_ICONS[exerciseIconKey(step.title)] + '</div><h2 class="step-title">' + esc(step.title) + '</h2></div>';
       if (EX_HOWTO[step.title]) {
-        html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(EX_HOWTO[step.title]) + '</p></div>';
+        html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(EX_HOWTO[step.title]) + '</p>' +
+          (EX_SKETCH[step.title] ? '<div class="sketch-wrap">' + renderExerciseSketch(step.title) + '</div>' : '') + '</div>';
       }
       html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
       if (step.isMainLift) {
