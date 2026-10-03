@@ -404,7 +404,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v9 · 2026-10-03";
+  var APP_VERSION = "v10 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -1745,8 +1745,16 @@
   var hadControllerAtLoad = !!navigator.serviceWorker.controller;
 
   if ("serviceWorker" in navigator) {
+    var ironcladSwReg = null;
+
     window.addEventListener("load", function(){
-      navigator.serviceWorker.register("service-worker.js").then(function(reg){
+      // updateViaCache: "none" tells the browser to never serve
+      // service-worker.js itself from its ordinary HTTP cache when checking
+      // for an update -- without this, a stale cached copy of that one file
+      // (served by GitHub Pages' CDN) can make every update check see no
+      // change at all, even though the real file on the server is newer.
+      navigator.serviceWorker.register("service-worker.js", { updateViaCache: "none" }).then(function(reg){
+        ironcladSwReg = reg;
         reg.addEventListener("updatefound", function(){
           var fresh = reg.installing;
           if (!fresh) return;
@@ -1760,6 +1768,17 @@
           });
         });
       }).catch(function(){});
+    });
+
+    // iOS standalone ("Add to Home Screen") apps often resume a suspended
+    // page instead of truly reloading it when reopened, so the "load" event
+    // above and its one-time register() call may simply never fire again on
+    // a reopen. Explicitly asking the existing registration to re-check for
+    // an update every time the app becomes visible again closes that gap.
+    document.addEventListener("visibilitychange", function(){
+      if (document.visibilityState === "visible" && ironcladSwReg) {
+        ironcladSwReg.update().catch(function(){});
+      }
     });
   }
 </script>
