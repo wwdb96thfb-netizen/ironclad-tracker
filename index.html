@@ -1666,53 +1666,44 @@
   // browser, file:// origin, etc.) is silently ignored — the app still runs,
   // just without the offline cache.
   //
-  // UPDATES: a future deploy with a bumped CACHE_NAME installs quietly in
-  // the background as a "waiting" worker. We show a small banner as soon as
-  // that happens; tapping it tells the waiting worker to take over, and the
-  // controllerchange listener below reloads the page onto the new version.
-  var swReg = null;
-
+  // UPDATES: a future deploy with a bumped CACHE_NAME installs in the
+  // background and takes over automatically (see service-worker.js) — safe
+  // here since nothing on screen changes mid-session just from that. We
+  // show a small banner once it's done; tapping it is just a plain reload
+  // onto what's already cached, nothing more.
   function showIroncladUpdateBanner() {
     var el = document.getElementById("sw-update-banner");
     if (el) el.hidden = false;
   }
 
   function applyIroncladUpdate() {
-    if (swReg && swReg.waiting) {
-      swReg.waiting.postMessage({ type: "SKIP_WAITING" });
-    }
     var el = document.getElementById("sw-update-banner");
     if (el) el.hidden = true;
+    window.location.reload();
   }
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function(){
       navigator.serviceWorker.register("service-worker.js").then(function(reg){
-        swReg = reg;
-
-        // A waiting worker already sitting there (e.g. update finished
-        // installing on a previous visit but was never applied).
-        if (reg.waiting) showIroncladUpdateBanner();
-
         reg.addEventListener("updatefound", function(){
           var fresh = reg.installing;
           if (!fresh) return;
           fresh.addEventListener("statechange", function(){
-            // "installed" + an existing controller means this is an UPDATE
+            // "activated" + an existing controller means this is an UPDATE
             // (not the very first install), so there's something to offer.
-            if (fresh.state === "installed" && navigator.serviceWorker.controller) {
+            if (fresh.state === "activated" && navigator.serviceWorker.controller) {
               showIroncladUpdateBanner();
             }
           });
         });
-      }).catch(function(){});
-    });
 
-    var reloadedForUpdate = false;
-    navigator.serviceWorker.addEventListener("controllerchange", function(){
-      if (reloadedForUpdate) return;
-      reloadedForUpdate = true;
-      window.location.reload();
+        // Standalone home-screen apps don't always get a fresh update check
+        // for free the way an ordinary browser tab does, so nudge one every
+        // time the app comes back to the foreground.
+        document.addEventListener("visibilitychange", function(){
+          if (document.visibilityState === "visible") reg.update().catch(function(){});
+        });
+      }).catch(function(){});
     });
   }
 </script>

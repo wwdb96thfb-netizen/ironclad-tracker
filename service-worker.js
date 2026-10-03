@@ -7,10 +7,20 @@
 // VERSIONING: bump CACHE_NAME on every deploy that changes index.html,
 // manifest.json or the icons. That's the only signal the browser has that
 // anything changed — without it, already-installed copies keep serving the
-// old cached files forever. A new version installs in the background and
-// sits "waiting" (see below) until the page asks it to take over, so a
-// visit in progress never gets swapped out from under the user.
-const CACHE_NAME = "ironclad-v2";
+// old cached files forever.
+//
+// A new version takes over automatically in the background as soon as it's
+// done installing (self.skipWaiting() below) — that's safe here because
+// this is a single-page app: nothing on screen changes mid-session just
+// because the worker controlling future fetches changed. The page still
+// shows an "update available" banner, but tapping it only needs to do a
+// plain reload onto what's already cached — no message has to make it back
+// to the worker first. (An earlier version waited for that round trip
+// before switching over, which turned out to be unreliable in iOS Safari's
+// "Add to Home Screen" standalone mode — the message to the waiting worker
+// could silently never arrive, leaving the update stuck forever. This
+// avoids that failure mode entirely.)
+const CACHE_NAME = "ironclad-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -23,17 +33,8 @@ self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function (cache) { return cache.addAll(APP_SHELL); })
-    // No self.skipWaiting() here on purpose: a freshly installed worker
-    // stays in the "waiting" state so the page can show an "update
-    // available" prompt and only switch over once the user taps it.
+      .then(function () { return self.skipWaiting(); })
   );
-});
-
-// The page posts this once the user confirms the update prompt.
-self.addEventListener("message", function (event) {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
 });
 
 self.addEventListener("activate", function (event) {
