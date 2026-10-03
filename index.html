@@ -309,14 +309,14 @@
 
   .sketch-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
   .sk-svg { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
-  .sk-svg .bf-torso, .sk-svg .bf-limb { fill: none; stroke: var(--ink); stroke-linecap: round; stroke-linejoin: round; }
+  .sk-svg .bf-torso, .sk-svg .bf-limb { fill: none; stroke: var(--surface-2); stroke-linecap: round; stroke-linejoin: round; }
   .sk-svg .bf-torso { stroke-width: 15; }
   .sk-svg .bf-limb { stroke-width: 10; }
   .sk-svg .bf-limb.bf-leg { stroke-width: 13; }
-  .sk-svg .bf-back { stroke: var(--ink-faint); opacity: 0.8; }
-  .sk-svg .bf-torso-poly { fill: var(--ink); }
-  .sk-svg circle.bf-head { fill: var(--ink); stroke: var(--surface); stroke-width: 1.4; }
-  .sk-svg circle.bf-joint { fill: var(--surface); stroke: var(--ink); stroke-width: 1.2; }
+  .sk-svg .bf-back { stroke: var(--surface-2); opacity: 0.55; }
+  .sk-svg .bf-torso-poly { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
+  .sk-svg circle.bf-head { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.3; }
+  .sk-svg circle.bf-joint { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; }
   .sk-svg .sk-prop { stroke: var(--rust); stroke-width: 2.2; fill: none; }
   .sk-svg .sk-prop-fill { fill: var(--rust); stroke: none; }
   .sk-svg .sk-ground { stroke: var(--line-strong); stroke-width: 1.5; }
@@ -451,7 +451,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v21 · 2026-10-04";
+  var APP_VERSION = "v22 · 2026-10-04";
 
   /* ============================================================
      DATA
