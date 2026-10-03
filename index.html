@@ -423,7 +423,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v11 · 2026-10-03";
+  var APP_VERSION = "v12 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -1487,7 +1487,7 @@
       return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Field Manual</div></div></div>';
     }
     if (state.screen === "profile") {
-      return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Profile</div></div></div>';
+      return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Body Measurements</div></div></div>';
     }
     if (state.screen === "settings") {
       return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Settings</div></div></div>';
@@ -1558,7 +1558,7 @@
       '<button class="' + (state.screen==='home'?'active':'') + '" data-action="go-home">' + ICONS.home + '<span>Home</span></button>' +
       '<button class="' + (state.screen==='log'?'active':'') + '" data-action="go-log">' + ICONS.log + '<span>Log</span></button>' +
       '<button class="' + (state.screen==='manual'?'active':'') + '" data-action="go-manual">' + ICONS.manual + '<span>Manual</span></button>' +
-      '<button class="' + (state.screen==='profile'?'active':'') + '" data-action="go-profile">' + ICONS.profile + '<span>Profile</span></button>' +
+      '<button class="' + (state.screen==='profile'?'active':'') + '" data-action="go-profile">' + ICONS.profile + '<span>Body</span></button>' +
       '<button class="' + (state.screen==='settings'?'active':'') + '" data-action="go-settings">' + ICONS.gear + '<span>Settings</span></button>' +
     '</div>';
   }
