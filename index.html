@@ -309,12 +309,14 @@
 
   .sketch-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
   .sk-svg { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
-  .sk-svg path, .sk-svg .sk-leg { stroke: var(--ink); stroke-width: 3.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .sk-svg circle.sk-head { fill: var(--ink); stroke: var(--surface); stroke-width: 1.2; }
-  .sk-svg circle.sk-joint { fill: var(--ink); stroke: var(--surface); stroke-width: 0.8; }
-  .sk-svg circle.sk-end { fill: var(--ink); stroke: var(--surface); stroke-width: 0.8; }
-  .sk-svg .sk-back { stroke: var(--ink-faint); stroke-width: 2.6; }
-  .sk-svg circle.sk-joint-back, .sk-svg circle.sk-end-back { fill: var(--ink-faint); stroke: var(--surface); stroke-width: 0.8; }
+  .sk-svg .bf-torso, .sk-svg .bf-limb { fill: none; stroke: var(--ink); stroke-linecap: round; stroke-linejoin: round; }
+  .sk-svg .bf-torso { stroke-width: 15; }
+  .sk-svg .bf-limb { stroke-width: 10; }
+  .sk-svg .bf-limb.bf-leg { stroke-width: 13; }
+  .sk-svg .bf-back { stroke: var(--ink-faint); opacity: 0.8; }
+  .sk-svg .bf-torso-poly { fill: var(--ink); }
+  .sk-svg circle.bf-head { fill: var(--ink); stroke: var(--surface); stroke-width: 1.4; }
+  .sk-svg circle.bf-joint { fill: var(--surface); stroke: var(--ink); stroke-width: 1.2; }
   .sk-svg .sk-prop { stroke: var(--rust); stroke-width: 2.2; fill: none; }
   .sk-svg .sk-prop-fill { fill: var(--rust); stroke: none; }
   .sk-svg .sk-ground { stroke: var(--line-strong); stroke-width: 1.5; }
@@ -449,7 +451,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v18 · 2026-10-03";
+  var APP_VERSION = "v19 · 2026-10-04";
 
   /* ============================================================
      DATA
@@ -890,7 +892,7 @@
     reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-7 3L3 8"/><path d="M3 3v5h5"/></svg>',
     manual: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>',
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
-    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>',
     scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v4l2.5 2.5"/></svg>'
   };
 
@@ -943,9 +945,11 @@
     return "CORE";
   }
 
-  // ---- Original line-sketch illustrations ----
-  // Simple two-frame (Start/Finish) stick-figure diagrams, hand-drawn as
-  // plain coordinates — not photos or stock art, so nothing to license and
+  // ---- Original body-shaped pose illustrations ----
+  // Simple two-frame (Start/Finish) diagrams of a filled, body-shaped
+  // figure (same visual language as the muscle map below — thick rounded
+  // limbs and torso, not thin stick lines), hand-drawn as plain
+  // coordinates — not photos or stock art, so nothing to license and
   // nothing that needs a network connection or extra download. Side-view
   // poses use a single near-side arm/leg (plus a faint far-side limb for
   // split stances); a handful of exercises that move side-to-side in front
@@ -974,41 +978,37 @@
   }
   function pBandPts(a, b) { return pBand(a[0], a[1], b[0], b[1]); }
 
-  // Small filled circles at every pivot (shoulder/elbow/hip/knee) and
-  // slightly larger ones at the working ends (hands/feet) turn plain
-  // stick lines into a proper jointed pictogram — the convention used by
-  // equipment manuals and exercise charts, and much easier to read at a
-  // glance than bare lines.
-  function jointDot(pt, cls) { return '<circle class="' + (cls||'sk-joint') + '" cx="' + pt[0] + '" cy="' + pt[1] + '" r="2.1"/>'; }
-  function endDot(pt, cls) { return '<circle class="' + (cls||'sk-end') + '" cx="' + pt[0] + '" cy="' + pt[1] + '" r="2.8"/>'; }
+  // Filled, body-shaped figures rather than thin stick lines: each limb is
+  // a thick rounded-cap/rounded-join stroke (the same "body as a chunky
+  // tube" trick used by renderMuscleMap's silhouette below), the torso is
+  // a thick stroke (side view) or a filled quad (front view), and small
+  // light dots mark the major pivots (shoulder/elbow/hip/knee) so the bend
+  // of a pose still reads clearly against the thicker body.
+  function jointDot(pt) { return '<circle class="bf-joint" cx="' + pt[0] + '" cy="' + pt[1] + '" r="2.4"/>'; }
   function figureSideSVG(j) {
     var s = '';
     if (j.kn2 && j.ft2) {
-      s += '<path class="sk-leg sk-back" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn2[0]+' '+j.kn2[1]+' L'+j.ft2[0]+' '+j.ft2[1]+'"/>';
-      s += jointDot(j.kn2,'sk-joint-back') + endDot(j.ft2,'sk-end-back');
+      s += '<path class="bf-limb bf-leg bf-back" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn2[0]+' '+j.kn2[1]+' L'+j.ft2[0]+' '+j.ft2[1]+'"/>';
     }
-    s += '<path class="sk-leg" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn[0]+' '+j.kn[1]+' L'+j.ft[0]+' '+j.ft[1]+'"/>';
-    s += '<path d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.sh[0]+' '+j.sh[1]+'"/>';
+    s += '<path class="bf-torso" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.sh[0]+' '+j.sh[1]+'"/>';
     if (j.el2 && j.ha2) {
-      s += '<path class="sk-back" d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el2[0]+' '+j.el2[1]+' L'+j.ha2[0]+' '+j.ha2[1]+'"/>';
-      s += jointDot(j.el2,'sk-joint-back') + endDot(j.ha2,'sk-end-back');
+      s += '<path class="bf-limb bf-back" d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el2[0]+' '+j.el2[1]+' L'+j.ha2[0]+' '+j.ha2[1]+'"/>';
     }
-    s += '<path d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el[0]+' '+j.el[1]+' L'+j.ha[0]+' '+j.ha[1]+'"/>';
+    s += '<path class="bf-limb bf-leg" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn[0]+' '+j.kn[1]+' L'+j.ft[0]+' '+j.ft[1]+'"/>';
+    s += '<path class="bf-limb" d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el[0]+' '+j.el[1]+' L'+j.ha[0]+' '+j.ha[1]+'"/>';
     s += jointDot(j.hi) + jointDot(j.kn) + jointDot(j.sh) + jointDot(j.el);
-    s += endDot(j.ft) + endDot(j.ha);
-    s += '<circle class="sk-head" cx="'+j.h[0]+'" cy="'+j.h[1]+'" r="5.5"/>';
+    s += '<circle class="bf-head" cx="'+j.h[0]+'" cy="'+j.h[1]+'" r="7.5"/>';
     return s;
   }
   function figureFrontSVG(f) {
     var s = '';
-    s += '<path class="sk-leg" d="M'+f.hipL[0]+' '+f.hipL[1]+' L'+f.knL[0]+' '+f.knL[1]+' L'+f.ftL[0]+' '+f.ftL[1]+'"/>';
-    s += '<path class="sk-leg" d="M'+f.hipR[0]+' '+f.hipR[1]+' L'+f.knR[0]+' '+f.knR[1]+' L'+f.ftR[0]+' '+f.ftR[1]+'"/>';
-    s += '<path d="M'+f.hipL[0]+' '+f.hipL[1]+' L'+f.shL[0]+' '+f.shL[1]+' M'+f.hipR[0]+' '+f.hipR[1]+' L'+f.shR[0]+' '+f.shR[1]+' M'+f.shL[0]+' '+f.shL[1]+' L'+f.shR[0]+' '+f.shR[1]+'"/>';
-    s += '<path d="M'+f.shL[0]+' '+f.shL[1]+' L'+f.elL[0]+' '+f.elL[1]+' L'+f.haL[0]+' '+f.haL[1]+'"/>';
-    s += '<path d="M'+f.shR[0]+' '+f.shR[1]+' L'+f.elR[0]+' '+f.elR[1]+' L'+f.haR[0]+' '+f.haR[1]+'"/>';
+    s += '<path class="bf-limb bf-leg" d="M'+f.hipL[0]+' '+f.hipL[1]+' L'+f.knL[0]+' '+f.knL[1]+' L'+f.ftL[0]+' '+f.ftL[1]+'"/>';
+    s += '<path class="bf-limb bf-leg" d="M'+f.hipR[0]+' '+f.hipR[1]+' L'+f.knR[0]+' '+f.knR[1]+' L'+f.ftR[0]+' '+f.ftR[1]+'"/>';
+    s += '<polygon class="bf-torso-poly" points="'+f.shL.join(',')+' '+f.shR.join(',')+' '+f.hipR.join(',')+' '+f.hipL.join(',')+'"/>';
+    s += '<path class="bf-limb" d="M'+f.shL[0]+' '+f.shL[1]+' L'+f.elL[0]+' '+f.elL[1]+' L'+f.haL[0]+' '+f.haL[1]+'"/>';
+    s += '<path class="bf-limb" d="M'+f.shR[0]+' '+f.shR[1]+' L'+f.elR[0]+' '+f.elR[1]+' L'+f.haR[0]+' '+f.haR[1]+'"/>';
     s += jointDot(f.hipL) + jointDot(f.hipR) + jointDot(f.shL) + jointDot(f.shR) + jointDot(f.knL) + jointDot(f.knR) + jointDot(f.elL) + jointDot(f.elR);
-    s += endDot(f.ftL) + endDot(f.ftR) + endDot(f.haL) + endDot(f.haR);
-    s += '<circle class="sk-head" cx="'+f.h[0]+'" cy="'+f.h[1]+'" r="5.5"/>';
+    s += '<circle class="bf-head" cx="'+f.h[0]+'" cy="'+f.h[1]+'" r="7.5"/>';
     return s;
   }
   function poseSVG(pose) {
