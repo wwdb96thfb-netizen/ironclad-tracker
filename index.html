@@ -194,6 +194,25 @@
   }
   .phase-btn.active { background: var(--olive); color: #fff; border-color: var(--olive); }
 
+  /* ---- onboarding (first-launch intake) ---- */
+  .onb-wrap { padding: 4px 0 24px; }
+  .onb-head { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: .02em; margin: 4px 0 2px; }
+  .onb-sub { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 20px; line-height: 1.5; }
+  .onb-label { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 22px 0 8px; }
+  .onb-label:first-of-type { margin-top: 0; }
+  .choice-row { display: flex; gap: 8px; }
+  .choice-row .choice-item { flex: 1; text-align: center; }
+  .choice-list { display: flex; flex-direction: column; gap: 8px; }
+  .choice-item {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .choice-item .ci-title { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; color: var(--ink); }
+  .choice-item .ci-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  .choice-item.active { background: var(--good-bg); border-color: var(--olive); }
+  .choice-item.active .ci-title { color: var(--olive); }
+  .onb-error { font-size: 12.5px; color: var(--rust); margin: 14px 0 0; }
+
   /* ---- banner ---- */
   .banner { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--ink-soft); margin-bottom: 14px; display:flex; align-items:center; gap:8px; }
   .banner svg { flex-shrink: 0; width: 16px; height: 16px; }
@@ -404,15 +423,30 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v10 · 2026-10-03";
+  var APP_VERSION = "v11 · 2026-10-03";
 
   /* ============================================================
      DATA
   ============================================================ */
-  var PHASES = {
+  // Two parallel tracks (see getPhases() below), chosen at onboarding by
+  // sex. Current, credible strength-and-conditioning sources (e.g. the
+  // NSCA's position stand on female athletes) agree the basic training
+  // logic — progressive overload, specificity — is identical for both
+  // sexes; a program for women isn't "the men's plan with lighter
+  // weights." Where the two tracks genuinely differ, by current evidence:
+  // more upper-body pulling volume for women (meta-analyses show equal or
+  // better relative upper-body response to training, even though absolute
+  // upper-body strength starts lower), explicit landing-mechanics coaching
+  // on jump/bound work in Phase 2 (women have measurably higher non-contact
+  // ACL injury rates, and cueing soft, aligned landings is one of the few
+  // interventions shown to reduce it), and realistic rather than
+  // male-normed gatekeeper benchmarks in Phase 2. Everything else —
+  // warm-up/tendon-prep/stretch structure, GPP, cardio, recovery, deload
+  // cadence — is identical and shared by both tracks below.
+  var PHASES_MEN = {
     1: {
       name: "Phase 1 — Foundation & Armor Building", timeline: "Months 1–3",
-      note: "Empty 20kg bar in Week 1. +1.25kg on main lifts weekly — miss reps, repeat the weight.",
+      note: "Empty 20kg bar in Week 1. +1.25kg on main lifts weekly — miss reps, repeat the weight. Brace before every heavy rep: breath in, ribs down, belly tight.",
       workouts: {
         A: {
           name: "Workout A — Push & Squat",
@@ -427,7 +461,8 @@
             {name:"Calf Raise", sets:"3×15", rest:"45s"},
             {name:"Band Pull-Apart", sets:"2×15", rest:"45s"}
           ],
-          stretch: ["Hip flexor stretch, 20–30s each side ×2", "Chest/shoulder doorway stretch, 20–30s ×2"]
+          stretch: ["Hip flexor stretch, 20–30s each side ×2", "Chest/shoulder doorway stretch, 20–30s ×2"],
+          homeAlt: "No barbell? Use the heaviest dumbbells, a loaded rucksack, or filled jugs/jerry cans for the squat and press; a sturdy table edge, resistance band, or doorway row substitutes for the pull."
         },
         B: {
           name: "Workout B — Hinge & Pull",
@@ -442,7 +477,8 @@
             {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
             {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
           ],
-          stretch: ["Hamstring stretch, 20–30s each side ×2", "Lat stretch (arm overhead, lean sideways), 20–30s each side ×2"]
+          stretch: ["Hamstring stretch, 20–30s each side ×2", "Lat stretch (arm overhead, lean sideways), 20–30s each side ×2"],
+          homeAlt: "No barbell? A loaded rucksack or two heavy jugs work for the deadlift pattern; bands sub in for the row and pull-apart work."
         }
       }
     },
@@ -463,7 +499,8 @@
             {name:"Calf Raise", sets:"3×15", rest:"45s"},
             {name:"Band Pull-Apart", sets:"2×15", rest:"45s"}
           ],
-          stretch: ["Hip flexor + quad stretch, 20–30s each side ×2", "Chest/shoulder stretch, 20–30s ×2"]
+          stretch: ["Hip flexor + quad stretch, 20–30s each side ×2", "Chest/shoulder stretch, 20–30s ×2"],
+          homeAlt: "No dip bars or pull-up bar? Use a sturdy chair/counter edge for dips and a doorway/towel-over-door row for the pull; a heavy duffel bag works for the carry."
         },
         B: {
           name: "Workout B — Explosive Hinge & Unilateral Pull",
@@ -478,7 +515,8 @@
             {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
             {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
           ],
-          stretch: ["Hamstring + glute stretch, 20–30s each side ×2", "Lat stretch, 20–30s each side ×2"]
+          stretch: ["Hamstring + glute stretch, 20–30s each side ×2", "Lat stretch, 20–30s each side ×2"],
+          homeAlt: "No kettlebell? A single heavy dumbbell or a filled jerry can swings the same way; a loaded rucksack substitutes for the push press and RDL."
         }
       }
     },
@@ -499,7 +537,8 @@
             {name:"Calf Raise", sets:"3×15", rest:"45s"},
             {name:"Band Pull-Apart", sets:"2×15", rest:"45s"}
           ],
-          stretch: ["Hip/ankle mobility stretch, 20–30s each side ×2", "Shoulder + wrist stretch, 20–30s ×2"]
+          stretch: ["Hip/ankle mobility stretch, 20–30s each side ×2", "Shoulder + wrist stretch, 20–30s ×2"],
+          homeAlt: "No sled? A loaded wheelbarrow, or just pushing/dragging a heavy duffel bag across the floor, works the same pattern."
         },
         B: {
           name: "Workout B — Raw Functional Mass",
@@ -514,11 +553,135 @@
             {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
             {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
           ],
-          stretch: ["Quad + hamstring stretch, 20–30s each side ×2", "Lat + forearm stretch, 20–30s ×2"]
+          stretch: ["Quad + hamstring stretch, 20–30s each side ×2", "Lat + forearm stretch, 20–30s ×2"],
+          homeAlt: "No barbell or sandbag? A duffel bag packed heavy (or a loaded rucksack) cleans and front-squats the same way; a backpack adds load to the pull-up."
         }
       }
     }
   };
+
+  var PHASES_WOMEN = {
+    1: {
+      name: "Phase 1 — Foundation & Armor Building", timeline: "Months 1–3",
+      note: "Empty 20kg bar (or your lightest dumbbells) in Week 1. +1.25kg on main lifts weekly — miss reps, repeat the weight. Brace before every heavy rep: breath in, ribs down, belly tight — this protects your lower back and pelvic floor under load as much as it builds strength.",
+      workouts: {
+        A: {
+          name: "Workout A — Push & Squat",
+          warmup: ["3–5 min light cardio (walk/bike)", "Leg swings, hip circles, arm circles, walking lunges", "2–3 ramp-up sets before your heaviest lift"],
+          tendon: "Back Squat hold, mid-squat (thighs parallel)",
+          exercises: [
+            {name:"Barbell Back Squat", sets:"3×5–8", rest:"2–3m", main:true},
+            {name:"Flat Bench Press", sets:"3×6–10", rest:"2–3m"},
+            {name:"Assisted Pull-ups", sets:"4×8–10", rest:"2m"},
+            {name:"Face Pull (band or cable)", sets:"3×15", rest:"60s"},
+            {name:"Farmer's Walk", sets:"3×40m", rest:"90s"},
+            {name:"Forearm Plank", sets:"3×30–45s", rest:"60s"},
+            {name:"Band Pull-Apart", sets:"2×15", rest:"45s"}
+          ],
+          stretch: ["Hip flexor stretch, 20–30s each side ×2", "Chest/shoulder doorway stretch, 20–30s ×2"],
+          homeAlt: "No barbell? Use the heaviest dumbbells, a loaded backpack, or filled jugs for the squat and press; a sturdy table edge, resistance band, or doorway row substitutes for the pull."
+        },
+        B: {
+          name: "Workout B — Hinge & Pull",
+          warmup: ["3–5 min light cardio (walk/bike)", "Leg swings, hip circles, cat-cow, band pull-aparts", "2–3 ramp-up sets before the deadlift"],
+          tendon: "Deadlift hold, bar at mid-shin against pins/blocks",
+          exercises: [
+            {name:"Conventional Deadlift", sets:"2×5", rest:"3m", main:true},
+            {name:"Standing Overhead Press", sets:"3×6–10", rest:"2–3m"},
+            {name:"Bent-Over Barbell Row", sets:"3×8–10", rest:"2m"},
+            {name:"Strict Push-ups", sets:"3×AMRAP", rest:"90s"},
+            {name:"Hanging Knee Raises", sets:"3×8–12", rest:"60s"},
+            {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
+            {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
+          ],
+          stretch: ["Hamstring stretch, 20–30s each side ×2", "Lat stretch (arm overhead, lean sideways), 20–30s each side ×2"],
+          homeAlt: "No barbell? A loaded backpack or two heavy jugs work for the deadlift pattern; bands sub in for the row and pull-apart work."
+        }
+      }
+    },
+    2: {
+      name: "Phase 2 — Tactical Power & Unilateral Capability", timeline: "Months 4–8",
+      note: "Single-limb work to fix imbalances. Land every jump/bound soft and quiet, knees tracking over your toes, not caving inward — that cue alone measurably lowers knee-injury risk. Same warm-up / tendon / stretch structure as Phase 1.",
+      workouts: {
+        A: {
+          name: "Workout A — Unilateral Lower & Power Push",
+          warmup: ["3–5 min light cardio", "Leg swings, hip circles, walking lunges", "Ramp-up sets before dips/pull-ups"],
+          tendon: "Bulgarian Split Squat hold, bottom position (alternate legs)",
+          exercises: [
+            {name:"Bulgarian Split Squat", sets:"3×8–10/leg", rest:"2m", main:true},
+            {name:"Weighted Dips (or Bench Dips)", sets:"3×6–8", rest:"2m"},
+            {name:"Strict Pull-ups", sets:"3×5–8", rest:"2m"},
+            {name:"Lateral Bound, Stick the Landing", sets:"3×6/side", rest:"90s"},
+            {name:"Sandbag Bear-Hug Carry", sets:"3×40m", rest:"90s"},
+            {name:"Hollow Body Hold", sets:"3×45s", rest:"60s"},
+            {name:"Band Pull-Apart", sets:"2×15", rest:"45s"}
+          ],
+          stretch: ["Hip flexor + quad stretch, 20–30s each side ×2", "Chest/shoulder stretch, 20–30s ×2"],
+          homeAlt: "No dip bars or pull-up bar? Use a sturdy chair/counter edge for dips and a doorway/towel-over-door row for the pull; a heavy duffel bag works for the carry."
+        },
+        B: {
+          name: "Workout B — Explosive Hinge & Unilateral Pull",
+          warmup: ["3–5 min light cardio", "Hip circles, arm circles, a few bodyweight swings", "Ramp-up sets before push press"],
+          tendon: "Romanian Deadlift hold, mid-hinge",
+          exercises: [
+            {name:"Romanian Deadlift", sets:"3×8", rest:"2m", main:true},
+            {name:"Single-Arm DB Row", sets:"3×8–10/arm", rest:"90s"},
+            {name:"Push Press", sets:"3×5", rest:"2m"},
+            {name:"Kettlebell Swings", sets:"4×15–20", rest:"60s"},
+            {name:"L-Sit Progressions", sets:"3×15–20s", rest:"60s"},
+            {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
+            {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
+          ],
+          stretch: ["Hamstring + glute stretch, 20–30s each side ×2", "Lat stretch, 20–30s each side ×2"],
+          homeAlt: "No kettlebell? A single heavy dumbbell or a filled jerry can swings the same way; a loaded backpack substitutes for the push press and RDL."
+        }
+      }
+    },
+    3: {
+      name: "Phase 3 — The Warrior Pinnacle", timeline: "Months 9–12+",
+      note: "Elite bodyweight mastery + heavy irregular-object lifting. Same warm-up / tendon / stretch structure.",
+      workouts: {
+        A: {
+          name: "Workout A — Advanced Calisthenics",
+          warmup: ["3–5 min light cardio", "Shoulder circles, deep squat holds, wrist prep", "A few easy pull-up/dip reps before working sets"],
+          tendon: "Pistol Squat hold, bottom position (assisted as needed, alternate legs)",
+          exercises: [
+            {name:"Pistol Squats", sets:"3×5/leg", rest:"2m", main:true},
+            {name:"Muscle-Up Progressions", sets:"4×3–5", rest:"3m"},
+            {name:"Handstand Push-ups (wall-assisted OK)", sets:"3×5–8", rest:"2m"},
+            {name:"Heavy Sled Push/Pull", sets:"4×20m", rest:"2m"},
+            {name:"Dragon Flags", sets:"3×5–8", rest:"90s"},
+            {name:"Face Pull (band or cable)", sets:"3×15", rest:"60s"},
+            {name:"Band Pull-Apart", sets:"2×15", rest:"45s"}
+          ],
+          stretch: ["Hip/ankle mobility stretch, 20–30s each side ×2", "Shoulder + wrist stretch, 20–30s ×2"],
+          homeAlt: "No sled? A loaded wheelbarrow, or just pushing/dragging a heavy duffel bag across the floor, works the same pattern."
+        },
+        B: {
+          name: "Workout B — Raw Functional Mass",
+          warmup: ["3–5 min light cardio", "Hip circles, leg swings, a light empty-bar front squat set", "Ramp-up sets before the sandbag cleans"],
+          tendon: "Front Squat hold, bottom position (bar on front delts)",
+          exercises: [
+            {name:"Heavy Sandbag Cleans", sets:"4×5", rest:"2m"},
+            {name:"Front Squat", sets:"3×5", rest:"2m", main:true},
+            {name:"Weighted Pull-ups", sets:"3×5", rest:"2m"},
+            {name:"Suitcase Carries", sets:"3×40m/side", rest:"90s"},
+            {name:"Front Lever Progressions", sets:"4×10s", rest:"90s"},
+            {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
+            {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
+          ],
+          stretch: ["Quad + hamstring stretch, 20–30s each side ×2", "Lat + forearm stretch, 20–30s ×2"],
+          homeAlt: "No barbell or sandbag? A duffel bag packed heavy (or a loaded backpack) cleans and front-squats the same way; a backpack adds load to the pull-up."
+        }
+      }
+    }
+  };
+
+  // Resolves to whichever track matches the on-device profile set at
+  // onboarding; defaults to the men's track only in the brief window before
+  // onboarding has ever run (render() gates the whole app behind onboarding,
+  // so in practice this fallback is never actually shown to anyone).
+  function getPhases() { return (state.profile && state.profile.sex === "female") ? PHASES_WOMEN : PHASES_MEN; }
   var RUCK_DOSING = {
     1: {load:"10–15%", duration:"30–40m"},
     2: {load:"20–30%", duration:"40–50m"},
@@ -538,19 +701,25 @@
 
   // Reference-only content for the in-app Manual screen — the handful of
   // lines from the field manual that aren't already part of the plan data
-  // above (PHASES / RUCK_DOSING / BALANCE_ITEMS / RECOVERY_ITEMS already
+  // above (PHASES_MEN/PHASES_WOMEN / RUCK_DOSING / BALANCE_ITEMS / RECOVERY_ITEMS already
   // cover everything else, so the Manual screen reads from the same single
   // source of truth as the rest of the app instead of a second copy of it).
-  var GOLDEN_RULES = "Empty bar in Week 1 · 2–3 min rest on main lifts · always leave 2 reps in the tank · deload one lighter week every 4–6 weeks · tendon prep before working sets, 4×/week · grip hangs accumulated daily · GPP day alternates ruck / speed-agility weekly · 7–8 hrs sleep nightly · 5 min/day deep resting squat.";
-  var PHASE_CALLOUTS = {
+  var GOLDEN_RULES = "Empty bar in Week 1 · brace (breath in, ribs down, belly tight) before every heavy rep · 2–3 min rest on main lifts · always leave 2 reps in the tank · deload one lighter week every 4–6 weeks · tendon prep before working sets, 4×/week · grip hangs accumulated daily · GPP day alternates ruck / speed-agility weekly · 7–8 hrs sleep nightly · 5 min/day deep resting squat.";
+  var PHASE_CALLOUTS_MEN = {
     1: { label:"Before the deadlift", text:"Spend your first few Workout B sessions grooving the hip-hinge with a Romanian Deadlift or kettlebell deadlift before loading a full conventional deadlift from the floor." },
     2: { label:"Gatekeeper — clear before Phase 3", items:["5 strict, unassisted pull-ups","Barbell back squat at bodyweight × 5","15 unbroken kettlebell swings with a 24kg bell"] },
     3: { label:"Reality check", text:"Muscle-up and front lever are long-term progressions, not Month-9 targets. Keep working them." }
   };
+  var PHASE_CALLOUTS_WOMEN = {
+    1: { label:"Before the deadlift", text:"Spend your first few Workout B sessions grooving the hip-hinge with a Romanian Deadlift or kettlebell deadlift before loading a full conventional deadlift from the floor. Keep your ribs stacked over your pelvis and exhale as you lift the weight — that keeps the pressure you build working for your spine and pelvic floor, not against them." },
+    2: { label:"Gatekeeper — clear before Phase 3", items:["3 strict, unassisted pull-ups (or 12 band-assisted)","Barbell back squat at bodyweight × 5","15 unbroken kettlebell swings with a 16kg bell"] },
+    3: { label:"Reality check", text:"Pull-up and pistol-squat strength usually take longer to build than squat/deadlift strength — that's leverage and starting point, not effort. Muscle-up and front lever are long-term progressions, not Month-9 targets. Keep working them." }
+  };
+  function getCallouts() { return (state.profile && state.profile.sex === "female") ? PHASE_CALLOUTS_WOMEN : PHASE_CALLOUTS_MEN; }
 
   function dayHeadline(dayNum, phase, liftType, gppType) {
     var t = DAY_TYPE[dayNum];
-    if (t === "lift") return PHASES[phase].workouts[liftType].name;
+    if (t === "lift") return getPhases()[phase].workouts[liftType].name;
     if (t === "gpp") return gppType === "ruck" ? "GPP — Load Carriage (Ruck)" : "GPP — Speed & Agility";
     if (t === "cardio") return "Cardio";
     if (t === "recovery") return "Active Recovery";
@@ -560,8 +729,11 @@
   function buildSteps(dayNum, phase, liftType, gppType) {
     var t = DAY_TYPE[dayNum], steps = [];
     if (t === "lift") {
-      var w = PHASES[phase].workouts[liftType];
+      var w = getPhases()[phase].workouts[liftType];
       steps.push({kind:"warmup", title:"Warm-up", sub:"10 min", items:w.warmup});
+      if (state.profile && state.profile.equipment === "home" && w.homeAlt) {
+        steps.push({kind:"homealt", title:"No Gym? No Problem", text:w.homeAlt});
+      }
       steps.push({kind:"tendon", title:"Tendon Prep", sub:"4×20s · 60s rest", text:w.tendon});
       w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets:e.sets, rest:e.rest, isMainLift:!!e.main}); });
       steps.push({kind:"stretch", title:"Stretch", sub:"5 min", items:w.stretch});
@@ -604,6 +776,14 @@
     logEntries: null,        // null = not loaded yet; kept live via onSnapshot — Home's "Recent" is derived from this
     measurements: null,      // null = not loaded yet — body-measurement log, independent of training log
 
+    // Set once, at onboarding (render() shows nothing else until this is
+    // set): { sex: "male"|"female", age, weightKg, level, equipment }.
+    // sex picks the track (getPhases()/getCallouts()); level and equipment
+    // only change coaching text/tips, never the underlying data shape.
+    profile: null,
+    onboardDraft: { sex: null, level: null, equipment: null },
+    onboardError: null,
+
     logError: null,
     measureError: null,
     session: null,           // {dayNum, phase, liftType, gppType, type, steps, idx, setDots:{}, weights:{}}
@@ -614,6 +794,7 @@
   var LS_SETTINGS_KEY = "ironclad_settings_v1";
   var LS_LOG_KEY = "ironclad_log_v1";
   var LS_MEASUREMENTS_KEY = "ironclad_measurements_v1";
+  var LS_PROFILE_KEY = "ironclad_profile_v1";
   var restInterval = null, audioCtx = null;
 
   /* ============================================================
@@ -715,6 +896,7 @@
     }
     state.logEntries = lsGet(LS_LOG_KEY, []);
     state.measurements = lsGet(LS_MEASUREMENTS_KEY, []);
+    state.profile = lsGet(LS_PROFILE_KEY, null);
     state.loading = false;
     render();
     // First-ever load with no stored cycleStartDate — start the deload
@@ -736,6 +918,48 @@
     Object.assign(state.settings, patch);
     render();
     persistSettings();
+  }
+
+  var LEVEL_LABELS = { beginner:"New to training", returning:"Returning after a break", experienced:"Experienced" };
+  var EQUIPMENT_LABELS = { gym:"Full gym access", home:"Home / limited equipment" };
+  // Shown on Home during Phase 1 only — the level question changes how
+  // cautiously you should approach Week 1, not the underlying program.
+  var LEVEL_TIPS = {
+    beginner: "New to training: take extra ramp-up sets and prioritize clean form over the number on the bar — the weekly progression will still get you there.",
+    returning: "Returning after a break: treat your first 2–3 weeks as conservative on purpose, even if a weight feels easy — let your joints and tendons catch up before your muscles push ahead of them.",
+    experienced: "Experienced: still start Week 1 honest and light. Phase 1 is for re-grooving the lifts, not testing your old max."
+  };
+
+  // Onboarding: set once, editable later from Settings. Changing sex later
+  // switches which track getPhases()/getCallouts() resolve to — the
+  // training log and body-measurement history are untouched either way,
+  // since both are stored completely separately from the profile.
+  function saveProfile(profile) {
+    state.profile = profile;
+    state.onboardDraft = { sex: null, level: null, equipment: null };
+    state.onboardError = null;
+    lsSet(LS_PROFILE_KEY, profile);
+    render();
+  }
+  function resetProfile() {
+    state.profile = null;
+    state.onboardDraft = { sex: null, level: null, equipment: null };
+    state.onboardError = null;
+    try { localStorage.removeItem(LS_PROFILE_KEY); } catch (e) {}
+    render();
+  }
+
+  function submitOnboarding() {
+    var d = state.onboardDraft;
+    var ageEl = document.getElementById("onb-age"), weightEl = document.getElementById("onb-weight");
+    var age = ageEl && ageEl.value !== "" ? parseInt(ageEl.value, 10) : NaN;
+    var weightKg = weightEl && weightEl.value !== "" ? parseFloat(weightEl.value) : NaN;
+    if (!d.sex || !d.level || !d.equipment || isNaN(age) || age < 10 || age > 100 || isNaN(weightKg) || weightKg <= 0) {
+      state.onboardError = "Pick an option for each question above, and enter a valid age and weight, before starting.";
+      render();
+      return;
+    }
+    saveProfile({ sex: d.sex, age: age, weightKg: weightKg, level: d.level, equipment: d.equipment });
   }
 
   function saveLogEntry(entry) {
@@ -1069,6 +1293,14 @@
     render();
   }
 
+  function openEditProfileConfirm() {
+    state.confirm = { action:"edit-profile",
+      title:"Edit your details?",
+      body:"Takes you back through the intake (sex, age, weight, level, equipment). Your training log and body measurements are not touched — but changing sex switches which plan (men's/women's) you see.",
+      confirmLabel:"Edit Details" };
+    render();
+  }
+
   function runConfirm() {
     var c = state.confirm;
     if (!c) return;
@@ -1079,6 +1311,7 @@
     else if (c.action === "delete-entry") deleteLogEntry(c.payload.id);
     else if (c.action === "clear-log") clearLog();
     else if (c.action === "delete-measurement") deleteMeasurement(c.payload.id);
+    else if (c.action === "edit-profile") resetProfile();
   }
 
   function resetPlan() {
@@ -1182,6 +1415,54 @@
   /* ============================================================
      SCREENS
   ============================================================ */
+  // First-launch intake. render() shows this and nothing else — no tabs,
+  // no bottom nav — until a profile is saved, so every question is answered
+  // once up front rather than drip-fed later.
+  function renderOnboarding() {
+    var d = state.onboardDraft;
+    var html = '<div class="body-scroll"><div class="onb-wrap">';
+    html += '<div class="onb-head">Welcome to Ironclad</div>';
+    html += '<p class="onb-sub">Answer a few questions and we’ll set you up with the right plan — the men’s or women’s track, scaled to your level and whatever equipment you have.</p>';
+
+    html += '<div class="onb-label">Sex</div>';
+    html += '<div class="choice-row">';
+    [["male","Male"],["female","Female"]].forEach(function(o){
+      html += '<div class="choice-item' + (d.sex===o[0]?' active':'') + '" data-action="onb-set-sex" data-val="' + o[0] + '"><div class="ci-title">' + o[1] + '</div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="onb-label">Age &amp; Weight</div>';
+    html += '<div class="field-grid">';
+    html += '<div class="field-row"><label>Age</label><input class="field-input" type="number" inputmode="numeric" id="onb-age" placeholder="e.g. 32"></div>';
+    html += '<div class="field-row"><label>Weight (kg)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="onb-weight" placeholder="e.g. 70"></div>';
+    html += '</div>';
+
+    html += '<div class="onb-label">Training Level</div>';
+    html += '<div class="choice-list">';
+    [["beginner","New to training","Little or no regular strength-training experience"],
+     ["returning","Returning after a break","Have trained before, but not consistently in a while"],
+     ["experienced","Experienced","Train regularly and know your way around a barbell"]].forEach(function(o){
+      html += '<div class="choice-item' + (d.level===o[0]?' active':'') + '" data-action="onb-set-level" data-val="' + o[0] + '">' +
+        '<div class="ci-title">' + o[1] + '</div><div class="ci-sub">' + o[2] + '</div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="onb-label">Equipment Access</div>';
+    html += '<div class="choice-list">';
+    [["gym","Full gym access","Barbells, a rack, dumbbells, kettlebells"],
+     ["home","Home / limited equipment","We’ll show you a substitute for anything you don’t have"]].forEach(function(o){
+      html += '<div class="choice-item' + (d.equipment===o[0]?' active':'') + '" data-action="onb-set-equipment" data-val="' + o[0] + '">' +
+        '<div class="ci-title">' + o[1] + '</div><div class="ci-sub">' + o[2] + '</div></div>';
+    });
+    html += '</div>';
+
+    if (state.onboardError) html += '<p class="onb-error">' + esc(state.onboardError) + '</p>';
+    html += '<button class="btn btn-primary btn-block" data-action="onb-submit" style="margin-top:22px">Start My Plan</button>';
+
+    html += '</div></div>';
+    return html;
+  }
+
   function renderTopbar() {
     if (state.screen === "session" && state.session) {
       var sess = state.session, pct = Math.round(((sess.idx+1)/sess.steps.length)*100);
@@ -1236,10 +1517,14 @@
       html += '<div class="banner" style="background:var(--warn-bg);color:var(--rust)">' + ICONS.warn + '<span><strong>Deload window open</strong> — Week ' + weeksIn + ' of your 4–6 week cycle. Take a lighter week (~60%) whenever it suits you this week or next.</span></div>';
     }
 
+    if (s.phase === 1 && state.profile && LEVEL_TIPS[state.profile.level]) {
+      html += '<div class="banner">' + ICONS.check + '<span>' + esc(LEVEL_TIPS[state.profile.level]) + '</span></div>';
+    }
+
     html += '<div class="next-card">' +
       '<div class="nc-eyebrow">NEXT UP · DAY ' + s.nextDayNumber + '</div>' +
       '<div class="nc-title">' + esc(nextLabel) + '</div>' +
-      '<div class="nc-meta">' + esc(PHASES[s.phase].name) + '</div>' +
+      '<div class="nc-meta">' + esc(getPhases()[s.phase].name) + '</div>' +
       '<button class="btn btn-primary btn-block" data-action="start-next">Start Day ' + s.nextDayNumber + '</button>' +
     '</div>';
 
@@ -1259,7 +1544,7 @@
       html += '<div class="phase-btn' + (s.phase===p?' active':'') + '" data-action="set-phase" data-phase="' + p + '">Phase ' + p + '</div>';
     });
     html += '</div>';
-    html += '<p class="ph-note">' + esc(PHASES[s.phase].timeline) + ' — ' + esc(PHASES[s.phase].note) + '</p>';
+    html += '<p class="ph-note">' + esc(getPhases()[s.phase].timeline) + ' — ' + esc(getPhases()[s.phase].note) + '</p>';
 
     html += '<div class="section-label">Daily habit</div>';
     html += '<div class="banner" style="margin-bottom:0">Grip: hang from a bar, 30–60s total, any time today — broken into as many short hangs as you like.</div>';
@@ -1315,9 +1600,19 @@
       html += '<div class="banner" style="background:var(--good-bg);color:var(--good)">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
     }
 
+    html += '<div class="section-label">Your Details</div>';
+    html += '<div class="card" style="padding:4px 16px">';
+    html += '<div class="settings-row"><span class="sr-k">Track</span><span class="sr-v">' + (state.profile && state.profile.sex === "female" ? "Women’s" : "Men’s") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Age</span><span class="sr-v">' + esc(state.profile ? state.profile.age : "—") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Weight</span><span class="sr-v">' + (state.profile && state.profile.weightKg != null ? esc(state.profile.weightKg) + ' kg' : "—") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Level</span><span class="sr-v">' + esc(LEVEL_LABELS[state.profile && state.profile.level] || "—") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Equipment</span><span class="sr-v">' + esc(EQUIPMENT_LABELS[state.profile && state.profile.equipment] || "—") + '</span></div>';
+    html += '</div>';
+    html += '<button class="btn btn-ghost btn-block" data-action="open-edit-profile-confirm" style="margin-bottom:14px">' + ICONS.profile + '<span>Edit My Details</span></button>';
+
     html += '<div class="section-label">Your Progress</div>';
     html += '<div class="card" style="padding:4px 16px">';
-    html += '<div class="settings-row"><span class="sr-k">Phase</span><span class="sr-v">' + s.phase + ' — ' + esc(PHASES[s.phase].name.split('—')[1] ? PHASES[s.phase].name.split('—')[1].trim() : PHASES[s.phase].name) + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Phase</span><span class="sr-v">' + s.phase + ' — ' + esc(getPhases()[s.phase].name.split('—')[1] ? getPhases()[s.phase].name.split('—')[1].trim() : getPhases()[s.phase].name) + '</span></div>';
     html += '<div class="settings-row"><span class="sr-k">Next day</span><span class="sr-v">Day ' + s.nextDayNumber + '</span></div>';
     html += '</div>';
 
@@ -1386,9 +1681,9 @@
     return html + renderBottomNav();
   }
 
-  // The Manual screen reads straight off PHASES / RUCK_DOSING / BALANCE_ITEMS /
+  // The Manual screen reads straight off getPhases() / RUCK_DOSING / BALANCE_ITEMS /
   // RECOVERY_ITEMS — the same data the tracker itself runs on — plus the handful
-  // of reference-only lines in GOLDEN_RULES / PHASE_CALLOUTS above. No second
+  // of reference-only lines in GOLDEN_RULES / getCallouts() above. No second
   // copy of the plan to drift out of sync, and it opens instantly in-app instead
   // of jumping to the separate field-manual page.
   function renderManual() {
@@ -1431,7 +1726,7 @@
       BALANCE_ITEMS.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul></div>';
 
     [1,2,3].forEach(function(p){
-      var ph = PHASES[p];
+      var ph = getPhases()[p];
       html += '<div class="section-label" id="m-p' + p + '">' + esc(ph.name) + '</div>';
       html += '<p class="note-line">' + esc(ph.timeline) + ' — ' + esc(ph.note) + '</p>';
       ["A","B"].forEach(function(w){
@@ -1439,6 +1734,10 @@
         html += '<div class="card manual-workout">';
         html += '<div class="mw-head">' + esc(wk.name) + '</div>';
         html += '<div class="mw-body">';
+        if (state.profile && state.profile.equipment === "home" && wk.homeAlt) {
+          html += '<p class="mn-label">No Gym? No Problem</p>';
+          html += '<p class="mn-cardbody" style="margin-bottom:12px">' + esc(wk.homeAlt) + '</p>';
+        }
         html += '<p class="mn-label">Warm-up</p>';
         html += '<ul class="item-list" style="margin:0 0 12px">' + wk.warmup.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
         html += '<p class="mn-label amber">Tendon Prep</p>';
@@ -1450,7 +1749,7 @@
         html += '<ul class="item-list" style="margin:0">' + wk.stretch.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
         html += '</div></div>';
       });
-      var co = PHASE_CALLOUTS[p];
+      var co = getCallouts()[p];
       if (co) {
         html += '<div class="banner" style="flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:20px">' +
           '<strong class="mn-calloutlabel">' + esc(co.label) + '</strong>';
@@ -1526,6 +1825,11 @@
       html += '<div class="step-kind ' + step.kind + '">' + label + ' · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + label + '</h2>';
       html += '<ul class="item-list">' + step.items.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
+    } else if (step.kind === "homealt") {
+      html += '<div class="step-kind">Equipment</div>';
+      html += '<h2 class="step-title">' + esc(step.title) + '</h2>';
+      html += '<div class="instr-card"><p>' + esc(step.text) + '</p></div>';
+      html += '<p class="note-line">Swap the lifts below for whatever you have on hand, same sets and reps — then tap through to the real exercise names for your rest times.</p>';
     } else if (step.kind === "tendon") {
       html += '<div class="step-kind tendon">Tendon Prep · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">Tendon Prep</h2>';
@@ -1602,6 +1906,10 @@
   ============================================================ */
   function render() {
     var app = document.getElementById("app");
+    if (!state.profile) {
+      app.innerHTML = '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Operation Ironclad</div><div class="tb-sub">TRACKER</div></div></div>' + renderOnboarding();
+      return;
+    }
     var body;
     if (state.screen === "session") body = renderSession();
     else if (state.screen === "summary") body = renderSummary();
@@ -1648,9 +1956,14 @@
     else if (action === "open-reset-confirm") { openResetConfirm(); }
     else if (action === "open-clearlog-confirm") { openClearLogConfirm(); }
     else if (action === "open-delete-confirm") { openDeleteConfirm(el.getAttribute("data-id"), el.getAttribute("data-headline")); }
+    else if (action === "open-edit-profile-confirm") { openEditProfileConfirm(); }
     else if (action === "save-finish") { finishDay(); }
     else if (action === "toggle-dot") { toggleSetDot(parseInt(el.getAttribute("data-step"),10), parseInt(el.getAttribute("data-i"),10)); }
     else if (action === "skip-rest") { dismissRestTimer(); }
+    else if (action === "onb-set-sex") { state.onboardDraft.sex = el.getAttribute("data-val"); render(); }
+    else if (action === "onb-set-level") { state.onboardDraft.level = el.getAttribute("data-val"); render(); }
+    else if (action === "onb-set-equipment") { state.onboardDraft.equipment = el.getAttribute("data-val"); render(); }
+    else if (action === "onb-submit") { submitOnboarding(); }
   });
 
   document.getElementById("app").addEventListener("input", function(e){
