@@ -400,7 +400,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v6 · 2026-10-03";
+  var APP_VERSION = "v7 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -1682,11 +1682,25 @@
     setTimeout(function(){ el.hidden = true; el.classList.remove("fade-out"); }, 2700);
   }
 
+  // Guards against an update-reload loop (e.g. if the host's CDN briefly
+  // serves inconsistent copies of service-worker.js right after a deploy,
+  // which can otherwise look like a "new" version on every single load).
+  var RELOAD_COOLDOWN_MS = 30000;
+  function ironcladRecentlyReloaded() {
+    try {
+      var t = sessionStorage.getItem("ironclad_last_reload_at");
+      return !!t && (Date.now() - parseInt(t, 10)) < RELOAD_COOLDOWN_MS;
+    } catch (e) { return false; }
+  }
+
   var ironcladReloaded = false;
   function ironcladReloadNow() {
     if (ironcladReloaded) return;
     ironcladReloaded = true;
-    try { sessionStorage.setItem("ironclad_just_updated", "1"); } catch (e) {}
+    try {
+      sessionStorage.setItem("ironclad_just_updated", "1");
+      sessionStorage.setItem("ironclad_last_reload_at", String(Date.now()));
+    } catch (e) {}
     window.location.reload();
   }
 
@@ -1711,6 +1725,17 @@
     }
   } catch (e) {}
 
+  // Captured BEFORE registering, not re-read later: service-worker.js calls
+  // clients.claim() in its own activate handler, which can hand this very
+  // page a controller within a second of a plain first-ever install — so
+  // checking navigator.serviceWorker.controller *at update time* can't
+  // reliably tell "first install" from "a real update", and was wrongly
+  // treating every fresh app open as an update (reloading + showing the
+  // toast every single time, whether anything had changed or not). Whether
+  // a controller already existed the moment this page started loading is
+  // the only thing that actually distinguishes the two.
+  var hadControllerAtLoad = !!navigator.serviceWorker.controller;
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function(){
       navigator.serviceWorker.register("service-worker.js").then(function(reg){
@@ -1718,20 +1743,13 @@
           var fresh = reg.installing;
           if (!fresh) return;
           fresh.addEventListener("statechange", function(){
-            // "activated" + an existing controller means this is an UPDATE
-            // (not the very first install), so it's safe — and now due — to
-            // reload onto it.
-            if (fresh.state === "activated" && navigator.serviceWorker.controller) {
+            // Only reload for a genuine update (this page was already being
+            // controlled by a previous worker when it loaded). The cooldown
+            // guard is a second line of defense against any reload-loop.
+            if (fresh.state === "activated" && hadControllerAtLoad && !ironcladRecentlyReloaded()) {
               ironcladReloadWhenSafe();
             }
           });
-        });
-
-        // Standalone home-screen apps don't always get a fresh update check
-        // for free the way an ordinary browser tab does, so nudge one every
-        // time the app comes back to the foreground.
-        document.addEventListener("visibilitychange", function(){
-          if (document.visibilityState === "visible") reg.update().catch(function(){});
         });
       }).catch(function(){});
     });
