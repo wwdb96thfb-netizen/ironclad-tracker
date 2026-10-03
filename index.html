@@ -117,6 +117,24 @@
   }
   .bottombar-inner { max-width: 520px; width: 100%; display: flex; gap: 10px; }
 
+  /* ---- service worker update toast ---- */
+  .sw-update-banner {
+    position: fixed; left: 12px; right: 12px; z-index: 50;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    background: var(--olive-deep); color: var(--on-accent);
+    border-radius: 10px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 13.5px;
+  }
+  .sw-update-banner span { flex: 1; }
+  .sw-update-banner button {
+    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.01em;
+    background: var(--rust); color: #fff; border: none; border-radius: 7px;
+    padding: 8px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+  }
+  .sw-update-banner button:active { background: var(--rust-soft); }
+
   /* ---- buttons ---- */
   .btn {
     font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.01em;
@@ -375,6 +393,11 @@
 <body>
 
 <div id="app"></div>
+
+<div id="sw-update-banner" class="sw-update-banner" hidden>
+  <span>A new version of Ironclad is ready.</span>
+  <button type="button" onclick="applyIroncladUpdate()">Refresh</button>
+</div>
 
 <script>
 (function(){
@@ -1642,9 +1665,54 @@
   // it keeps working with no signal. Registration failure (unsupported
   // browser, file:// origin, etc.) is silently ignored — the app still runs,
   // just without the offline cache.
+  //
+  // UPDATES: a future deploy with a bumped CACHE_NAME installs quietly in
+  // the background as a "waiting" worker. We show a small banner as soon as
+  // that happens; tapping it tells the waiting worker to take over, and the
+  // controllerchange listener below reloads the page onto the new version.
+  var swReg = null;
+
+  function showIroncladUpdateBanner() {
+    var el = document.getElementById("sw-update-banner");
+    if (el) el.hidden = false;
+  }
+
+  function applyIroncladUpdate() {
+    if (swReg && swReg.waiting) {
+      swReg.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
+    var el = document.getElementById("sw-update-banner");
+    if (el) el.hidden = true;
+  }
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function(){
-      navigator.serviceWorker.register("service-worker.js").catch(function(){});
+      navigator.serviceWorker.register("service-worker.js").then(function(reg){
+        swReg = reg;
+
+        // A waiting worker already sitting there (e.g. update finished
+        // installing on a previous visit but was never applied).
+        if (reg.waiting) showIroncladUpdateBanner();
+
+        reg.addEventListener("updatefound", function(){
+          var fresh = reg.installing;
+          if (!fresh) return;
+          fresh.addEventListener("statechange", function(){
+            // "installed" + an existing controller means this is an UPDATE
+            // (not the very first install), so there's something to offer.
+            if (fresh.state === "installed" && navigator.serviceWorker.controller) {
+              showIroncladUpdateBanner();
+            }
+          });
+        });
+      }).catch(function(){});
+    });
+
+    var reloadedForUpdate = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function(){
+      if (reloadedForUpdate) return;
+      reloadedForUpdate = true;
+      window.location.reload();
     });
   }
 </script>

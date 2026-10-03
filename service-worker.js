@@ -3,7 +3,14 @@
 // is cached, so future loads work with zero signal. Training data itself
 // never touches this cache — that lives in localStorage, read directly by
 // the page.
-const CACHE_NAME = "ironclad-v1";
+//
+// VERSIONING: bump CACHE_NAME on every deploy that changes index.html,
+// manifest.json or the icons. That's the only signal the browser has that
+// anything changed — without it, already-installed copies keep serving the
+// old cached files forever. A new version installs in the background and
+// sits "waiting" (see below) until the page asks it to take over, so a
+// visit in progress never gets swapped out from under the user.
+const CACHE_NAME = "ironclad-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -16,8 +23,17 @@ self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function (cache) { return cache.addAll(APP_SHELL); })
-      .then(function () { return self.skipWaiting(); })
+    // No self.skipWaiting() here on purpose: a freshly installed worker
+    // stays in the "waiting" state so the page can show an "update
+    // available" prompt and only switch over once the user taps it.
   );
+});
+
+// The page posts this once the user confirms the update prompt.
+self.addEventListener("message", function (event) {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", function (event) {
