@@ -322,6 +322,14 @@
   .sk-svg .sk-label { fill: var(--ink-faint); font-family: 'JetBrains Mono', monospace; font-size: 7px; text-transform: uppercase; letter-spacing: 0.04em; text-anchor: middle; }
   .manual-sketch { margin: 6px 0 2px; }
 
+  .mm-svg { width: 100%; max-width: 260px; display: block; margin: 0 auto; }
+  .mm-svg .mm-torso { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
+  .mm-svg .mm-limb { fill: none; stroke: var(--surface-2); stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
+  .mm-svg .mm-limb.mm-leg { stroke-width: 14; }
+  .mm-svg .mm-head { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
+  .mm-svg .mm-region { fill: none; stroke: var(--ink-faint); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0.6; }
+  .mm-svg .mm-region.active { fill: var(--rust); stroke: var(--rust); opacity: 0.92; stroke-dasharray: none; }
+
   .tendon-box { background: var(--surface); border: 1px dashed var(--amber); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
   .tendon-box p { margin: 0; font-size: 15px; line-height: 1.4; }
 
@@ -441,7 +449,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v17 · 2026-10-03";
+  var APP_VERSION = "v18 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -1093,6 +1101,126 @@
     svg += '<g transform="translate(40,0)">' + poseSVG(sk.start) + '</g>';
     svg += '<g transform="translate(120,0)">' + poseSVG(sk.finish) + '</g>';
     svg += '<text class="sk-label" x="40" y="' + (h-3) + '">Start</text><text class="sk-label" x="120" y="' + (h-3) + '">Finish</text>';
+    svg += '</svg>';
+    return svg;
+  }
+
+  // ---- Muscle-engagement figures (separate male/female body shapes) ----
+  // A second, static illustration per exercise — not a movement, so one
+  // front+back body figure per sex with the engaged muscle groups shaded
+  // is enough; no Start/Finish needed. The body outline (torso polygon +
+  // limb capsules) is identical for the front and back panel — only the
+  // shaded regions differ — so it's defined once per sex and reused.
+  var BODY_SHAPE = {
+    male: {
+      head:[50,16,11], shoulderL:[22,34], shoulderR:[78,34], waistL:[35,82], waistR:[65,82],
+      hipL:[33,98], hipR:[67,98], elbowL:[10,64], elbowR:[90,64], wristL:[14,96], wristR:[86,96],
+      kneeL:[38,150], kneeR:[62,150], ankleL:[40,192], ankleR:[60,192]
+    },
+    female: {
+      head:[50,16,10.5], shoulderL:[28,34], shoulderR:[72,34], waistL:[39,80], waistR:[61,80],
+      hipL:[26,98], hipR:[74,98], elbowL:[18,62], elbowR:[82,62], wristL:[20,94], wristR:[80,94],
+      kneeL:[35,150], kneeR:[65,150], ankleL:[38,192], ankleR:[62,192]
+    }
+  };
+  // One shape (or a left/right pair) per muscle group, as [cx,cy,rx,ry].
+  // Front and back share the same body outline, so these are the only
+  // thing that differs between the two panels.
+  var MUSCLE_REGIONS = {
+    male: {
+      front: {
+        frontDelts:[[22,36,8,7],[78,36,8,7]], chest:[[50,46,22,10]], biceps:[[16,49,6,10],[84,49,6,10]],
+        forearms:[[12,80,5,11],[88,80,5,11]], abs:[[50,72,12,14]], obliques:[[36,74,6,12],[64,74,6,12]],
+        quads:[[35.5,124,9,22],[64.5,124,9,22]]
+      },
+      back: {
+        traps:[[50,38,16,8]], rearDelts:[[22,36,8,7],[78,36,8,7]], lats:[[34,58,10,16],[66,58,10,16]],
+        triceps:[[16,49,6,10],[84,49,6,10]], forearms:[[12,80,5,11],[88,80,5,11]], lowerBack:[[50,80,10,10]],
+        glutes:[[39,100,9,8],[61,100,9,8]], hamstrings:[[35.5,124,9,22],[64.5,124,9,22]], calves:[[39,171,7,16],[61,171,7,16]]
+      }
+    },
+    female: {
+      front: {
+        frontDelts:[[28,36,7,6],[72,36,7,6]], chest:[[50,45,18,9]], biceps:[[23,48,5,9],[77,48,5,9]],
+        forearms:[[19,78,4.5,10],[81,78,4.5,10]], abs:[[50,70,9,13]], obliques:[[40,72,5,11],[60,72,5,11]],
+        quads:[[30.5,124,8.5,22],[69.5,124,8.5,22]]
+      },
+      back: {
+        traps:[[50,38,13,7]], rearDelts:[[28,36,7,6],[72,36,7,6]], lats:[[37,56,8,14],[63,56,8,14]],
+        triceps:[[23,48,5,9],[77,48,5,9]], forearms:[[19,78,4.5,10],[81,78,4.5,10]], lowerBack:[[50,78,8,9]],
+        glutes:[[37,100,10,8],[63,100,10,8]], hamstrings:[[30.5,124,8.5,22],[69.5,124,8.5,22]], calves:[[36.5,171,6.5,16],[63.5,171,6.5,16]]
+      }
+    }
+  };
+  // Primary movers only, by exact exercise name — kept short and honest
+  // rather than tagging every muscle that helps stabilize the lift.
+  var EX_MUSCLES = {
+    "Barbell Back Squat": ["quads","glutes","hamstrings","lowerBack","abs"],
+    "Flat Bench Press": ["chest","frontDelts","triceps"],
+    "Assisted Pull-ups": ["lats","biceps","rearDelts","forearms"],
+    "Farmer's Walk": ["forearms","traps","abs","obliques"],
+    "Forearm Plank": ["abs","obliques","lowerBack"],
+    "Calf Raise": ["calves"],
+    "Band Pull-Apart": ["rearDelts","traps"],
+    "Conventional Deadlift": ["hamstrings","glutes","lowerBack","traps","forearms"],
+    "Standing Overhead Press": ["frontDelts","triceps","abs"],
+    "Bent-Over Barbell Row": ["lats","traps","rearDelts","biceps"],
+    "Strict Push-ups": ["chest","frontDelts","triceps","abs"],
+    "Hanging Knee Raises": ["abs","obliques","forearms"],
+    "Banded Lateral Walk": ["glutes","quads"],
+    "Pallof Press": ["abs","obliques"],
+    "Bulgarian Split Squat": ["quads","glutes","hamstrings"],
+    "Weighted Dips": ["chest","triceps","frontDelts"],
+    "Strict Pull-ups": ["lats","biceps","forearms","rearDelts"],
+    "Sandbag Bear-Hug Carry": ["abs","obliques","quads","forearms"],
+    "Hollow Body Hold": ["abs","obliques"],
+    "Romanian Deadlift": ["hamstrings","glutes","lowerBack"],
+    "Single-Arm DB Row": ["lats","biceps","traps","obliques"],
+    "Push Press": ["frontDelts","triceps","quads","glutes"],
+    "Kettlebell Swings": ["glutes","hamstrings","lowerBack","abs"],
+    "L-Sit Progressions": ["abs","triceps","quads"],
+    "Pistol Squats": ["quads","glutes","hamstrings","abs"],
+    "Muscle-Up Progressions": ["lats","biceps","triceps","chest","forearms"],
+    "Handstand Push-ups": ["frontDelts","triceps","traps"],
+    "Heavy Sled Push/Pull": ["quads","glutes","chest","lats","forearms"],
+    "Dragon Flags": ["abs","obliques","lats"],
+    "Heavy Sandbag Cleans": ["hamstrings","glutes","traps","forearms","quads"],
+    "Front Squat": ["quads","glutes","abs"],
+    "Weighted Pull-ups": ["lats","biceps","forearms","rearDelts"],
+    "Suitcase Carries": ["obliques","abs","forearms","traps"],
+    "Front Lever Progressions": ["lats","abs","biceps","rearDelts"],
+    "Face Pull (band or cable)": ["rearDelts","traps"],
+    "Lateral Bound, Stick the Landing": ["quads","glutes","hamstrings","calves"]
+  };
+  function bodyOutlineSVG(sex) {
+    var b = BODY_SHAPE[sex];
+    var s = '<polygon class="mm-torso" points="' + b.shoulderL.join(',') + ' ' + b.shoulderR.join(',') + ' ' + b.waistR.join(',') + ' ' + b.hipR.join(',') + ' ' + b.hipL.join(',') + ' ' + b.waistL.join(',') + '"/>';
+    s += '<path class="mm-limb" d="M' + b.shoulderL.join(' ') + ' L' + b.elbowL.join(' ') + ' L' + b.wristL.join(' ') + '"/>';
+    s += '<path class="mm-limb" d="M' + b.shoulderR.join(' ') + ' L' + b.elbowR.join(' ') + ' L' + b.wristR.join(' ') + '"/>';
+    s += '<path class="mm-limb mm-leg" d="M' + b.hipL.join(' ') + ' L' + b.kneeL.join(' ') + ' L' + b.ankleL.join(' ') + '"/>';
+    s += '<path class="mm-limb mm-leg" d="M' + b.hipR.join(' ') + ' L' + b.kneeR.join(' ') + ' L' + b.ankleR.join(' ') + '"/>';
+    s += '<circle class="mm-head" cx="' + b.head[0] + '" cy="' + b.head[1] + '" r="' + b.head[2] + '"/>';
+    return s;
+  }
+  function renderMuscleMap(sex, tags) {
+    sex = sex === "female" ? "female" : "male";
+    var tagSet = {};
+    (tags || []).forEach(function(t){ tagSet[t] = true; });
+    function panel(regions) {
+      var s = bodyOutlineSVG(sex);
+      Object.keys(regions).forEach(function(tag){
+        var active = !!tagSet[tag];
+        regions[tag].forEach(function(r){
+          s += '<ellipse class="mm-region' + (active?' active':'') + '" cx="' + r[0] + '" cy="' + r[1] + '" rx="' + r[2] + '" ry="' + r[3] + '"/>';
+        });
+      });
+      return s;
+    }
+    var svg = '<svg class="mm-svg" viewBox="0 0 220 212" aria-hidden="true">';
+    svg += '<g transform="translate(0,4)">' + panel(MUSCLE_REGIONS[sex].front) + '</g>';
+    svg += '<g transform="translate(120,4)">' + panel(MUSCLE_REGIONS[sex].back) + '</g>';
+    svg += '<line class="sk-div" x1="110" y1="0" x2="110" y2="200"/>';
+    svg += '<text class="sk-label" x="50" y="209">Front</text><text class="sk-label" x="170" y="209">Back</text>';
     svg += '</svg>';
     return svg;
   }
@@ -1977,9 +2105,12 @@
         wk.exercises.forEach(function(e){ html += '<tr><td>' + esc(e.name) + '</td><td>' + esc(e.sets) + '</td><td>' + esc(e.rest) + '</td></tr>'; });
         html += '</table>';
         html += '<p class="mn-label">How To Do Each Move</p>';
+        var manualSex = state.profile && state.profile.sex === "female" ? "female" : "male";
         html += '<div style="margin-bottom:12px">' + wk.exercises.map(function(e){
           return '<div class="card" style="margin-bottom:10px;padding:12px 14px"><p class="mn-cardhead" style="margin-bottom:4px">' + esc(e.name) + '</p><p class="mn-cardbody">' + esc(EX_HOWTO[e.name] || '') + '</p>' +
-            (EX_SKETCH[e.name] ? '<div class="sketch-wrap manual-sketch">' + renderExerciseSketch(e.name) + '</div>' : '') + '</div>';
+            (EX_SKETCH[e.name] ? '<div class="sketch-wrap manual-sketch">' + renderExerciseSketch(e.name) + '</div>' : '') +
+            (EX_MUSCLES[e.name] ? '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div>' + renderMuscleMap(manualSex, EX_MUSCLES[e.name]) + '</div>' : '') +
+            '</div>';
         }).join('') + '</div>';
         html += '<p class="mn-label olive">Stretch</p>';
         html += '<ul class="item-list" style="margin:0">' + wk.stretch.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
@@ -2018,8 +2149,11 @@
       html += '<div class="step-kind">Exercise</div>';
       html += '<div class="ex-header"><div class="ex-icon">' + EX_ICONS[exerciseIconKey(step.title)] + '</div><h2 class="step-title">' + esc(step.title) + '</h2></div>';
       if (EX_HOWTO[step.title]) {
+        var exSex = state.profile && state.profile.sex === "female" ? "female" : "male";
         html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(EX_HOWTO[step.title]) + '</p>' +
-          (EX_SKETCH[step.title] ? '<div class="sketch-wrap">' + renderExerciseSketch(step.title) + '</div>' : '') + '</div>';
+          (EX_SKETCH[step.title] ? '<div class="sketch-wrap">' + renderExerciseSketch(step.title) + '</div>' : '') +
+          (EX_MUSCLES[step.title] ? '<div class="sketch-wrap"><div class="mn-label">Muscles Worked</div>' + renderMuscleMap(exSex, EX_MUSCLES[step.title]) + '</div>' : '') +
+          '</div>';
       }
       html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
       if (step.isMainLift) {
