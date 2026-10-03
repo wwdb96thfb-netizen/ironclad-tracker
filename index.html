@@ -403,6 +403,11 @@
 (function(){
   "use strict";
 
+  // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
+  // shown at the bottom of Settings so you can tell at a glance whether a
+  // given phone has actually picked up the latest push.
+  var APP_VERSION = "v4 · 2026-10-03";
+
   /* ============================================================
      DATA
   ============================================================ */
@@ -1329,6 +1334,8 @@
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
     html += '<p class="ph-note">Takes you back to Day 1, Phase 1, Workout A / Ruck, and restarts the deload clock. Your training log and body measurements are not touched.</p>';
+
+    html += '<p class="ph-note" style="text-align:center;margin-top:24px;font-family:\'JetBrains Mono\',monospace;color:var(--ink-faint)">Ironclad ' + esc(APP_VERSION) + '</p>';
 
     html += '</div>';
     return html + renderBottomNav();
