@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ironclad Tracker</title>
 <meta name="description" content="Operation Ironclad — 12-month functional strength &amp; GPP tracker.">
 <meta name="theme-color" content="#20231A">
@@ -60,11 +60,14 @@
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
+  html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
     font-family: 'IBM Plex Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     display: flex; flex-direction: column;
+    touch-action: manipulation;
+    overscroll-behavior: none;
   }
   button { font-family: inherit; }
 
@@ -305,11 +308,14 @@
   .instr-card p + p { margin-top: 10px; color: var(--ink-soft); font-size: 13.5px; }
 
   .sketch-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
-  .sk-svg { width: 100%; max-width: 280px; display: block; margin: 0 auto; }
-  .sk-svg path, .sk-svg .sk-leg { stroke: var(--ink); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .sk-svg circle.sk-head { fill: var(--ink); stroke: none; }
-  .sk-svg .sk-back { stroke: var(--ink-faint); stroke-width: 2.4; }
-  .sk-svg .sk-prop { stroke: var(--rust); stroke-width: 2; fill: none; }
+  .sk-svg { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
+  .sk-svg path, .sk-svg .sk-leg { stroke: var(--ink); stroke-width: 3.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .sk-svg circle.sk-head { fill: var(--ink); stroke: var(--surface); stroke-width: 1.2; }
+  .sk-svg circle.sk-joint { fill: var(--ink); stroke: var(--surface); stroke-width: 0.8; }
+  .sk-svg circle.sk-end { fill: var(--ink); stroke: var(--surface); stroke-width: 0.8; }
+  .sk-svg .sk-back { stroke: var(--ink-faint); stroke-width: 2.6; }
+  .sk-svg circle.sk-joint-back, .sk-svg circle.sk-end-back { fill: var(--ink-faint); stroke: var(--surface); stroke-width: 0.8; }
+  .sk-svg .sk-prop { stroke: var(--rust); stroke-width: 2.2; fill: none; }
   .sk-svg .sk-prop-fill { fill: var(--rust); stroke: none; }
   .sk-svg .sk-ground { stroke: var(--line-strong); stroke-width: 1.5; }
   .sk-svg .sk-div { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
@@ -435,7 +441,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v16 · 2026-10-03";
+  var APP_VERSION = "v17 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -844,7 +850,7 @@
     // sex picks the track (getPhases()/getCallouts()); level and equipment
     // only change coaching text/tips, never the underlying data shape.
     profile: null,
-    onboardDraft: { sex: null, level: null, equipment: null },
+    onboardDraft: { sex: null, level: null, equipment: null, age: "", weight: "" },
     onboardError: null,
 
     logError: null,
@@ -960,14 +966,29 @@
   }
   function pBandPts(a, b) { return pBand(a[0], a[1], b[0], b[1]); }
 
+  // Small filled circles at every pivot (shoulder/elbow/hip/knee) and
+  // slightly larger ones at the working ends (hands/feet) turn plain
+  // stick lines into a proper jointed pictogram — the convention used by
+  // equipment manuals and exercise charts, and much easier to read at a
+  // glance than bare lines.
+  function jointDot(pt, cls) { return '<circle class="' + (cls||'sk-joint') + '" cx="' + pt[0] + '" cy="' + pt[1] + '" r="2.1"/>'; }
+  function endDot(pt, cls) { return '<circle class="' + (cls||'sk-end') + '" cx="' + pt[0] + '" cy="' + pt[1] + '" r="2.8"/>'; }
   function figureSideSVG(j) {
     var s = '';
-    if (j.kn2 && j.ft2) s += '<path class="sk-leg sk-back" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn2[0]+' '+j.kn2[1]+' L'+j.ft2[0]+' '+j.ft2[1]+'"/>';
+    if (j.kn2 && j.ft2) {
+      s += '<path class="sk-leg sk-back" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn2[0]+' '+j.kn2[1]+' L'+j.ft2[0]+' '+j.ft2[1]+'"/>';
+      s += jointDot(j.kn2,'sk-joint-back') + endDot(j.ft2,'sk-end-back');
+    }
     s += '<path class="sk-leg" d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.kn[0]+' '+j.kn[1]+' L'+j.ft[0]+' '+j.ft[1]+'"/>';
     s += '<path d="M'+j.hi[0]+' '+j.hi[1]+' L'+j.sh[0]+' '+j.sh[1]+'"/>';
-    if (j.el2 && j.ha2) s += '<path class="sk-back" d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el2[0]+' '+j.el2[1]+' L'+j.ha2[0]+' '+j.ha2[1]+'"/>';
+    if (j.el2 && j.ha2) {
+      s += '<path class="sk-back" d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el2[0]+' '+j.el2[1]+' L'+j.ha2[0]+' '+j.ha2[1]+'"/>';
+      s += jointDot(j.el2,'sk-joint-back') + endDot(j.ha2,'sk-end-back');
+    }
     s += '<path d="M'+j.sh[0]+' '+j.sh[1]+' L'+j.el[0]+' '+j.el[1]+' L'+j.ha[0]+' '+j.ha[1]+'"/>';
-    s += '<circle class="sk-head" cx="'+j.h[0]+'" cy="'+j.h[1]+'" r="5"/>';
+    s += jointDot(j.hi) + jointDot(j.kn) + jointDot(j.sh) + jointDot(j.el);
+    s += endDot(j.ft) + endDot(j.ha);
+    s += '<circle class="sk-head" cx="'+j.h[0]+'" cy="'+j.h[1]+'" r="5.5"/>';
     return s;
   }
   function figureFrontSVG(f) {
@@ -977,7 +998,9 @@
     s += '<path d="M'+f.hipL[0]+' '+f.hipL[1]+' L'+f.shL[0]+' '+f.shL[1]+' M'+f.hipR[0]+' '+f.hipR[1]+' L'+f.shR[0]+' '+f.shR[1]+' M'+f.shL[0]+' '+f.shL[1]+' L'+f.shR[0]+' '+f.shR[1]+'"/>';
     s += '<path d="M'+f.shL[0]+' '+f.shL[1]+' L'+f.elL[0]+' '+f.elL[1]+' L'+f.haL[0]+' '+f.haL[1]+'"/>';
     s += '<path d="M'+f.shR[0]+' '+f.shR[1]+' L'+f.elR[0]+' '+f.elR[1]+' L'+f.haR[0]+' '+f.haR[1]+'"/>';
-    s += '<circle class="sk-head" cx="'+f.h[0]+'" cy="'+f.h[1]+'" r="5"/>';
+    s += jointDot(f.hipL) + jointDot(f.hipR) + jointDot(f.shL) + jointDot(f.shR) + jointDot(f.knL) + jointDot(f.knR) + jointDot(f.elL) + jointDot(f.elR);
+    s += endDot(f.ftL) + endDot(f.ftR) + endDot(f.haL) + endDot(f.haR);
+    s += '<circle class="sk-head" cx="'+f.h[0]+'" cy="'+f.h[1]+'" r="5.5"/>';
     return s;
   }
   function poseSVG(pose) {
@@ -1026,8 +1049,8 @@
       finish:{j:J([16,52],[10,54],[8,58],[2,60],[-4,58],[-14,50],[-22,46])} },
     "Romanian Deadlift": { start:{j:J([0,10],[0,20],[-3,30],[-4,42],[0,38],[0,54],[0,70]), props:[pBar([-4,42],9)]},
       finish:{j:J([10,28],[8,32],[4,42],[2,52],[-2,42],[4,54],[0,70]), props:[pBar([2,52],9)]} },
-    "Single-Arm DB Row": { start:{j:J([16,28],[10,30],[6,40],[4,50],[-4,38],[-10,54],[-14,70]), props:[pBell([4,50]),pBench(14,30,14)]},
-      finish:{j:J([16,28],[10,30],[2,32],[-2,34],[-4,38],[-10,54],[-14,70]), props:[pBell([-2,34]),pBench(14,30,14)]} },
+    "Single-Arm DB Row": { start:{j:J([16,28],[10,30],[6,40],[4,50],[-4,38],[-10,54],[-14,70]), props:[pBell([4,50])]},
+      finish:{j:J([16,28],[10,30],[2,32],[-2,34],[-4,38],[-10,54],[-14,70]), props:[pBell([-2,34])]} },
     "Push Press": { start:{j:J([0,14],[0,24],[6,20],[9,24],[0,40],[4,52],[0,70]), props:[pBar([9,24],8)]},
       finish:{j:J([0,10],[0,20],[4,6],[6,2],[0,38],[0,54],[0,70]), props:[pBar([6,2],8)]} },
     "Kettlebell Swings": { start:{j:J([12,30],[10,34],[6,46],[4,58],[0,44],[6,56],[0,70]), props:[pBell([4,58])]},
@@ -1038,8 +1061,8 @@
       finish:{j:J([4,26],[4,36],[-2,42],[-6,46],[4,54],[10,58],[0,70],{kn2:[20,46],ft2:[24,44]})} },
     "Muscle-Up Progressions": { start:{j:J([0,16],[0,24],[2,16],[4,3],[0,42],[0,56],[0,70]), props:[pPullbar(2)]},
       finish:{j:J([6,10],[4,16],[0,22],[4,3],[4,30],[4,46],[2,62]), props:[pPullbar(2)]} },
-    "Handstand Push-ups": { start:{j:J([0,56],[0,48],[0,58],[0,68],[2,30],[6,14],[10,2]), props:[pWall(22)]},
-      finish:{j:J([0,64],[0,54],[-4,60],[0,68],[2,34],[6,18],[10,4]), props:[pWall(22)]} },
+    "Handstand Push-ups": { start:{j:J([8,52],[0,46],[0,56],[0,68],[-2,30],[2,14],[6,2]), props:[pWall(22)]},
+      finish:{j:J([10,60],[0,50],[-6,60],[0,68],[-2,34],[2,18],[6,4]), props:[pWall(22)]} },
     "Heavy Sled Push/Pull": { start:{j:J([16,40],[10,44],[14,50],[18,54],[-6,52],[-2,62],[2,70],{kn2:[-14,60],ft2:[-20,70]}), props:[pBox(20,54,14,10)]},
       finish:{j:J([16,40],[10,44],[14,50],[18,54],[-6,52],[-14,60],[-20,70],{kn2:[-2,62],ft2:[2,70]}), props:[pBox(20,54,14,10)]} },
     "Dragon Flags": { start:{j:J([-12,40],[-6,42],[-14,36],[-18,38],[6,56],[14,60],[20,62]), props:[pBench(-14,42,16)]},
@@ -1145,14 +1168,14 @@
   // since both are stored completely separately from the profile.
   function saveProfile(profile) {
     state.profile = profile;
-    state.onboardDraft = { sex: null, level: null, equipment: null };
+    state.onboardDraft = { sex: null, level: null, equipment: null, age: "", weight: "" };
     state.onboardError = null;
     lsSet(LS_PROFILE_KEY, profile);
     render();
   }
   function resetProfile() {
     state.profile = null;
-    state.onboardDraft = { sex: null, level: null, equipment: null };
+    state.onboardDraft = { sex: null, level: null, equipment: null, age: "", weight: "" };
     state.onboardError = null;
     try { localStorage.removeItem(LS_PROFILE_KEY); } catch (e) {}
     render();
@@ -1160,12 +1183,11 @@
 
   function submitOnboarding() {
     var d = state.onboardDraft;
-    var ageEl = document.getElementById("onb-age"), weightEl = document.getElementById("onb-weight");
-    var age = ageEl && ageEl.value !== "" ? parseInt(ageEl.value, 10) : NaN;
-    var weightKg = weightEl && weightEl.value !== "" ? parseFloat(weightEl.value) : NaN;
+    var age = d.age !== "" ? parseInt(d.age, 10) : NaN;
+    var weightKg = d.weight !== "" ? parseFloat(d.weight) : NaN;
     if (!d.sex || !d.level || !d.equipment || isNaN(age) || age < 10 || age > 100 || isNaN(weightKg) || weightKg <= 0 || weightKg > 300) {
       state.onboardError = "Pick an option for each question above, and enter a valid age and weight, before starting.";
-      render();
+      renderKeepScroll();
       return;
     }
     saveProfile({ sex: d.sex, age: age, weightKg: weightKg, level: d.level, equipment: d.equipment });
@@ -1324,7 +1346,7 @@
       clearRestInterval();
       sess.restTimer = null;
     }
-    render();
+    renderKeepScroll();
   }
 
   function setPhase(p) { saveSettings({ phase: p }); }
@@ -1344,7 +1366,7 @@
     if (!sess) return;
     if (!sess.weights[stepIdx]) sess.weights[stepIdx] = {};
     sess.weights[stepIdx].hitAll = hitAll;
-    render();
+    renderKeepScroll();
   }
 
   /* ---- deload cycle: a running count of weeks since the last deload
@@ -1394,7 +1416,7 @@
       rt.done = true;
       clearRestInterval();
       playBeep();
-      render();
+      renderKeepScroll();
       return;
     }
     patchRestTimerDom(rt, remaining);
@@ -1425,7 +1447,7 @@
   function dismissRestTimer() {
     clearRestInterval();
     if (state.session) state.session.restTimer = null;
-    render();
+    renderKeepScroll();
   }
 
   function resumeRestTimerIfNeeded() {
@@ -1642,8 +1664,8 @@
 
     html += '<div class="onb-label">Age &amp; Weight</div>';
     html += '<div class="field-grid">';
-    html += '<div class="field-row"><label>Age</label><input class="field-input" type="number" inputmode="numeric" id="onb-age" placeholder="e.g. 32"></div>';
-    html += '<div class="field-row"><label>Weight (kg)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="onb-weight" placeholder="e.g. 70"></div>';
+    html += '<div class="field-row"><label>Age</label><input class="field-input" type="number" inputmode="numeric" id="onb-age" data-input="onb-age" placeholder="e.g. 32" value="' + esc(d.age||"") + '"></div>';
+    html += '<div class="field-row"><label>Weight (kg)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="onb-weight" data-input="onb-weight" placeholder="e.g. 70" value="' + esc(d.weight||"") + '"></div>';
     html += '</div>';
 
     html += '<div class="onb-label">Training Level</div>';
@@ -2146,6 +2168,18 @@
     app.innerHTML = renderTopbar() + body + renderConfirmOverlay();
   }
 
+  // For an in-place update (ticking a set, flipping a toggle, picking an
+  // onboarding answer) that redraws the same screen rather than navigating
+  // to a new one — render() always rebuilds a fresh scroll container, which
+  // would otherwise silently snap back to the top every time.
+  function renderKeepScroll() {
+    var scroller = document.querySelector(".body-scroll");
+    var top = scroller ? scroller.scrollTop : 0;
+    render();
+    var next = document.querySelector(".body-scroll");
+    if (next) next.scrollTop = top;
+  }
+
   /* ============================================================
      EVENTS
   ============================================================ */
@@ -2185,16 +2219,22 @@
     else if (action === "save-finish") { finishDay(); }
     else if (action === "toggle-dot") { toggleSetDot(parseInt(el.getAttribute("data-step"),10), parseInt(el.getAttribute("data-i"),10)); }
     else if (action === "skip-rest") { dismissRestTimer(); }
-    else if (action === "onb-set-sex") { state.onboardDraft.sex = el.getAttribute("data-val"); render(); }
-    else if (action === "onb-set-level") { state.onboardDraft.level = el.getAttribute("data-val"); render(); }
-    else if (action === "onb-set-equipment") { state.onboardDraft.equipment = el.getAttribute("data-val"); render(); }
+    else if (action === "onb-set-sex") { state.onboardDraft.sex = el.getAttribute("data-val"); renderKeepScroll(); }
+    else if (action === "onb-set-level") { state.onboardDraft.level = el.getAttribute("data-val"); renderKeepScroll(); }
+    else if (action === "onb-set-equipment") { state.onboardDraft.equipment = el.getAttribute("data-val"); renderKeepScroll(); }
     else if (action === "onb-submit") { submitOnboarding(); }
   });
 
   document.getElementById("app").addEventListener("input", function(e){
     var el = e.target;
-    if (el && el.getAttribute && el.getAttribute("data-input") === "set-weight") {
+    if (!el || !el.getAttribute) return;
+    var kind = el.getAttribute("data-input");
+    if (kind === "set-weight") {
       setStepWeight(parseInt(el.getAttribute("data-step"),10), el.value);
+    } else if (kind === "onb-age") {
+      state.onboardDraft.age = el.value;
+    } else if (kind === "onb-weight") {
+      state.onboardDraft.weight = el.value;
     }
   });
 
