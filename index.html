@@ -73,7 +73,7 @@
   /* ---- top bar ---- */
   .topbar {
     flex-shrink: 0; background: var(--olive-deep); color: var(--on-accent);
-    padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; display: flex; align-items: center; gap: 10px;
     border-bottom: 3px solid var(--rust);
   }
   .topbar .tb-btn {
@@ -423,7 +423,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v13 · 2026-10-03";
+  var APP_VERSION = "v14 · 2026-10-03";
 
   /* ============================================================
      DATA
@@ -690,7 +690,14 @@
   var BALANCE_ITEMS = ["Single-leg stance, eyes open then closed — 30s/side ×2", "Single-leg reach (no load) — 8/side", "Stand on a folded towel/cushion — 30s/side"];
   var RECOVERY_ITEMS = [
     {name:"Deep Squat Hold", dur:"5 min", desc:"Rest in a deep bodyweight squat, heels flat on the floor. Break it into shorter chunks through the day if 5 minutes straight is hard at first. Restores ankle, hip, and lower-back mobility that chairs and boots take away."},
-    {name:"Tai Chi / Yoga", dur:"15–20 min", desc:"Slow, controlled flowing movement — whatever routine you know. It won't build mass, but it de-stiffens connective tissue and keeps joints moving through their full range without adding fatigue."},
+    {name:"Guided Mobility Flow", dur:"15–20 min", desc:"Move slowly and keep breathing through each one — nothing here should feel like a hard stretch, just gentle full-range movement.", items:[
+      "Cat-Cow — on hands and knees, slowly arch then round your spine, 90 seconds",
+      "World's Greatest Stretch — low lunge, rear leg straight, rotate your torso and reach toward the ceiling, 90 seconds each side",
+      "Thoracic Rotations — on all fours, one hand behind your head, rotate that elbow down then up toward the ceiling, 90 seconds each side",
+      "Hip Circles — standing, hands on hips, trace slow circles with your hips, 60 seconds each direction",
+      "Ankle Circles — seated or standing on one leg, circle the other foot at the ankle, 60 seconds each foot",
+      "Standing Forward Fold Roll-Up — hinge forward and let your arms hang, then roll back up one vertebra at a time, 5 slow reps"
+    ]},
     {name:"Brisk Walk", dur:"30 min", desc:"Easy, steady pace — not a workout. Helps flush the week's training out of your legs and settles you down before the full rest day."}
   ];
   var DAY_TYPE = {1:"lift", 2:"gpp", 3:"lift", 4:"cardio", 5:"lift", 6:"recovery", 7:"rest"};
@@ -747,9 +754,9 @@
         steps.push({kind:"gpp", title:"Sprints", sub:"Max Effort",
           stats:[{v:"6–8 × 20–30m",l:"Reps"},{v:"90s–2m",l:"Rest"}],
           note:"Full effort on every rep, full recovery between. Stop the session if your speed starts dropping off."});
-        steps.push({kind:"gpp", title:"Agility", sub:"Ladder / Cones",
+        steps.push({kind:"gpp", title:"Agility", sub:"5-Meter Shuttle",
           stats:[{v:"4–6",l:"Sets"},{v:"20–30s",l:"Per Set"}],
-          note:"A short change-of-direction drill — ladder footwork, cone shuttles, or shadow stepping."});
+          note:"Set two markers (water bottles, shoes, anything) about 5 meters apart. Sprint to the far one, touch the ground with one hand, sprint back and touch the near one — that's one rep, keep going for the full 20–30s. Stay low and plant hard on each direction change. Full recovery between sets. Have an agility ladder or cones? Use your usual ladder-footwork or cone-shuttle drill instead — this is just the no-equipment default."});
       }
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
     } else if (t === "cardio") {
@@ -758,7 +765,7 @@
         note:"Walk, jog, cycle, or swim. Keep it conversational — you should be able to talk, not gasp."});
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
     } else if (t === "recovery") {
-      RECOVERY_ITEMS.forEach(function(r){ steps.push({kind:"recovery", title:r.name, sub:r.dur, text:r.desc}); });
+      RECOVERY_ITEMS.forEach(function(r){ steps.push({kind:"recovery", title:r.name, sub:r.dur, text:r.desc, items:r.items}); });
     } else {
       steps.push({kind:"rest", title:"Full Rest", text:"Nothing scheduled today. Sleep 7–8 hours and let the week's training absorb."});
     }
@@ -1722,7 +1729,7 @@
     });
     html += '</table></div>';
     html += '<div class="card"><p class="mn-cardhead">Speed &amp; Agility · even weeks, Day 2</p><ul class="item-list" style="margin:0">' +
-      '<li>Sprints: 6–8 × 20–30m, max effort, full recovery between</li><li>Agility: 4–6 sets, ladder or cone drill, 20–30s each</li></ul></div>';
+      '<li>Sprints: 6–8 × 20–30m, max effort, full recovery between</li><li>Agility: 4–6 sets × 20–30s — two markers 5m apart, sprint-touch-sprint-touch between them, staying low on each turn. Have a ladder or cones? Use your usual drill instead.</li></ul></div>';
     html += '<div class="card" style="margin-bottom:20px"><p class="mn-cardhead">Balance &amp; Proprioception · Days 2 &amp; 4</p><ul class="item-list" style="margin:0">' +
       BALANCE_ITEMS.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul></div>';
 
@@ -1762,7 +1769,11 @@
 
     html += '<div class="section-label" id="m-rec">Recovery &amp; Active Rest</div>';
     RECOVERY_ITEMS.forEach(function(r){
-      html += '<div class="card"><p class="mn-cardhead">' + esc(r.name) + ' · ' + esc(r.dur) + '</p><p class="mn-cardbody">' + esc(r.desc) + '</p></div>';
+      html += '<div class="card"><p class="mn-cardhead">' + esc(r.name) + ' · ' + esc(r.dur) + '</p><p class="mn-cardbody">' + esc(r.desc) + '</p>';
+      if (r.items && r.items.length) {
+        html += '<ol style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-soft)">' + r.items.map(function(it){ return '<li style="margin-bottom:6px">'+esc(it)+'</li>'; }).join('') + '</ol>';
+      }
+      html += '</div>';
     });
     html += '<div class="banner" style="margin-bottom:20px">Sleep 7–8 hours, every night.</div>';
 
@@ -1855,6 +1866,9 @@
       html += '<div class="step-kind">Recovery · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + esc(step.title) + '</h2>';
       html += '<div class="instr-card"><p>' + esc(step.text) + '</p></div>';
+      if (step.items && step.items.length) {
+        html += '<ul class="item-list">' + step.items.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
+      }
     } else if (step.kind === "rest") {
       html += '<div class="step-kind">Rest</div>';
       html += '<h2 class="step-title">Full Rest</h2>';
