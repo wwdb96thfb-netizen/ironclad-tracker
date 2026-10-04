@@ -20,7 +20,7 @@
 // "Add to Home Screen" standalone mode — the message to the waiting worker
 // could silently never arrive, leaving the update stuck forever. This
 // avoids that failure mode entirely.)
-const CACHE_NAME = "ironclad-v29";
+const CACHE_NAME = "ironclad-v30";
 const APP_SHELL = [
   "./",
   "./index.html",
