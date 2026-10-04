@@ -447,7 +447,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v24 · 2026-10-04";
+  var APP_VERSION = "v25 · 2026-10-04";
 
   /* ============================================================
      DATA
@@ -1193,6 +1193,13 @@
     return name.toLowerCase().replace(/[()]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
   function exercisePhotoPath(name) { return 'exercises/' + photoSlug(name) + '.jpg'; }
+
+  // Same idea as EX_PHOTOS, for real "muscles worked" reference photos —
+  // added one at a time as they're supplied, at muscles/<slug>.jpg. Until an
+  // exercise has one, the Manual simply shows nothing for that section
+  // (no tan body-diagram placeholder anymore).
+  var EX_MUSCLE_PHOTOS = [];
+  function musclePhotoPath(name) { return 'muscles/' + photoSlug(name) + '.jpg'; }
 
   function bodyOutlineSVG(sex) {
     var b = BODY_SHAPE[sex];
@@ -2133,7 +2140,6 @@
         html += '<p class="mn-label amber">Tendon Prep</p>';
         html += '<p class="mn-cardbody" style="margin-bottom:12px">' + esc(wk.tendon) + '</p>';
         html += '<p class="mn-label">Movements</p>';
-        var manualSex = state.profile && state.profile.sex === "female" ? "female" : "male";
         html += '<div style="margin-bottom:12px">' + wk.exercises.map(function(e){
           return '<div class="card" style="margin-bottom:10px;padding:12px 14px">' +
             '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px">' +
@@ -2143,7 +2149,7 @@
             '<p class="mn-cardbody">' + esc(EX_HOWTO[e.name] || '') + '</p>' +
             (EX_PHOTOS.indexOf(e.name) !== -1 ? '<div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + exercisePhotoPath(e.name) + '" alt="' + esc(e.name) + '" loading="lazy"></div>' :
               (EX_SKETCH[e.name] ? '<div class="sketch-wrap manual-sketch">' + renderExerciseSketch(e.name) + '</div>' : '')) +
-            (EX_MUSCLES[e.name] ? '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div>' + renderMuscleMap(manualSex, EX_MUSCLES[e.name]) + '</div>' : '') +
+            (EX_MUSCLE_PHOTOS.indexOf(e.name) !== -1 ? '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div><img class="ex-photo" src="' + musclePhotoPath(e.name) + '" alt="Muscles worked — ' + esc(e.name) + '" loading="lazy"></div>' : '') +
             '</div>';
         }).join('') + '</div>';
         html += '<p class="mn-label olive">Stretch</p>';
