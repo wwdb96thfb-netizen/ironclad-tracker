@@ -462,7 +462,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v30 · 2026-10-04";
+  var APP_VERSION = "v31 · 2026-10-04";
 
   /* ============================================================
      DATA
@@ -770,6 +770,14 @@
     2: {load:"20–30%", duration:"40–50m"},
     3: {load:"30–40%", duration:"50–60m"}
   };
+  // Deload-week ruck dosing — roughly half the normal load and a shorter
+  // duration, same shape as RUCK_DOSING so buildSteps can swap tables
+  // wholesale instead of trying to parse/rewrite the normal ranges.
+  var RUCK_DOSING_DELOAD = {
+    1: {load:"5–8%", duration:"20–25m"},
+    2: {load:"10–15%", duration:"25–30m"},
+    3: {load:"15–20%", duration:"30–35m"}
+  };
   var BALANCE_ITEMS = ["Single-leg stance, eyes open then closed — 30s/side ×2", "Single-leg reach (no load) — 8/side", "Stand on a folded towel/cushion — 30s/side"];
   var RECOVERY_ITEMS = [
     {name:"Deep Squat Hold", dur:"5 min", desc:"Rest in a deep bodyweight squat, heels flat on the floor. Break it into shorter chunks through the day if 5 minutes straight is hard at first. Restores ankle, hip, and lower-back mobility that chairs and boots take away."},
@@ -786,7 +794,14 @@
   var DAY_TYPE = {1:"lift", 2:"gpp", 3:"lift", 4:"cardio", 5:"lift", 6:"recovery", 7:"rest"};
   var DAY_SHORT = {lift:"Lift", gpp:"GPP", cardio:"Cardio", recovery:"Recovery", rest:"Rest"};
 
-  var DELOAD_DUE_WEEKS = 4, DELOAD_OVERDUE_WEEKS = 6;
+  // Deload is a hard gate, not a reminder: the moment DELOAD_DUE_WEEKS is
+  // reached, deloadModeActive() flips on and every session startSession()
+  // builds from then on is automatically the lighter version (see
+  // buildSteps' `deload` param) until DELOAD_WEEK_SESSIONS of them have
+  // been completed, at which point finishDay() resets the cycle on its
+  // own. There's no "overdue" tier above it — this is the only threshold.
+  var DELOAD_DUE_WEEKS = 4;
+  var DELOAD_WEEK_SESSIONS = 7;
   var MAIN_LIFT_STEP_KG = 1.25;
 
   // Reference-only content for the in-app Manual screen — the handful of
@@ -794,7 +809,7 @@
   // above (PHASES_MEN/PHASES_WOMEN / RUCK_DOSING / BALANCE_ITEMS / RECOVERY_ITEMS already
   // cover everything else, so the Manual screen reads from the same single
   // source of truth as the rest of the app instead of a second copy of it).
-  var GOLDEN_RULES = "Empty bar in Week 1 · brace (breath in, ribs down, belly tight) before every heavy rep · 2–3 min rest on main lifts · always leave 2 reps in the tank · deload one lighter week every 4–6 weeks · tendon prep before working sets, 4×/week · grip hangs accumulated daily · GPP day alternates ruck / speed-agility weekly · 7–8 hrs sleep nightly · 5 min/day deep resting squat.";
+  var GOLDEN_RULES = "Empty bar in Week 1 · brace (breath in, ribs down, belly tight) before every heavy rep · 2–3 min rest on main lifts · always leave 2 reps in the tank · a lighter deload week locks in automatically every 4 weeks and can't be skipped · tendon prep before working sets, 4×/week · grip hangs accumulated daily · GPP day alternates ruck / speed-agility weekly · 7–8 hrs sleep nightly · 5 min/day deep resting squat.";
   var PHASE_CALLOUTS_MEN = {
     1: { label:"Before the deadlift", text:"Spend your first few Workout B sessions grooving the hip-hinge with a Romanian Deadlift or kettlebell deadlift before loading a full conventional deadlift from the floor." },
     2: { label:"Gatekeeper — clear before Phase 3", items:["5 strict, unassisted pull-ups","Barbell back squat at bodyweight × 5","15 unbroken kettlebell swings with a 24kg bell"] },
@@ -816,7 +831,7 @@
     return "Full Rest";
   }
 
-  function buildSteps(dayNum, phase, liftType, gppType) {
+  function buildSteps(dayNum, phase, liftType, gppType, deload) {
     var t = DAY_TYPE[dayNum], steps = [];
     if (t === "lift") {
       var w = getPhases()[phase].workouts[liftType];
@@ -825,20 +840,20 @@
         steps.push({kind:"homealt", title:"No Gym? No Problem", text:w.homeAlt});
       }
       steps.push({kind:"tendon", title:"Tendon Prep", sub:"4×20s · 60s rest", text:w.tendon});
-      w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets:e.sets, rest:e.rest, isMainLift:!!e.main}); });
+      w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets: deload ? deloadSetsString(e.sets) : e.sets, rest:e.rest, isMainLift:!!e.main}); });
       steps.push({kind:"stretch", title:"Stretch", sub:"5 min", items:w.stretch});
     } else if (t === "gpp") {
       if (gppType === "ruck") {
-        var d = RUCK_DOSING[phase];
+        var d = deload ? RUCK_DOSING_DELOAD[phase] : RUCK_DOSING[phase];
         steps.push({kind:"gpp", title:"Ruck", sub:"Load Carriage",
           stats:[{v:d.load,l:"Load (BW)"},{v:d.duration,l:"Duration"}],
           note:"Backpack or ruck, steady pace on flat or rolling ground. If your back rounds or your breathing goes ragged, drop the weight before you cut the time."});
       } else {
         steps.push({kind:"gpp", title:"Sprints", sub:"Max Effort",
-          stats:[{v:"6–8 × 20–30m",l:"Reps"},{v:"90s–2m",l:"Rest"}],
+          stats: deload ? [{v:"4 × 20–30m",l:"Reps"},{v:"90s–2m",l:"Rest"}] : [{v:"6–8 × 20–30m",l:"Reps"},{v:"90s–2m",l:"Rest"}],
           note:"Full effort on every rep, full recovery between. Stop the session if your speed starts dropping off."});
         steps.push({kind:"gpp", title:"Agility", sub:"5-Meter Shuttle",
-          stats:[{v:"4–6",l:"Sets"},{v:"20–30s",l:"Per Set"}],
+          stats: deload ? [{v:"3",l:"Sets"},{v:"20–30s",l:"Per Set"}] : [{v:"4–6",l:"Sets"},{v:"20–30s",l:"Per Set"}],
           note:"Set two markers (water bottles, shoes, anything) about 5 meters apart. Sprint to the far one, touch the ground with one hand, sprint back and touch the near one — that's one rep, keep going for the full 20–30s. Stay low and plant hard on each direction change. Full recovery between sets. Have an agility ladder or cones? Use your usual ladder-footwork or cone-shuttle drill instead — this is just the no-equipment default."});
       }
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
@@ -862,7 +877,7 @@
     screen: "home",          // home | log | session | summary
     loading: true,
     persistOk: true,
-    settings: { phase: 1, nextDayNumber: 1, nextLiftType: "A", nextGppType: "ruck", cycleStartDate: null, lastWeights: {} },
+    settings: { phase: 1, nextDayNumber: 1, nextLiftType: "A", nextGppType: "ruck", cycleStartDate: null, lastWeights: {}, deloadSessionsDone: 0 },
     logEntries: null,        // null = not loaded yet; kept live via onSnapshot — Home's "Recent" is derived from this
     measurements: null,      // null = not loaded yet — body-measurement log, independent of training log
 
@@ -1398,6 +1413,7 @@
       state.settings.nextGppType = saved.nextGppType || "ruck";
       state.settings.cycleStartDate = saved.cycleStartDate || null;
       state.settings.lastWeights = saved.lastWeights || {};
+      state.settings.deloadSessionsDone = saved.deloadSessionsDone || 0;
     }
     state.logEntries = lsGet(LS_LOG_KEY, []);
     state.measurements = lsGet(LS_MEASUREMENTS_KEY, []);
@@ -1538,12 +1554,13 @@
   function startSession(dayNum) {
     var s = state.settings;
     var type = DAY_TYPE[dayNum];
-    var steps = buildSteps(dayNum, s.phase, s.nextLiftType, s.nextGppType);
+    var deload = deloadModeActive();
+    var steps = buildSteps(dayNum, s.phase, s.nextLiftType, s.nextGppType, deload);
     clearRestInterval();
     state.session = {
       dayNum: dayNum, phase: s.phase, liftType: s.nextLiftType, gppType: s.nextGppType,
       type: type, headline: dayHeadline(dayNum, s.phase, s.nextLiftType, s.nextGppType),
-      steps: steps, idx: 0, setDots: {}, restTimer: null, weights: {}
+      steps: steps, idx: 0, setDots: {}, restTimer: null, weights: {}, deload: deload
     };
     state.confirm = null;
     state.screen = "session";
@@ -1589,7 +1606,7 @@
     var entry = {
       date: todayKey(), dayNumber: sess.dayNum, phase: sess.phase, type: sess.type,
       headline: sess.headline, items: sess.steps.map(function(s){ return s.title; }),
-      completedAt: Date.now()
+      completedAt: Date.now(), deload: !!sess.deload
     };
     var nextDay = (sess.dayNum % 7) + 1;
     var patch = { nextDayNumber: nextDay };
@@ -1597,22 +1614,42 @@
     if (sess.type === "gpp") patch.nextGppType = sess.gppType === "ruck" ? "speed" : "ruck";
 
     // Carry forward any weight the main lift logged this session so next
-    // time's progression hint ("+1.25kg" / "repeat") has something to go on.
-    var weightUpdates = null;
-    sess.steps.forEach(function(st, i){
-      if (!st.isMainLift) return;
-      var w = sess.weights[i];
-      if (!w || w.weight === undefined || w.weight === null || w.weight === "") return;
-      var num = parseFloat(w.weight);
-      if (isNaN(num)) return;
-      if (!weightUpdates) weightUpdates = Object.assign({}, state.settings.lastWeights);
-      weightUpdates[st.title] = { weight: num, hitAll: w.hitAll !== false, date: todayKey() };
-    });
-    if (weightUpdates) patch.lastWeights = weightUpdates;
+    // time's progression hint ("+1.25kg" / "repeat") has something to go
+    // on — but never from a deload session, since ~60% weight isn't a real
+    // working-weight data point and would wreck the next progression hint.
+    if (!sess.deload) {
+      var weightUpdates = null;
+      sess.steps.forEach(function(st, i){
+        if (!st.isMainLift) return;
+        var w = sess.weights[i];
+        if (!w || w.weight === undefined || w.weight === null || w.weight === "") return;
+        var num = parseFloat(w.weight);
+        if (isNaN(num)) return;
+        if (!weightUpdates) weightUpdates = Object.assign({}, state.settings.lastWeights);
+        weightUpdates[st.title] = { weight: num, hitAll: w.hitAll !== false, date: todayKey() };
+      });
+      if (weightUpdates) patch.lastWeights = weightUpdates;
+    }
+
+    // Deload gate: count this session toward the current deload week. Once
+    // DELOAD_WEEK_SESSIONS are done, reset the clock on its own — the user
+    // never has to remember to do that themselves.
+    var toastMsg = "Logged: " + sess.headline;
+    if (sess.deload) {
+      var doneCount = (state.settings.deloadSessionsDone || 0) + 1;
+      if (doneCount >= DELOAD_WEEK_SESSIONS) {
+        patch.deloadSessionsDone = 0;
+        patch.cycleStartDate = Date.now();
+        toastMsg = "Deload week complete — nice work. Back to full weight next session.";
+      } else {
+        patch.deloadSessionsDone = doneCount;
+        toastMsg = "Logged: " + sess.headline + " (Deload " + doneCount + "/" + DELOAD_WEEK_SESSIONS + ")";
+      }
+    }
 
     saveLogEntry(entry);
     saveSettings(patch);
-    state.toast = "Logged: " + sess.headline;
+    state.toast = toastMsg;
     state.session = null;
     state.screen = "home";
     render();
@@ -1663,8 +1700,28 @@
     return Math.floor((Date.now() - start) / (7*24*3600*1000));
   }
 
+  // The hard gate: once this is true, startSession() builds every day as a
+  // deload day (see buildSteps' `deload` param) and stays true — since
+  // cycleStartDate only moves forward once a full deload week is logged —
+  // until DELOAD_WEEK_SESSIONS sessions have been completed. No separate
+  // flag to fall out of sync with; it's purely a function of the clock.
+  function deloadModeActive() {
+    return computeWeeksInCycle() >= DELOAD_DUE_WEEKS;
+  }
+
+  // Deload week: same exercise, same rep/time/distance target, one fewer
+  // working set (minimum 1). Only the leading set-count number is touched —
+  // "3×5–8" becomes "2×5–8", "2×40m" becomes "1×40m" — so this is safe
+  // across every unit style used in the plan without parsing the rest of it.
+  function deloadSetsString(setsStr) {
+    var m = /^(\d+)×(.+)$/.exec(setsStr || "");
+    if (!m) return setsStr;
+    var n = Math.max(1, parseInt(m[1],10) - 1);
+    return n + "×" + m[2];
+  }
+
   function markDeloadTaken() {
-    saveSettings({ cycleStartDate: Date.now() });
+    saveSettings({ cycleStartDate: Date.now(), deloadSessionsDone: 0 });
     state.toast = "Deload logged — new 4–6 week cycle started";
     render();
     setTimeout(function(){ state.toast = null; render(); }, 3500);
@@ -1850,7 +1907,7 @@
   }
 
   function resetPlan() {
-    saveSettings({ phase: 1, nextDayNumber: 1, nextLiftType: "A", nextGppType: "ruck", cycleStartDate: Date.now() });
+    saveSettings({ phase: 1, nextDayNumber: 1, nextLiftType: "A", nextGppType: "ruck", cycleStartDate: Date.now(), deloadSessionsDone: 0 });
     state.toast = "Plan reset — back to Day 1";
     render();
     setTimeout(function(){ state.toast = null; render(); }, 3500);
@@ -2004,7 +2061,8 @@
       return '' +
       '<div class="topbar">' +
         '<button class="tb-btn" data-action="back-step" aria-label="Back">' + ICONS.back + '</button>' +
-        '<div class="tb-title-wrap"><div class="tb-main">' + esc(sess.headline) + '</div></div>' +
+        '<div class="tb-title-wrap"><div class="tb-main">' + esc(sess.headline) + '</div>' +
+        (sess.deload ? '<div class="tb-sub">DELOAD · DAY ' + ((state.settings.deloadSessionsDone||0)+1) + '/' + DELOAD_WEEK_SESSIONS + '</div>' : '') + '</div>' +
         '<button class="tb-btn" data-action="exit-session" aria-label="Exit">' + ICONS.close + '</button>' +
       '</div>' +
       '<div class="progress-wrap">' +
@@ -2046,10 +2104,10 @@
     }
 
     var weeksIn = computeWeeksInCycle();
-    if (weeksIn >= DELOAD_OVERDUE_WEEKS) {
-      html += '<div class="banner banner-warn">' + ICONS.warn + '<span><strong>Deload overdue</strong> — Week ' + weeksIn + ' since your last lighter week. Take one now: same exercises at ~60% weight, fewer sets.</span></div>';
-    } else if (weeksIn >= DELOAD_DUE_WEEKS) {
-      html += '<div class="banner" style="background:var(--warn-bg);color:var(--rust)">' + ICONS.warn + '<span><strong>Deload window open</strong> — Week ' + weeksIn + ' of your 4–6 week cycle. Take a lighter week (~60%) whenever it suits you this week or next.</span></div>';
+    var deload = deloadModeActive();
+    if (deload) {
+      var doneSoFar = state.settings.deloadSessionsDone || 0;
+      html += '<div class="banner banner-warn">' + ICONS.warn + '<span><strong>Deload week</strong> — Day ' + (doneSoFar+1) + ' of ' + DELOAD_WEEK_SESSIONS + '. Every session is automatically lighter (~60% weight, fewer sets) until the week is done — this can\'t be skipped.</span></div>';
     }
 
     if (s.phase === 1 && state.profile && LEVEL_TIPS[state.profile.level]) {
@@ -2057,19 +2115,19 @@
     }
 
     html += '<div class="next-card">' +
-      '<div class="nc-eyebrow">NEXT UP · DAY ' + s.nextDayNumber + '</div>' +
+      '<div class="nc-eyebrow">NEXT UP · DAY ' + s.nextDayNumber + (deload ? ' · DELOAD' : '') + '</div>' +
       '<div class="nc-title">' + esc(nextLabel) + '</div>' +
       '<div class="nc-meta">' + esc(getPhases()[s.phase].name) + '</div>' +
-      '<button class="btn btn-primary btn-block" data-action="start-next">Start Day ' + s.nextDayNumber + '</button>' +
+      '<button class="btn btn-primary btn-block" data-action="start-next">' + (deload ? 'Start Deload Day ' : 'Start Day ') + s.nextDayNumber + '</button>' +
     '</div>';
 
-    html += '<div class="section-label">Jump to a day</div>';
+    html += '<div class="section-label">Jump to a day' + (deload ? ' (all deload while locked)' : '') + '</div>';
     html += '<div class="day-chips">';
     for (var d=1; d<=7; d++) {
       var t = DAY_TYPE[d];
       var isNext = d === s.nextDayNumber;
       html += '<div class="day-chip ' + t + (isNext ? ' is-next' : '') + '" data-action="start-day" data-day="' + d + '">' +
-        '<div class="dc-n">D' + d + '</div><div class="dc-t">' + DAY_SHORT[t] + '</div></div>';
+        '<div class="dc-n">D' + d + '</div><div class="dc-t">' + DAY_SHORT[t] + (deload ? ' ⬇' : '') + '</div></div>';
     }
     html += '</div>';
 
@@ -2114,7 +2172,7 @@
     } else {
       html += '<div class="card" style="padding:4px 16px">';
       entries.forEach(function(e){
-        html += '<div class="log-row"><div class="log-dot ' + e.type + '"></div><div class="log-main"><div class="log-title">' + esc(e.headline) + '</div><div class="log-date">Day ' + e.dayNumber + ' · Phase ' + e.phase + '</div></div><div class="log-date">' + fmtDate(e.date) + '</div>' +
+        html += '<div class="log-row"><div class="log-dot ' + e.type + '"></div><div class="log-main"><div class="log-title">' + esc(e.headline) + (e.deload ? ' <span style="font-size:10px;font-weight:700;color:var(--rust)">· DELOAD</span>' : '') + '</div><div class="log-date">Day ' + e.dayNumber + ' · Phase ' + e.phase + '</div></div><div class="log-date">' + fmtDate(e.date) + '</div>' +
           '<button class="log-del" data-action="open-delete-confirm" data-id="' + esc(e.id||'') + '" data-headline="' + esc(e.headline) + '" aria-label="Delete session">' + ICONS.trash + '</button></div>';
       });
       html += '</div>';
@@ -2127,8 +2185,10 @@
   function renderSettings() {
     var s = state.settings;
     var weeksIn = computeWeeksInCycle();
-    var deloadStatus = weeksIn >= DELOAD_OVERDUE_WEEKS ? "Overdue"
-      : weeksIn >= DELOAD_DUE_WEEKS ? "Window open" : "Not yet";
+    var deload = deloadModeActive();
+    var deloadStatus = deload
+      ? "Deload week — Day " + ((s.deloadSessionsDone||0)+1) + "/" + DELOAD_WEEK_SESSIONS
+      : "Not yet due";
     var html = '<div class="body-scroll">';
 
     if (state.toast) {
@@ -2156,8 +2216,10 @@
     html += '<div class="settings-row"><span class="sr-k">Weeks since last deload</span><span class="sr-v">Week ' + weeksIn + '</span></div>';
     html += '<div class="settings-row"><span class="sr-k">Status</span><span class="sr-v">' + esc(deloadStatus) + '</span></div>';
     html += '</div>';
-    html += '<p class="ph-note" style="margin-bottom:12px">Golden rule: take one lighter week (~60% of normal weight) every 4–6 weeks. Tap below once you’ve taken that week, to restart the clock.</p>';
-    html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Mark Deload Taken</span></button>';
+    html += '<p class="ph-note" style="margin-bottom:12px">' + (deload
+      ? ('Deload is locked in — every session you start right now is automatically lighter (fewer sets, ~60% weight) until all ' + DELOAD_WEEK_SESSIONS + ' days are done. The cycle then restarts on its own.')
+      : 'Every 4 weeks the app automatically switches your next sessions to a lighter deload week and won’t let you skip it — no need to track this yourself.') + '</p>';
+    html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>' + (deload ? 'Already deloaded elsewhere — skip to full training' : 'Log an early deload week') + '</span></button>';
 
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
@@ -2379,6 +2441,9 @@
 
   function renderStepBody(step, stepIdx) {
     var html = '';
+    if (state.session && state.session.deload) {
+      html += '<div class="banner" style="background:var(--warn-bg);color:var(--rust);margin-bottom:14px">' + ICONS.warn + '<span><strong>Deload week</strong> — lighter sets, ~60% weight on the main lift.</span></div>';
+    }
     if (step.kind === "exercise") {
       html += '<div class="step-kind">Exercise</div>';
       html += '<div class="ex-header"><div class="ex-icon">' + EX_ICONS[exerciseIconKey(step.title)] + '</div><h2 class="step-title">' + esc(step.title) + '</h2></div>';
@@ -2411,10 +2476,19 @@
       if (step.isMainLift) {
         var lastW = state.settings.lastWeights && state.settings.lastWeights[step.title];
         var sessW = state.session.weights[stepIdx] || {};
-        var curVal = (sessW.weight !== undefined && sessW.weight !== null) ? sessW.weight : (lastW ? lastW.weight : "");
+        var deloadSuggested = null;
+        if (state.session.deload && lastW && lastW.weight != null) {
+          deloadSuggested = Math.max(0, Math.round((lastW.weight * 0.6) / MAIN_LIFT_STEP_KG) * MAIN_LIFT_STEP_KG);
+        }
+        var curVal = (sessW.weight !== undefined && sessW.weight !== null) ? sessW.weight
+          : (state.session.deload ? (deloadSuggested != null ? deloadSuggested : "") : (lastW ? lastW.weight : ""));
         var hitAllVal = sessW.hitAll;
         var hint;
-        if (lastW && lastW.weight != null) {
+        if (state.session.deload) {
+          hint = deloadSuggested != null
+            ? "Deload week — try about " + fmtKg(deloadSuggested) + "kg (~60% of your usual " + fmtKg(lastW.weight) + "kg). Fewer sets, same reps."
+            : "Deload week — use a clearly lighter weight than usual, about 60% of normal.";
+        } else if (lastW && lastW.weight != null) {
           if (lastW.hitAll === false) {
             hint = "Last session you missed a rep at " + fmtKg(lastW.weight) + "kg — repeat that weight today.";
             if (state.settings.phase > 1) hint += " Progress slows down from here — holding a weight for a few weeks is normal, not a setback.";
