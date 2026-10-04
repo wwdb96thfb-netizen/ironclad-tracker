@@ -20,13 +20,14 @@
 // "Add to Home Screen" standalone mode — the message to the waiting worker
 // could silently never arrive, leaving the update stuck forever. This
 // avoids that failure mode entirely.)
-const CACHE_NAME = "ironclad-v31";
+const CACHE_NAME = "ironclad-v32";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icons/icon-512.png",
+  "./banner-home.jpg"
 ];
 
 self.addEventListener("install", function (event) {

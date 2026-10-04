@@ -88,6 +88,9 @@
   .tb-title-wrap { flex: 1; min-width: 0; }
   .tb-title-wrap .tb-main { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tb-title-wrap .tb-sub { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.04em; color: var(--on-accent-soft); margin-top: 1px; }
+  /* ---- Home screen's image banner, replacing the plain text topbar ---- */
+  .home-banner { flex-shrink: 0; background: var(--olive-deep); padding-top: env(safe-area-inset-top, 0px); border-bottom: 3px solid var(--rust); }
+  .home-banner img { display: block; width: 100%; height: auto; }
   .progress-wrap { flex-shrink: 0; padding: 0 16px 8px; background: var(--olive-deep); }
   .progress-track { height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; overflow: hidden; margin-top: 8px; }
   .progress-fill { height: 100%; background: var(--rust-soft); transition: width 0.25s ease; }
@@ -462,7 +465,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v31 · 2026-10-04";
+  var APP_VERSION = "v32 · 2026-10-04";
 
   /* ============================================================
      DATA
@@ -2085,7 +2088,7 @@
     if (state.screen === "settings") {
       return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Settings</div></div></div>';
     }
-    return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Operation Ironclad</div><div class="tb-sub">TRACKER</div></div></div>';
+    return '<div class="home-banner"><img src="banner-home.jpg" alt="Operation Ironclad" loading="eager"></div>';
   }
 
   function renderHome() {
