@@ -324,6 +324,17 @@
   .photo-reveal-panel { margin: -6px 0 14px; display: flex; flex-direction: column; gap: 14px; }
   .photo-reveal-panel .sketch-wrap { margin-top: 0; padding-top: 12px; }
 
+  /* ---- per-line photo toggle (warm-up / tendon / stretch / balance / recovery) ---- */
+  .named-item-list .ni-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .named-item-list .ni-row span { flex: 1; }
+  .ni-photo-btn {
+    flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .ni-photo-btn:active { background: var(--olive); color: #fff; border-color: var(--olive); }
+  .ni-photo { margin-top: 10px; }
+
   .mm-svg { width: 100%; max-width: 260px; display: block; margin: 0 auto; }
   .mm-svg .mm-torso { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
   .mm-svg .mm-limb { fill: none; stroke: var(--surface-2); stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
@@ -451,7 +462,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v27 · 2026-10-04";
+  var APP_VERSION = "v28 · 2026-10-04";
 
   /* ============================================================
      DATA
@@ -1204,6 +1215,127 @@
   // (no tan body-diagram placeholder anymore).
   var EX_MUSCLE_PHOTOS = ["Barbell Back Squat", "Bulgarian Split Squat", "Flat Bench Press", "Assisted Pull-ups", "Farmer's Walk", "Forearm Plank", "Calf Raise", "Band Pull-Apart", "Conventional Deadlift", "Standing Overhead Press", "Strict Push-ups"];
   function musclePhotoPath(name) { return 'muscles/' + photoSlug(name) + '.jpg'; }
+
+  // ------------------------------------------------------------------
+  // SUPPORTING MOVEMENTS — warm-up drills, tendon-prep holds, stretches,
+  // balance drills and active-recovery moves. Same idea as EX_PHOTOS, just
+  // for everything that sits around the 36 main lifts rather than being one
+  // of them. A handful of these (e.g. Band Pull-Apart, Hip Circles, Deep
+  // Squat Hold, Cat-Cow) are shared by name across warm-up and recovery, or
+  // are already one of the 36 main lifts — resolvePhotoPath() below checks
+  // EX_PHOTOS first so a shared name never needs a second photo.
+  var SUPPORT_PHOTOS = []; // filled in as real photos are supplied, same as EX_PHOTOS was
+  function supportPhotoPath(name) { return 'support/' + photoSlug(name) + '.jpg'; }
+  function resolvePhotoPath(name) {
+    if (!name) return null;
+    if (EX_PHOTOS.indexOf(name) !== -1) return exercisePhotoPath(name);
+    if (SUPPORT_PHOTOS.indexOf(name) !== -1) return supportPhotoPath(name);
+    return null;
+  }
+
+  // The full canonical list, A–Z, for the Exercise Library's second section.
+  var SUPPORT_MOVEMENTS = ["Ankle Circles", "Arm Circles", "Back Squat Hold", "Bulgarian Split Squat Hold",
+    "Cat-Cow", "Chest/Shoulder Doorway Stretch", "Deadlift Hold", "Deep Squat Hold", "Forearm Stretch",
+    "Front Squat Hold", "Glute Stretch", "Hamstring Stretch", "Hip Circles", "Hip Flexor Stretch",
+    "Hip/Ankle Mobility Stretch", "Lat Stretch", "Leg Swings", "Pistol Squat Hold", "Quad Stretch",
+    "Romanian Deadlift Hold", "Shoulder Circles", "Shoulder Stretch", "Single-Leg Reach", "Single-Leg Stance",
+    "Standing Forward Fold Roll-Up", "Standing on a Folded Towel/Cushion", "Thoracic Rotations",
+    "Walking Lunges", "Weighted Dead-Hang", "Wrist Prep", "Wrist Stretch", "World's Greatest Stretch"];
+
+  // Each distinct warm-up bullet actually written in the plan, mapped to the
+  // individual movement(s) it names — exact-string keyed, deliberately not
+  // parsed/guessed, so a line that isn't a known combo just renders as plain
+  // text with no photo offered. The generic lines ("3–5 min light cardio",
+  // "Ramp-up sets…") are never keys here on purpose.
+  var WARMUP_LINE_MAP = {
+    "Leg swings, hip circles, arm circles, walking lunges": ["Leg Swings", "Hip Circles", "Arm Circles", "Walking Lunges"],
+    "Leg swings, hip circles, cat-cow, band pull-aparts": ["Leg Swings", "Hip Circles", "Cat-Cow", "Band Pull-Apart"],
+    "Leg swings, hip circles, walking lunges": ["Leg Swings", "Hip Circles", "Walking Lunges"],
+    "Hip circles, arm circles, a few bodyweight swings": ["Hip Circles", "Arm Circles"],
+    "Shoulder circles, deep squat holds, wrist prep": ["Shoulder Circles", "Deep Squat Hold", "Wrist Prep"],
+    "Hip circles, leg swings, a light empty-bar front squat set": ["Hip Circles", "Leg Swings"]
+  };
+
+  // Each distinct tendon-prep paragraph, mapped to the hold(s) it names —
+  // the paragraph itself is unchanged on screen; this only adds the optional
+  // photo chips below it.
+  var TENDON_LINE_MAP = {
+    "Back Squat hold, mid-squat (thighs parallel)": ["Back Squat Hold"],
+    "Deadlift hold, bar at mid-shin against pins/blocks": ["Deadlift Hold"],
+    "Bulgarian Split Squat hold, bottom position (alternate legs), 4×20s. Also: Weighted dead-hang, 2×20s — light elbow/shoulder tendon prep before today's dips and pull-ups.": ["Bulgarian Split Squat Hold", "Weighted Dead-Hang"],
+    "Romanian Deadlift hold, mid-hinge": ["Romanian Deadlift Hold"],
+    "Pistol Squat hold, bottom position (assisted as needed, alternate legs), 4×20s. Also: Weighted dead-hang, 2×20s — light elbow/shoulder tendon prep before today's muscle-ups and handstand push-ups.": ["Pistol Squat Hold", "Weighted Dead-Hang"],
+    "Front Squat hold, bottom position (bar on front delts)": ["Front Squat Hold"]
+  };
+
+  // Each distinct stretch bullet, mapped to the name(s) it's made of — per
+  // Iftikhar's call, a combined line like "Hip flexor + quad stretch" is
+  // SPLIT into two separate display bullets (one per name), each carrying
+  // the same dosage the original line already had.
+  var STRETCH_LINE_MAP = {
+    "Hip flexor stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Hip Flexor Stretch"]},
+    "Chest/shoulder doorway stretch, 20–30s ×2": {dose: "20–30s ×2", names: ["Chest/Shoulder Doorway Stretch"]},
+    "Hamstring stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Hamstring Stretch"]},
+    "Lat stretch (arm overhead, lean sideways), 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Lat Stretch"]},
+    "Hip flexor + quad stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Hip Flexor Stretch", "Quad Stretch"]},
+    "Chest/shoulder stretch, 20–30s ×2": {dose: "20–30s ×2", names: ["Chest/Shoulder Doorway Stretch"]},
+    "Hamstring + glute stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Hamstring Stretch", "Glute Stretch"]},
+    "Lat stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Lat Stretch"]},
+    "Hip/ankle mobility stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Hip/Ankle Mobility Stretch"]},
+    "Shoulder + wrist stretch, 20–30s ×2": {dose: "20–30s ×2", names: ["Shoulder Stretch", "Wrist Stretch"]},
+    "Quad + hamstring stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Quad Stretch", "Hamstring Stretch"]},
+    "Lat + forearm stretch, 20–30s ×2": {dose: "20–30s ×2", names: ["Lat Stretch", "Forearm Stretch"]}
+  };
+
+  // BALANCE_ITEMS and the Guided Mobility Flow sub-items (inside
+  // RECOVERY_ITEMS, defined further below) are each one exact string too —
+  // mapped the same way, right next to where those arrays are defined.
+  var BALANCE_LINE_MAP = {
+    "Single-leg stance, eyes open then closed — 30s/side ×2": "Single-Leg Stance",
+    "Single-leg reach (no load) — 8/side": "Single-Leg Reach",
+    "Stand on a folded towel/cushion — 30s/side": "Standing on a Folded Towel/Cushion"
+  };
+
+  // The Guided Mobility Flow's own sub-items (inside RECOVERY_ITEMS, below).
+  var RECOVERY_SUBITEM_MAP = {
+    "Cat-Cow — on hands and knees, slowly arch then round your spine, 90 seconds": "Cat-Cow",
+    "World's Greatest Stretch — low lunge, rear leg straight, rotate your torso and reach toward the ceiling, 90 seconds each side": "World's Greatest Stretch",
+    "Thoracic Rotations — on all fours, one hand behind your head, rotate that elbow down then up toward the ceiling, 90 seconds each side": "Thoracic Rotations",
+    "Hip Circles — standing, hands on hips, trace slow circles with your hips, 60 seconds each direction": "Hip Circles",
+    "Ankle Circles — seated or standing on one leg, circle the other foot at the ankle, 60 seconds each foot": "Ankle Circles",
+    "Standing Forward Fold Roll-Up — hinge forward and let your arms hang, then roll back up one vertebra at a time, 5 slow reps": "Standing Forward Fold Roll-Up"
+  };
+
+  // Expands a kind's raw description lines into {text, photoName} entries
+  // for rendering, using the right LINE_MAP (or none, for a plain list).
+  function expandNamedLines(lines, lineMap) {
+    var out = [];
+    (lines || []).forEach(function(line){
+      var names = lineMap[line];
+      if (names) {
+        // WARMUP_LINE_MAP values are arrays (a combo line can name several
+        // movements); BALANCE_LINE_MAP / RECOVERY_SUBITEM_MAP values are a
+        // single string (one line, one movement) — accept either shape.
+        if (typeof names === "string") names = [names];
+        names.forEach(function(n){ out.push({text: n, photoName: n}); });
+      } else {
+        out.push({text: line, photoName: null});
+      }
+    });
+    return out;
+  }
+  function expandStretchLines(lines) {
+    var out = [];
+    (lines || []).forEach(function(line){
+      var m = STRETCH_LINE_MAP[line];
+      if (m) {
+        m.names.forEach(function(n){ out.push({text: n + ', ' + m.dose, photoName: n}); });
+      } else {
+        out.push({text: line, photoName: null});
+      }
+    });
+    return out;
+  }
 
   function bodyOutlineSVG(sex) {
     var b = BODY_SHAPE[sex];
@@ -2196,6 +2328,17 @@
       html += '</div></div>';
     });
 
+    html += '<p class="note-line" style="margin:18px 0 14px">Plus every warm-up drill, tendon-prep hold, stretch, balance drill and active-recovery move used throughout the program:</p>';
+    SUPPORT_MOVEMENTS.slice().sort().forEach(function(name){
+      var p = resolvePhotoPath(name);
+      html += '<div class="card manual-workout" style="margin-bottom:10px">';
+      html += '<div class="mw-head">' + esc(name) + '</div>';
+      if (p) {
+        html += '<div class="mw-body"><div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + p + '" alt="' + esc(name) + '" loading="lazy"></div></div>';
+      }
+      html += '</div>';
+    });
+
     html += '<div class="section-label">Golden Rules</div>';
     html += '<p class="note-line" style="margin-bottom:8px">' + esc(GOLDEN_RULES) + '</p>';
 
@@ -2208,6 +2351,33 @@
   // throwaway UI preference that should default back to collapsed every
   // time a step is entered, not something worth saving to localStorage.
   var revealedPhotos = {};
+
+  // Renders a <ul class="item-list"> where any item that resolves to a
+  // known photo (a main exercise or a supporting movement) gets a small
+  // tap-to-reveal "Photo" button of its own, collapsed by default — same
+  // idea as the per-exercise toggle, just one per line instead of one per
+  // step. `keyPrefix` keeps each step's reveal state from colliding with
+  // any other step or list on screen.
+  function renderNamedItemList(items, keyPrefix) {
+    var html = '<ul class="item-list named-item-list">';
+    items.forEach(function(it, i){
+      var photoPath = resolvePhotoPath(it.photoName);
+      var key = keyPrefix + '_' + i;
+      var revealed = photoPath && !!revealedPhotos[key];
+      html += '<li>';
+      html += '<div class="ni-row"><span>' + esc(it.text) + '</span>';
+      if (photoPath) {
+        html += '<button class="ni-photo-btn" data-action="toggle-photo-reveal" data-key="' + key + '">' + (revealed ? 'Hide' : 'Photo') + '</button>';
+      }
+      html += '</div>';
+      if (revealed) {
+        html += '<div class="ni-photo"><img class="ex-photo" src="' + photoPath + '" alt="' + esc(it.photoName) + '" loading="lazy"></div>';
+      }
+      html += '</li>';
+    });
+    html += '</ul>';
+    return html;
+  }
 
   function renderStepBody(step, stepIdx) {
     var html = '';
@@ -2287,7 +2457,8 @@
       var label = step.kind === "warmup" ? "Warm-up" : "Stretch";
       html += '<div class="step-kind ' + step.kind + '">' + label + ' · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + label + '</h2>';
-      html += '<ul class="item-list">' + step.items.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
+      var expanded = step.kind === "warmup" ? expandNamedLines(step.items, WARMUP_LINE_MAP) : expandStretchLines(step.items);
+      html += renderNamedItemList(expanded, step.kind + stepIdx);
     } else if (step.kind === "homealt") {
       html += '<div class="step-kind">Equipment</div>';
       html += '<h2 class="step-title">' + esc(step.title) + '</h2>';
@@ -2297,6 +2468,10 @@
       html += '<div class="step-kind tendon">Tendon Prep · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">Tendon Prep</h2>';
       html += '<div class="tendon-box"><p>' + esc(step.text) + '</p></div>';
+      var tendonNames = TENDON_LINE_MAP[step.text];
+      if (tendonNames && tendonNames.length) {
+        html += renderNamedItemList(tendonNames.map(function(n){ return {text:n, photoName:n}; }), "tendon" + stepIdx);
+      }
       html += renderStats([{v:"4×20s",l:"Hold"},{v:"60s",l:"Rest"}]);
       html += '<p class="note-line">Firm, controlled tension at roughly 70% effort — not a maximal grind. Done before your working sets.</p>';
     } else if (step.kind === "gpp") {
@@ -2307,7 +2482,7 @@
     } else if (step.kind === "balance") {
       html += '<div class="step-kind">Balance · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">Balance</h2>';
-      html += '<ul class="item-list">' + step.items.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
+      html += renderNamedItemList(expandNamedLines(step.items, BALANCE_LINE_MAP), "balance" + stepIdx);
     } else if (step.kind === "cardio") {
       html += '<div class="step-kind">Cardio · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">Cardio</h2>';
@@ -2317,8 +2492,11 @@
       html += '<div class="step-kind">Recovery · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + esc(step.title) + '</h2>';
       html += '<div class="instr-card"><p>' + esc(step.text) + '</p></div>';
+      if (resolvePhotoPath(step.title)) {
+        html += renderNamedItemList([{text: step.title, photoName: step.title}], "recovtitle" + stepIdx);
+      }
       if (step.items && step.items.length) {
-        html += '<ul class="item-list">' + step.items.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
+        html += renderNamedItemList(expandNamedLines(step.items, RECOVERY_SUBITEM_MAP), "recov" + stepIdx);
       }
     } else if (step.kind === "rest") {
       html += '<div class="step-kind">Rest</div>';
@@ -2424,7 +2602,7 @@
     else if (action === "open-delete-measurement-confirm") { openDeleteMeasurementConfirm(el.getAttribute("data-id"), el.getAttribute("data-date")); }
     else if (action === "set-hitall") { setStepHitAll(parseInt(el.getAttribute("data-step"),10), el.getAttribute("data-val")==="yes"); }
     else if (action === "toggle-photo-reveal") {
-      var ps = el.getAttribute("data-step");
+      var ps = el.getAttribute("data-key") || el.getAttribute("data-step");
       revealedPhotos[ps] = !revealedPhotos[ps];
       renderKeepScroll();
     }
