@@ -318,6 +318,7 @@
   .sk-svg .sk-div { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
   .sk-svg .sk-label { fill: var(--ink-faint); font-family: 'JetBrains Mono', monospace; font-size: 7px; text-transform: uppercase; letter-spacing: 0.04em; text-anchor: middle; }
   .manual-sketch { margin: 6px 0 2px; }
+  .ex-photo { width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--line); }
 
   .mm-svg { width: 100%; max-width: 260px; display: block; margin: 0 auto; }
   .mm-svg .mm-torso { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
@@ -446,7 +447,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v23 · 2026-10-04";
+  var APP_VERSION = "v24 · 2026-10-04";
 
   /* ============================================================
      DATA
@@ -1182,6 +1183,17 @@
     "Face Pull (band or cable)": ["rearDelts","traps"],
     "Lateral Bound, Stick the Landing": ["quads","glutes","hamstrings","calves"]
   };
+
+  // Real reference photos, added one exercise at a time as they're supplied —
+  // every name in this list must have a matching file at exercises/<slug>.jpg.
+  // Exercises not yet in this list keep showing the plain stick-figure sketch
+  // in the Field Manual until their photo arrives.
+  var EX_PHOTOS = ["Barbell Back Squat"];
+  function photoSlug(name) {
+    return name.toLowerCase().replace(/[()]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function exercisePhotoPath(name) { return 'exercises/' + photoSlug(name) + '.jpg'; }
+
   function bodyOutlineSVG(sex) {
     var b = BODY_SHAPE[sex];
     var s = '<polygon class="mm-torso" points="' + b.shoulderL.join(',') + ' ' + b.shoulderR.join(',') + ' ' + b.waistR.join(',') + ' ' + b.hipR.join(',') + ' ' + b.hipL.join(',') + ' ' + b.waistL.join(',') + '"/>';
@@ -2129,7 +2141,8 @@
             '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--ink-faint);white-space:nowrap">' + esc(e.sets) + ' · ' + esc(e.rest) + '</span>' +
             '</div>' +
             '<p class="mn-cardbody">' + esc(EX_HOWTO[e.name] || '') + '</p>' +
-            (EX_SKETCH[e.name] ? '<div class="sketch-wrap manual-sketch">' + renderExerciseSketch(e.name) + '</div>' : '') +
+            (EX_PHOTOS.indexOf(e.name) !== -1 ? '<div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + exercisePhotoPath(e.name) + '" alt="' + esc(e.name) + '" loading="lazy"></div>' :
+              (EX_SKETCH[e.name] ? '<div class="sketch-wrap manual-sketch">' + renderExerciseSketch(e.name) + '</div>' : '')) +
             (EX_MUSCLES[e.name] ? '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div>' + renderMuscleMap(manualSex, EX_MUSCLES[e.name]) + '</div>' : '') +
             '</div>';
         }).join('') + '</div>';
@@ -2170,11 +2183,10 @@
       html += '<div class="step-kind">Exercise</div>';
       html += '<div class="ex-header"><div class="ex-icon">' + EX_ICONS[exerciseIconKey(step.title)] + '</div><h2 class="step-title">' + esc(step.title) + '</h2></div>';
       if (EX_HOWTO[step.title]) {
-        var exSex = state.profile && state.profile.sex === "female" ? "female" : "male";
-        html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(EX_HOWTO[step.title]) + '</p>' +
-          (EX_SKETCH[step.title] ? '<div class="sketch-wrap">' + renderExerciseSketch(step.title) + '</div>' : '') +
-          (EX_MUSCLES[step.title] ? '<div class="sketch-wrap"><div class="mn-label">Muscles Worked</div>' + renderMuscleMap(exSex, EX_MUSCLES[step.title]) + '</div>' : '') +
-          '</div>';
+        // Pose pictures and the muscle-worked diagram live only in the Field
+        // Manual now — mid-workout you just want the cue text, nothing to
+        // scroll past.
+        html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(EX_HOWTO[step.title]) + '</p></div>';
       }
       html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
       if (step.isMainLift) {
