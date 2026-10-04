@@ -462,7 +462,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v28 · 2026-10-04";
+  var APP_VERSION = "v29 · 2026-10-04";
 
   /* ============================================================
      DATA
@@ -2278,6 +2278,7 @@
         html += '<p class="mn-label amber">Tendon Prep</p>';
         html += '<p class="mn-cardbody" style="margin-bottom:12px">' + esc(wk.tendon) + '</p>';
         html += '<p class="mn-label">Movements</p>';
+        html += '<p class="note-line" style="margin:0 0 10px">Photos &amp; muscles worked for each move are in the Exercise Library tab above.</p>';
         html += '<div style="margin-bottom:12px">' + wk.exercises.map(function(e){
           return '<div class="card" style="margin-bottom:10px;padding:12px 14px">' +
             '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px">' +
@@ -2285,9 +2286,6 @@
             '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--ink-faint);white-space:nowrap">' + esc(e.sets) + ' · ' + esc(e.rest) + '</span>' +
             '</div>' +
             '<p class="mn-cardbody">' + esc(EX_HOWTO[e.name] || '') + '</p>' +
-            (EX_PHOTOS.indexOf(e.name) !== -1 ? '<div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + exercisePhotoPath(e.name) + '" alt="' + esc(e.name) + '" loading="lazy"></div>' :
-              (EX_SKETCH[e.name] ? '<div class="sketch-wrap manual-sketch">' + renderExerciseSketch(e.name) + '</div>' : '')) +
-            (EX_MUSCLE_PHOTOS.indexOf(e.name) !== -1 ? '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div><img class="ex-photo" src="' + musclePhotoPath(e.name) + '" alt="Muscles worked — ' + esc(e.name) + '" loading="lazy"></div>' : '') +
             '</div>';
         }).join('') + '</div>';
         html += '<p class="mn-label olive">Stretch</p>';
