@@ -364,6 +364,38 @@
   .summary-list li:last-child { border-bottom: none; }
   .summary-list svg { width: 16px; height: 16px; color: var(--good); flex-shrink: 0; }
 
+
+  /* ---- guided timer runner ---- */
+  .guided { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+  .g-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; }
+  .g-x { background: var(--surface-2); border: none; border-radius: 8px; padding: 8px 14px; color: var(--ink-soft);
+    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .g-count { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); }
+  .g-progress { height: 4px; background: var(--surface-2); margin: 0 16px; border-radius: 2px; overflow: hidden; }
+  .g-pfill { height: 100%; background: var(--olive); width: 0; transition: width .3s; }
+  .g-main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px 20px; gap: 6px; overflow: hidden; }
+  .g-photo { max-width: 100%; max-height: 34vh; object-fit: contain; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+  .g-phase { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--olive); margin-top: 6px; }
+  .g-rest .g-phase { color: var(--amber); }
+  .g-title { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 1.5rem; line-height: 1.15; color: var(--ink); }
+  .g-sub { font-size: 14px; color: var(--ink-soft); min-height: 20px; }
+  .g-time { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 4.6rem; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .g-reps { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 2.6rem; color: var(--ink); }
+  .g-bar { width: 100%; max-width: 360px; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .g-fill { height: 100%; background: var(--olive); width: 0; }
+  .g-rest .g-fill { background: var(--amber); }
+  .g-next { padding: 10px 20px; text-align: center; font-size: 13px; color: var(--ink-soft); border-top: 1px solid var(--line); background: var(--surface); }
+  .g-next b { font-family: 'Oswald', sans-serif; color: var(--ink); font-weight: 600; }
+  .g-controls { display: flex; gap: 10px; padding: 12px 16px 14px; background: var(--surface); }
+  .g-controls .btn { flex: 1; }
+  .g-controls .btn[disabled] { opacity: .4; }
+  .g-done { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; gap: 8px; }
+  .g-done h2 { font-family: 'Oswald', sans-serif; margin: 6px 0 0; }
+  .g-done p { margin: 0 0 14px; color: var(--ink-soft); }
+  .guided-start { margin-bottom: 14px; }
+  .guided-start-note { font-size: 12px; color: var(--ink-faint); text-align: center; margin: -6px 0 14px; }
+
   /* ---- exit confirm overlay ---- */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
   .overlay-sheet { background: var(--surface); width: 100%; max-width: 520px; border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); }
@@ -470,7 +502,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v35 · 2026-10-05";
+  var APP_VERSION = "v36 · 2026-10-05";
 
   /* ============================================================
      DATA
@@ -901,6 +933,7 @@
     measureError: null,
     session: null,           // {dayNum, phase, liftType, gppType, type, steps, idx, setDots:{}, weights:{}}
     confirm: null,           // {action, payload?, title, body, confirmLabel, cancelLabel?}
+    guided: null,            // live guided-timer run (never persisted): {stepIdx, segs, idx, endsAt, paused, remainMs, done}
     toast: null
   };
 
@@ -1578,6 +1611,7 @@
   function completeStep() {
     var sess = state.session;
     if (setsRemaining(sess.steps[sess.idx], sess.idx) > 0) return; // all sets must be ticked first
+    stopGuided();
     clearRestInterval();
     sess.restTimer = null;
     if (sess.idx < sess.steps.length - 1) {
@@ -1594,6 +1628,7 @@
 
   function backStep() {
     var sess = state.session;
+    stopGuided();
     clearRestInterval();
     sess.restTimer = null;
     if (sess.idx > 0) { sess.idx--; revealedPhotos = {}; render(); }
@@ -1601,6 +1636,7 @@
   }
 
   function exitSession() {
+    stopGuided();
     clearRestInterval();
     state.session = null;
     state.screen = "home";
@@ -1830,6 +1866,280 @@
       });
     } catch (e) {}
   }
+
+
+  /* ============================================================
+     GUIDED TIMER — runs every timed drill in a step, start to finish.
+     Defaults: 30s per hold (the plan says 20–30s, so we use the top end),
+     5s between sides/rounds, 10s between drills, 60s between tendon holds.
+     Timing is timestamp-based (endsAt), so if the phone sleeps or the app
+     is backgrounded it catches up to the right place on return.
+  ============================================================ */
+  var GUIDE_DEFAULTS = { sideRest: 5, exRest: 10, lead: 5, tendonRest: 60, repEstimate: 20 };
+  var guidedInterval = null, wakeLock = null;
+
+  function guideSideLabels(text) {
+    if (/each direction/i.test(text)) return ["Clockwise", "Counter-clockwise"];
+    if (/each foot/i.test(text)) return ["Left foot", "Right foot"];
+    if (/each side|\/\s*side|each leg/i.test(text)) return ["Left side", "Right side"];
+    return [null];
+  }
+  function guideHoldSeconds(text) {
+    var m = text.match(/(\d+)(?:\s*[–-]\s*(\d+))?\s*(?:s\b|sec)/i);
+    return m ? parseInt(m[2] || m[1], 10) : 0;
+  }
+  function guideRounds(text) {
+    var m = text.match(/×\s*(\d+)/);
+    return m ? parseInt(m[1], 10) : 1;
+  }
+  function guideReps(text) {
+    var m = text.match(/(\d+)\s*(?:slow\s*)?reps?\b/i) || text.match(/(\d+)\s*\/\s*side/i);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
+  // Turns one session step into a flat list of segments, or null when the
+  // step has nothing timeable. Segment: {type: work|rep|rest, title, sub, sec,
+  // photo, group, next}. "rep" segments (e.g. 8 reps) have no countdown —
+  // they wait for a tap on Done.
+  function buildGuidedSeq(step) {
+    var G = GUIDE_DEFAULTS, groups = [];
+    function addGroup(name, labels, rounds, sec, reps, innerRest, restAfter) {
+      var grp = { items: [], innerRest: innerRest, restAfter: restAfter };
+      for (var r = 1; r <= rounds; r++) {
+        labels.forEach(function(lab) {
+          var parts = [];
+          if (!sec && reps) parts.push(reps + " reps");
+          if (lab) parts.push(lab);
+          if (rounds > 1) parts.push("Round " + r + " of " + rounds);
+          grp.items.push({ type: sec ? "work" : "rep", title: name, sub: parts.join(" · "), sec: sec || 0, photo: name });
+        });
+      }
+      groups.push(grp);
+    }
+    if (step.kind === "stretch") {
+      (step.items || []).forEach(function(line) {
+        var m = STRETCH_LINE_MAP[line];
+        if (!m) return;
+        var labels = /each side/i.test(m.dose) ? ["Left side", "Right side"] : [null];
+        m.names.forEach(function(n) { addGroup(n, labels, guideRounds(m.dose), guideHoldSeconds(m.dose) || 30, 0, G.sideRest, G.exRest); });
+      });
+    } else if (step.kind === "balance") {
+      (step.items || []).forEach(function(line) {
+        var n = BALANCE_LINE_MAP[line];
+        if (!n) return;
+        var sec = guideHoldSeconds(line);
+        addGroup(n, guideSideLabels(line), guideRounds(line), sec, sec ? 0 : guideReps(line), G.sideRest, G.exRest);
+      });
+    } else if (step.kind === "recovery") {
+      if (step.items && step.items.length) {
+        step.items.forEach(function(line) {
+          var n = RECOVERY_SUBITEM_MAP[line] || line.split(" — ")[0];
+          var sec = guideHoldSeconds(line);
+          addGroup(n, guideSideLabels(line), 1, sec, sec ? 0 : guideReps(line), G.sideRest, G.exRest);
+        });
+      } else {
+        var mm = (step.sub || "").match(/(\d+)\s*min/i);
+        if (mm) addGroup(step.title, [null], 1, parseInt(mm[1], 10) * 60, 0, 0, 0);
+      }
+    } else if (step.kind === "tendon") {
+      var names = TENDON_LINE_MAP[step.text];
+      if (!names) return null;
+      names.forEach(function(n, i) { addGroup(n, [null], i === 0 ? 4 : 2, 20, 0, G.tendonRest, G.tendonRest); });
+    }
+    var segs = [];
+    groups.forEach(function(grp, gi) {
+      grp.items.forEach(function(it, k) {
+        if (k > 0) segs.push({ type: "rest", title: "Rest", sec: grp.innerRest, group: gi, same: true });
+        it.group = gi;
+        segs.push(it);
+      });
+      if (gi < groups.length - 1 && grp.restAfter) segs.push({ type: "rest", title: "Rest", sec: grp.restAfter, group: gi + 1, same: false });
+    });
+    if (!segs.length) return null;
+    // Lead-in, then fill in each rest's preview (the next real drill).
+    segs.unshift({ type: "rest", title: "Get ready", sec: G.lead, group: 0, lead: true });
+    for (var i = 0; i < segs.length; i++) {
+      if (segs[i].type !== "rest") continue;
+      for (var j = i + 1; j < segs.length; j++) {
+        if (segs[j].type !== "rest") {
+          segs[i].next = segs[j];
+          segs[i].photo = segs[j].photo;
+          segs[i].sub = segs[i].lead ? "First up: " + segs[j].title : (segs[i].same ? "Switch sides / reset" : "Get into position");
+          break;
+        }
+      }
+    }
+    var total = 0;
+    segs.forEach(function(sg) { total += sg.sec || G.repEstimate; });
+    return { segs: segs, groupCount: groups.length, totalSec: total };
+  }
+
+  function guidedMinutesLabel(sec) {
+    var m = Math.max(1, Math.round(sec / 60));
+    return "≈ " + m + " min";
+  }
+  function fmtClock(sec) {
+    sec = Math.max(0, sec);
+    var mm = Math.floor(sec / 60), ss = sec % 60;
+    return mm + ":" + String(ss).padStart(2, "0");
+  }
+
+  function requestWake() {
+    try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function(l){ wakeLock = l; }).catch(function(){}); } catch (e) {}
+  }
+  function releaseWake() {
+    try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {}
+  }
+  function playTone(freq, dur) {
+    var ctx = ensureAudio();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      var now = ctx.currentTime, osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.22, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now); osc.stop(now + dur + 0.02);
+    } catch (e) {}
+  }
+
+  function startGuided(stepIdx) {
+    var step = state.session && state.session.steps[stepIdx];
+    var built = step && buildGuidedSeq(step);
+    if (!built) return;
+    ensureAudio();
+    clearGuidedInterval();
+    var g = { stepIdx: stepIdx, segs: built.segs, groupCount: built.groupCount, idx: 0, endsAt: Date.now() + built.segs[0].sec * 1000,
+      paused: false, remainMs: 0, done: false, lastTick: null };
+    state.guided = g;
+    requestWake();
+    guidedInterval = setInterval(tickGuided, 250);
+    playTone(660, 0.12);
+    render();
+  }
+  function clearGuidedInterval() { if (guidedInterval) { clearInterval(guidedInterval); guidedInterval = null; } }
+  function stopGuided() {
+    clearGuidedInterval(); releaseWake();
+    state.guided = null;
+  }
+  function guidedEnter(g, idx, announce) {
+    g.idx = idx; g.lastTick = null;
+    var seg = g.segs[idx];
+    g.endsAt = seg.type === "rep" ? null : (g.endsAt && announce === "catchup" ? g.endsAt : Date.now() + seg.sec * 1000);
+  }
+  function guidedAdvance(userSkip) {
+    var g = state.guided;
+    if (!g || g.done) return;
+    if (g.idx >= g.segs.length - 1) { finishGuided(); return; }
+    guidedEnter(g, g.idx + 1);
+    if (g.paused) { g.paused = false; }
+    playSegmentCue(g.segs[g.idx]);
+    render();
+  }
+  function playSegmentCue(seg) {
+    if (seg.type === "rest") playTone(440, 0.28); else playBeep();
+  }
+  function guidedBack() {
+    var g = state.guided;
+    if (!g || g.done) return;
+    var target = g.idx;
+    for (var i = g.idx - 1; i >= 0; i--) { if (g.segs[i].type !== "rest") { target = i; break; } }
+    if (target === g.idx) { for (var k = g.idx - 1; k >= 0; k--) { target = k; break; } }
+    g.paused = false;
+    guidedEnter(g, target);
+    render();
+  }
+  function guidedTogglePause() {
+    var g = state.guided;
+    if (!g || g.done) return;
+    var seg = g.segs[g.idx];
+    if (seg.type === "rep") return;
+    if (g.paused) { g.endsAt = Date.now() + g.remainMs; g.paused = false; }
+    else { g.remainMs = Math.max(0, g.endsAt - Date.now()); g.paused = true; }
+    render();
+  }
+  function finishGuided() {
+    var g = state.guided;
+    if (!g) return;
+    g.done = true;
+    clearGuidedInterval(); releaseWake();
+    playBeep();
+    render();
+  }
+
+  function tickGuided() {
+    var g = state.guided;
+    if (!g || g.done || g.paused) return;
+    var seg = g.segs[g.idx];
+    if (seg.type === "rep") return;
+    var now = Date.now(), moved = false;
+    // Catch up if the page was suspended: walk forward through every segment
+    // whose end has already passed, stopping at a rep segment (needs a tap).
+    while (seg.type !== "rep" && now >= g.endsAt) {
+      if (g.idx >= g.segs.length - 1) { finishGuided(); return; }
+      var carry = g.endsAt;
+      g.idx++; moved = true; g.lastTick = null;
+      seg = g.segs[g.idx];
+      g.endsAt = seg.type === "rep" ? null : carry + seg.sec * 1000;
+    }
+    if (moved) { playSegmentCue(seg); render(); return; }
+    var remaining = Math.ceil((g.endsAt - now) / 1000);
+    if (remaining <= 3 && remaining > 0 && g.lastTick !== remaining) { g.lastTick = remaining; playTone(700, 0.07); }
+    var t = document.getElementById("g-time");
+    if (t) t.textContent = fmtClock(remaining);
+    var f = document.getElementById("g-fill");
+    if (f) f.style.width = Math.max(0, Math.min(100, Math.round(((seg.sec - remaining) / seg.sec) * 100))) + "%";
+  }
+
+  function renderGuidedOverlay() {
+    var g = state.guided;
+    if (!g) return '';
+    if (g.done) {
+      return '<div class="guided"><div class="g-done"><div class="check-circle">' + ICONS.checkBig + '</div>' +
+        '<h2>Sequence Complete</h2><p>Every drill in this step is done.</p>' +
+        '<button class="btn btn-primary btn-block" data-action="guided-finish">Continue</button></div></div>';
+    }
+    var seg = g.segs[g.idx];
+    var isRep = seg.type === "rep", isRest = seg.type === "rest";
+    var photo = seg.photo ? resolvePhotoPath(seg.photo) : null;
+    var remaining = g.paused ? Math.ceil(g.remainMs / 1000) : (isRep ? 0 : Math.ceil((g.endsAt - Date.now()) / 1000));
+    var pct = (!isRep && seg.sec) ? Math.max(0, Math.min(100, Math.round(((seg.sec - remaining) / seg.sec) * 100))) : 0;
+    var nextSeg = null;
+    for (var i = g.idx + 1; i < g.segs.length; i++) { if (g.segs[i].type !== "rest") { nextSeg = g.segs[i]; break; } }
+    if (isRest && seg.next) nextSeg = seg.next;
+    var drill = Math.min(g.groupCount, seg.group + 1);
+    var html = '<div class="guided ' + (isRest ? 'g-rest' : 'g-work') + '">';
+    html += '<div class="g-top"><button class="g-x" data-action="guided-exit">✕ Exit</button><div class="g-count">Drill ' + drill + ' of ' + g.groupCount + '</div></div>';
+    html += '<div class="g-progress"><div class="g-pfill" style="width:' + Math.round((g.idx / g.segs.length) * 100) + '%"></div></div>';
+    html += '<div class="g-main">';
+    if (photo) html += '<img class="g-photo" src="' + photo + '" alt="' + esc(seg.photo) + '">';
+    html += '<div class="g-phase">' + (seg.lead ? 'Get ready' : (isRest ? 'Rest' : (isRep ? 'Reps' : 'Hold'))) + '</div>';
+    if (!isRest) html += '<div class="g-title">' + esc(seg.title) + '</div>';
+    else html += '<div class="g-title">' + (seg.lead ? 'Starting soon' : 'Rest') + '</div>';
+    html += '<div class="g-sub">' + esc(seg.sub || '') + '</div>';
+    if (isRep) {
+      html += '<div class="g-reps">Do your reps</div>';
+    } else {
+      html += '<div class="g-time" id="g-time">' + fmtClock(remaining) + '</div>';
+      html += '<div class="g-bar"><div class="g-fill" id="g-fill" style="width:' + pct + '%"></div></div>';
+    }
+    html += '</div>';
+    if (nextSeg && !(isRest && seg.lead)) html += '<div class="g-next">Next up: <b>' + esc(nextSeg.title) + '</b>' + (nextSeg.sub ? ' · ' + esc(nextSeg.sub) : '') + '</div>';
+    else html += '<div class="g-next">' + (nextSeg ? '' : 'Last one — finish strong') + '</div>';
+    html += '<div class="g-controls">';
+    html += '<button class="btn btn-ghost" data-action="guided-back">‹ Back</button>';
+    if (isRep) html += '<button class="btn btn-primary" data-action="guided-skip">Done ›</button>';
+    else html += '<button class="btn btn-primary" data-action="guided-pause">' + (g.paused ? 'Resume' : 'Pause') + '</button>';
+    html += '<button class="btn btn-ghost" data-action="guided-skip">Skip ›</button>';
+    html += '</div></div>';
+    return html;
+  }
+
+  document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "visible" && state.guided && !state.guided.done) { requestWake(); tickGuided(); }
+  });
 
   /* ---- confirm-overlay plumbing: one generic sheet for every destructive action ---- */
   function openExitConfirm() {
@@ -2638,6 +2948,14 @@
     return html;
   }
 
+  function renderGuidedStart(step, stepIdx) {
+    var built = buildGuidedSeq(step);
+    if (!built) return '';
+    return '<button class="btn btn-primary btn-block guided-start" data-action="start-guided" data-step="' + stepIdx + '">' +
+      '<span>Start Guided Timer · ' + guidedMinutesLabel(built.totalSec) + '</span></button>' +
+      '<p class="guided-start-note">Runs every move in order — holds, rests and beeps — so you can just follow along.</p>';
+  }
+
   function renderStepBody(step, stepIdx) {
     var html = '';
     if (state.session && state.session.deload) {
@@ -2728,6 +3046,7 @@
       var label = step.kind === "warmup" ? "Warm-up" : "Stretch";
       html += '<div class="step-kind ' + step.kind + '">' + label + ' · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + label + '</h2>';
+      if (step.kind === "stretch") html += renderGuidedStart(step, stepIdx);
       var expanded = step.kind === "warmup" ? expandNamedLines(step.items, WARMUP_LINE_MAP) : expandStretchLines(step.items);
       html += renderNamedItemList(expanded, step.kind + stepIdx);
     } else if (step.kind === "homealt") {
@@ -2738,6 +3057,7 @@
     } else if (step.kind === "tendon") {
       html += '<div class="step-kind tendon">Tendon Prep · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">Tendon Prep</h2>';
+      html += renderGuidedStart(step, stepIdx);
       html += '<div class="tendon-box"><p>' + esc(step.text) + '</p></div>';
       var tendonNames = TENDON_LINE_MAP[step.text];
       if (tendonNames && tendonNames.length) {
@@ -2753,6 +3073,7 @@
     } else if (step.kind === "balance") {
       html += '<div class="step-kind">Balance · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">Balance</h2>';
+      html += renderGuidedStart(step, stepIdx);
       html += renderNamedItemList(expandNamedLines(step.items, BALANCE_LINE_MAP), "balance" + stepIdx);
     } else if (step.kind === "cardio") {
       html += '<div class="step-kind">Cardio · ' + esc(step.sub) + '</div>';
@@ -2762,6 +3083,7 @@
     } else if (step.kind === "recovery") {
       html += '<div class="step-kind">Recovery · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + esc(step.title) + '</h2>';
+      html += renderGuidedStart(step, stepIdx);
       html += '<div class="instr-card"><p>' + esc(step.text) + '</p></div>';
       if (resolvePhotoPath(step.title)) {
         html += renderNamedItemList([{text: step.title, photoName: step.title}], "recovtitle" + stepIdx);
@@ -2833,7 +3155,7 @@
     else if (state.screen === "profile") body = renderProfile();
     else if (state.screen === "settings") body = renderSettings();
     else body = renderHome();
-    app.innerHTML = renderTopbar() + body + renderConfirmOverlay();
+    app.innerHTML = renderTopbar() + body + renderConfirmOverlay() + renderGuidedOverlay();
   }
 
   // For an in-place update (ticking a set, flipping a toggle, picking an
@@ -2884,6 +3206,12 @@
       if (targetPhase === 3 && state.settings.phase !== 3) openPhase3GateConfirm();
       else setPhase(targetPhase);
     }
+    else if (action === "start-guided") { startGuided(parseInt(el.getAttribute("data-step"),10)); }
+    else if (action === "guided-pause") { guidedTogglePause(); }
+    else if (action === "guided-skip") { guidedAdvance(true); }
+    else if (action === "guided-back") { guidedBack(); }
+    else if (action === "guided-exit") { stopGuided(); renderKeepScroll(); }
+    else if (action === "guided-finish") { stopGuided(); completeStep(); }
     else if (action === "complete-step") { completeStep(); }
     else if (action === "back-step") { backStep(); }
     else if (action === "exit-session") { openExitConfirm(); }
