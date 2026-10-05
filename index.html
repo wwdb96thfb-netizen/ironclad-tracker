@@ -659,7 +659,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.4.1";
+  var APP_VERSION = "2.5.0";
 
   /* ============================================================
      DATA
@@ -2503,6 +2503,23 @@
     render();
   }
 
+  function openResetChoice() { state.resetChoice = true; render(); }
+  function openResetAllConfirm() {
+    state.resetChoice = false;
+    state.confirm = { action:"reset-all", title:"Erase everything?", body:"Deletes your profile, plan progress, training log, measurements and theme choice. The app starts fresh like the first time you opened it. This cannot be undone.", confirmLabel:"Erase everything" };
+    render();
+  }
+  function openResetProgressConfirm() {
+    state.resetChoice = false;
+    state.confirm = { action:"reset-progress", title:"Reset all progress?", body:"Deletes your plan progress, training log and body measurements. Your profile (men/women path, level, equipment) is kept.", confirmLabel:"Reset progress" };
+    render();
+  }
+  function wipeStorage(keys) {
+    try { keys.forEach(function(k){ localStorage.removeItem(k); }); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+    location.reload();
+  }
+
   function openDeleteConfirm(id, headline) {
     if (!id) {
       state.toast = "Couldn’t identify that session — try reopening the Log tab";
@@ -2572,6 +2589,8 @@
     else if (c.action === "clear-log") clearLog();
     else if (c.action === "delete-measurement") deleteMeasurement(c.payload.id);
     else if (c.action === "edit-profile") resetProfile();
+    else if (c.action === "reset-all") wipeStorage([LS_SETTINGS_KEY, LS_LOG_KEY, LS_MEASUREMENTS_KEY, LS_PROFILE_KEY, LS_THEME_KEY]);
+    else if (c.action === "reset-progress") wipeStorage([LS_SETTINGS_KEY, LS_LOG_KEY, LS_MEASUREMENTS_KEY]);
   }
 
   function resetPlan() {
@@ -3034,6 +3053,10 @@
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
     html += '<p class="ph-note">Takes you back to Day 1, Phase 1, Workout A / Ruck, and restarts the deload clock. Your training log and body measurements are not touched.</p>';
+
+    html += '<div class="section-label">Reset</div>';
+    html += '<button class="btn btn-ghost btn-block" data-action="open-reset-choice">' + ICONS.reset + '<span>Reset App…</span></button>';
+    html += '<p class="ph-note">Choose to erase just your progress, or the whole app so it starts like the first time you opened it.</p>';
 
     html += '<p class="ph-note" style="text-align:center;margin-top:24px;font-family:\'Barlow Condensed\',sans-serif;color:var(--ink-faint)">Ironclad &middot; Version ' + esc(APP_VERSION) + '</p>';
     html += '<p class="ph-note" style="text-align:center;margin-top:4px;font-size:11px;color:var(--ink-faint)">&copy; 2026 Syed Iftikhar Shah. All rights reserved.</p>';
@@ -3607,6 +3630,14 @@
 
   function renderConfirmOverlay() {
     var c = state.confirm;
+    if (!c && state.resetChoice) {
+      return '<div class="overlay" data-action="close-reset-choice"><div class="overlay-sheet" data-action="noop"><h3>Reset what?</h3>' +
+        '<p>Pick one. You will get a final confirmation before anything is deleted.</p>' +
+        '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<button class="btn btn-ghost btn-block" data-action="reset-progress-ask"><span>Progress only (keep my profile)</span></button>' +
+        '<button class="btn btn-danger btn-block" data-action="reset-all-ask"><span>Complete app (start from scratch)</span></button>' +
+        '<button class="btn btn-ghost btn-block" data-action="close-reset-choice"><span>Cancel</span></button></div></div></div>';
+    }
     if (!c) return '';
     return '<div class="overlay" data-action="dismiss-confirm">' +
       '<div class="overlay-sheet" data-action="noop">' +
@@ -3717,6 +3748,10 @@
     else if (action === "dismiss-confirm") { state.confirm = null; render(); }
     else if (action === "confirm-action") { runConfirm(); }
     else if (action === "open-reset-confirm") { openResetConfirm(); }
+    else if (action === "open-reset-choice") { openResetChoice(); }
+    else if (action === "close-reset-choice") { state.resetChoice = false; render(); }
+    else if (action === "reset-progress-ask") { openResetProgressConfirm(); }
+    else if (action === "reset-all-ask") { openResetAllConfirm(); }
     else if (action === "open-clearlog-confirm") { openClearLogConfirm(); }
     else if (action === "open-delete-confirm") { openDeleteConfirm(el.getAttribute("data-id"), el.getAttribute("data-headline")); }
     else if (action === "open-edit-profile-confirm") { openEditProfileConfirm(); }
