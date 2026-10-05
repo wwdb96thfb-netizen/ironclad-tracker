@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="author" content="Syed Iftikhar Shah">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ironclad Tracker</title>
 <meta name="description" content="Operation Ironclad — 12-month functional strength &amp; GPP tracker.">
-<meta name="theme-color" content="#20231A">
+<meta name="theme-color" content="#141416">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,48 +14,64 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ---- self-hosted fonts (work offline) ---- */
+  @font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/barlow-condensed-latin-500-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/barlow-condensed-latin-600-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/barlow-condensed-latin-700-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 800; font-display: swap; src: url(fonts/barlow-condensed-latin-800-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Barlow'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/barlow-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Barlow'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/barlow-latin-500-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Barlow'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/barlow-latin-600-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Barlow'; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/barlow-latin-700-normal.woff2) format('woff2'); }
+
   /* ============ TOKENS ============ */
   /* layout: single-column mobile app shell — fixed header, scrolling body, fixed bottom bar during a session */
   :root {
-    --bg: #EDE8DA; --surface: #F6F2E7; --surface-2: #DED5B8; --raised: #FFFDF6;
-    --ink: #22241E; --ink-soft: #4B4E42; --ink-faint: #8A8572;
-    --olive: #4E5E3E; --olive-deep: #38452D;
-    --rust: #9B4A2B; --rust-soft: #C97B54;
-    --amber: #A97A2E;
-    --line: #C9C2AC; --line-strong: #A69D80;
-    --good: #4E5E3E; --good-bg: #E3E8DA;
-    --warn-bg: #F1DFC9;
-    --on-accent: #F3EFE0; --on-accent-dim: #E3DEC9; --on-accent-soft: #D9D4C0;
+    --bg: #ECECE6; --surface: #FFFFFF; --surface-2: #E3E3DB; --raised: #FFFFFF;
+    --ink: #151517; --ink-soft: #4E4E49; --ink-faint: #82827A;
+    --olive: #1A1A1C; --olive-deep: #141416;
+    --accent: #F2B33D; --accent-bg: #FBF1D6; --cool: #3E6FA8;
+    --rust: #C2461F; --rust-soft: #E0703F;
+    --amber: #9A6700;
+    --line: #D9D9D0; --line-strong: #B4B4A8;
+    --good: #1F6B43; --good-bg: #E2F0E7;
+    --warn-bg: #FBE6D6;
+    --on-primary: #FFFFFF;
+    --on-accent: #F4F2EA; --on-accent-dim: #D6D4CA; --on-accent-soft: #B9B7AC;
+    --shadow: 0 1px 2px rgba(20,20,22,.06), 0 6px 18px rgba(20,20,22,.06);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #17190F; --surface: #20231A; --surface-2: #2B2E22; --raised: #262A1F;
-      --ink: #EDE9D8; --ink-soft: #AFAC96; --ink-faint: #6F6C5B;
-      --olive: #8FA377; --olive-deep: #6E8459;
-      --rust: #D98A5E; --rust-soft: #C97B54;
-      --amber: #D4A24E;
-      --line: #3A3D2E; --line-strong: #4E5241;
-      --good: #8FA377; --good-bg: #27301F;
-      --warn-bg: #3B2A1C;
-      --on-accent: #F3EFE0; --on-accent-dim: #E3DEC9; --on-accent-soft: #D9D4C0;
+      --bg: #0E0E10; --surface: #19191C; --surface-2: #26262A; --raised: #202023;
+      --ink: #F4F2EA; --ink-soft: #B2B0A7; --ink-faint: #76756E;
+      --olive: #F2B33D; --olive-deep: #0A0A0B;
+      --accent: #F2B33D; --accent-bg: #2B2414; --cool: #7FA9DD;
+      --rust: #FF7F52; --rust-soft: #FF7F52;
+      --amber: #F2B33D;
+      --line: #2C2C30; --line-strong: #444449;
+      --good: #7FD0A0; --good-bg: #1A2A21;
+      --warn-bg: #36241A;
+      --on-primary: #141416;
+      --on-accent: #F4F2EA; --on-accent-dim: #D6D4CA; --on-accent-soft: #B9B7AC;
+      --shadow: none;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #17190F; --surface: #20231A; --surface-2: #2B2E22; --raised: #262A1F;
-    --ink: #EDE9D8; --ink-soft: #AFAC96; --ink-faint: #6F6C5B;
-    --olive: #8FA377; --olive-deep: #6E8459;
-    --rust: #D98A5E; --rust-soft: #C97B54;
-    --amber: #D4A24E;
-    --line: #3A3D2E; --line-strong: #4E5241;
-    --good: #8FA377; --good-bg: #27301F;
-    --warn-bg: #3B2A1C;
-    --on-accent: #F3EFE0; --on-accent-dim: #E3DEC9; --on-accent-soft: #D9D4C0;
+    --bg: #0E0E10; --surface: #19191C; --surface-2: #26262A; --raised: #202023;
+    --ink: #F4F2EA; --ink-soft: #B2B0A7; --ink-faint: #76756E;
+    --olive: #F2B33D; --olive-deep: #0A0A0B;
+    --accent: #F2B33D; --accent-bg: #2B2414; --cool: #7FA9DD;
+    --rust: #FF7F52; --rust-soft: #FF7F52;
+    --amber: #F2B33D;
+    --line: #2C2C30; --line-strong: #444449;
+    --good: #7FD0A0; --good-bg: #1A2A21;
+    --warn-bg: #36241A;
+    --on-primary: #141416;
+    --on-accent: #F4F2EA; --on-accent-dim: #D6D4CA; --on-accent-soft: #B9B7AC;
+    --shadow: none;
     color-scheme: dark;
   }
 
@@ -63,7 +80,7 @@
   html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-family: 'Barlow', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     display: flex; flex-direction: column;
     touch-action: manipulation;
@@ -86,15 +103,15 @@
   }
   .topbar .tb-btn:active { background: rgba(255,255,255,0.14); }
   .tb-title-wrap { flex: 1; min-width: 0; }
-  .tb-title-wrap .tb-main { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tb-title-wrap .tb-sub { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.04em; color: var(--on-accent-soft); margin-top: 1px; }
+  .tb-title-wrap .tb-main { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1.05rem; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tb-title-wrap .tb-sub { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10.5px; letter-spacing: 0.04em; color: var(--on-accent-soft); margin-top: 1px; }
   /* ---- Home screen's image banner, replacing the plain text topbar ---- */
   .home-banner { flex-shrink: 0; background: var(--olive-deep); padding-top: env(safe-area-inset-top, 0px); border-bottom: 3px solid var(--rust); }
   .home-banner img { display: block; width: 100%; height: auto; }
   .progress-wrap { flex-shrink: 0; padding: 0 16px 8px; background: var(--olive-deep); }
   .progress-track { height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; overflow: hidden; margin-top: 8px; }
   .progress-fill { height: 100%; background: var(--rust-soft); transition: width 0.25s ease; }
-  .progress-label { padding: 5px 0 0; color: var(--on-accent-soft); font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; }
+  .progress-label { padding: 5px 0 0; color: var(--on-accent-soft); font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10.5px; letter-spacing: 0.03em; }
 
   /* ---- scroll body ---- */
   .body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); min-height: 0; }
@@ -108,7 +125,7 @@
   .bottomnav button, .bottomnav .nav-link {
     flex: 1; background: none; border: none; padding: 10px 4px 8px; cursor: pointer;
     display: flex; flex-direction: column; align-items: center; gap: 3px;
-    color: var(--ink-faint); font-size: 11px; font-family: 'Oswald', sans-serif; letter-spacing: 0.02em;
+    color: var(--ink-faint); font-size: 11px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.02em;
     -webkit-tap-highlight-color: transparent; text-decoration: none;
   }
   .bottomnav button.active { color: var(--olive); }
@@ -131,7 +148,7 @@
     border-radius: 10px; padding: 12px 14px;
     display: flex; align-items: center; gap: 10px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.35);
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 13.5px;
+    font-family: 'Barlow', system-ui, sans-serif; font-size: 13.5px;
     opacity: 1; transition: opacity 0.5s ease;
   }
   /* Needs higher specificity than the display:flex above, or the [hidden]
@@ -142,7 +159,7 @@
 
   /* ---- buttons ---- */
   .btn {
-    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.01em;
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.01em;
     border-radius: 8px; border: none; padding: 15px 20px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 8px;
     -webkit-tap-highlight-color: transparent; transition: transform 0.08s ease, opacity 0.15s ease, background 0.15s ease;
@@ -158,7 +175,7 @@
 
   /* ---- cards / sections ---- */
   .section-label {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em;
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 11px; letter-spacing: 0.06em;
     color: var(--ink-faint); text-transform: uppercase; margin: 22px 0 8px;
   }
   .section-label:first-child { margin-top: 0; }
@@ -172,8 +189,8 @@
     background: var(--olive-deep); color: var(--on-accent); border-radius: 14px; padding: 20px;
     margin-bottom: 16px;
   }
-  .next-card .nc-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: var(--on-accent-soft); margin-bottom: 4px; }
-  .next-card .nc-title { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1.5rem; line-height: 1.15; margin: 0 0 4px; text-wrap: balance; }
+  .next-card .nc-eyebrow { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 11px; letter-spacing: 0.06em; color: var(--on-accent-soft); margin-bottom: 4px; }
+  .next-card .nc-title { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 1.5rem; line-height: 1.15; margin: 0 0 4px; text-wrap: balance; }
   .next-card .nc-meta { font-size: 13px; color: var(--on-accent-soft); margin-bottom: 16px; }
   .next-card .btn-primary { background: var(--on-accent); color: var(--olive-deep); }
   .next-card .btn-primary:active { background: var(--on-accent-dim); }
@@ -184,8 +201,8 @@
     background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
     padding: 8px 2px; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .day-chip .dc-n { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-faint); }
-  .day-chip .dc-t { font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 600; margin-top: 2px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day-chip .dc-n { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10px; color: var(--ink-faint); }
+  .day-chip .dc-t { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10px; font-weight: 600; margin-top: 2px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .day-chip.is-next { border-color: var(--olive); background: var(--good-bg); }
   .day-chip.lift .dc-t { color: var(--olive); }
   .day-chip.gpp .dc-t { color: var(--amber); }
@@ -195,16 +212,16 @@
   .phase-select { display: flex; gap: 6px; }
   .phase-btn {
     flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
-    padding: 10px 6px; text-align: center; cursor: pointer; font-family: 'Oswald', sans-serif;
+    padding: 10px 6px; text-align: center; cursor: pointer; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
     font-weight: 600; font-size: 13px; color: var(--ink-soft); -webkit-tap-highlight-color: transparent;
   }
   .phase-btn.active { background: var(--olive); color: #fff; border-color: var(--olive); }
 
   /* ---- onboarding (first-launch intake) ---- */
   .onb-wrap { padding: 4px 0 24px; }
-  .onb-head { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: .02em; margin: 4px 0 2px; }
+  .onb-head { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: .02em; margin: 4px 0 2px; }
   .onb-sub { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 20px; line-height: 1.5; }
-  .onb-label { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 22px 0 8px; }
+  .onb-label { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 22px 0 8px; }
   .onb-label:first-of-type { margin-top: 0; }
   .choice-row { display: flex; gap: 8px; }
   .choice-row .choice-item { flex: 1; text-align: center; }
@@ -213,7 +230,7 @@
     background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
     padding: 12px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .choice-item .ci-title { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; color: var(--ink); }
+  .choice-item .ci-title { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 14px; color: var(--ink); }
   .choice-item .ci-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
   .choice-item.active { background: var(--good-bg); border-color: var(--olive); }
   .choice-item.active .ci-title { color: var(--olive); }
@@ -231,7 +248,7 @@
   .log-dot.gpp { background: var(--amber); } .log-dot.cardio { background: var(--rust); } .log-dot.recovery { background: var(--ink-faint); } .log-dot.rest { background: var(--line-strong); }
   .log-main { flex: 1; min-width: 0; }
   .log-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .log-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-faint); flex-shrink: 0; }
+  .log-date { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 11px; color: var(--ink-faint); flex-shrink: 0; }
   .log-del {
     background: none; border: none; padding: 6px; margin: -6px -6px -6px 2px; flex-shrink: 0;
     color: var(--ink-faint); cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center;
@@ -244,14 +261,14 @@
 
   .stat-row { display: flex; gap: 10px; margin-bottom: 16px; }
   .stat-tile { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; text-align: center; }
-  .stat-tile .st-n { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 1.5rem; color: var(--olive); font-variant-numeric: tabular-nums; }
+  .stat-tile .st-n { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1.5rem; color: var(--olive); font-variant-numeric: tabular-nums; }
   .stat-tile .st-l { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
 
   /* ---- session step ---- */
-  .step-kind { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: var(--rust); text-transform: uppercase; margin-bottom: 6px; }
+  .step-kind { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 11px; letter-spacing: 0.06em; color: var(--rust); text-transform: uppercase; margin-bottom: 6px; }
   .step-kind.warmup, .step-kind.stretch { color: var(--olive); }
   .step-kind.tendon { color: var(--amber); }
-  .step-title { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1.7rem; line-height: 1.1; margin: 0 0 18px; text-wrap: balance; }
+  .step-title { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 1.7rem; line-height: 1.1; margin: 0 0 18px; text-wrap: balance; }
 
   .ex-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
   .ex-header .step-title { margin: 0; }
@@ -264,8 +281,8 @@
 
   .stat-pair { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
   .stat-big { flex: 1; min-width: 90px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 10px; text-align: center; }
-  .stat-big .sb-v { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.55rem; font-variant-numeric: tabular-nums; line-height: 1.15; }
-  .stat-big .sb-l { font-family: 'Oswald', sans-serif; font-size: 10.5px; letter-spacing: 0.04em; color: var(--ink-faint); text-transform: uppercase; margin-top: 5px; }
+  .stat-big .sb-v { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 1.55rem; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .stat-big .sb-l { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10.5px; letter-spacing: 0.04em; color: var(--ink-faint); text-transform: uppercase; margin-top: 5px; }
 
   .set-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
   .set-row {
@@ -280,22 +297,22 @@
     display: flex; align-items: center; justify-content: center; color: #fff; transition: all 0.15s ease;
   }
   .set-row.filled .sr-check { background: var(--olive); border-color: var(--olive); }
-  .set-row .sr-label { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .set-row .sr-label { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 15px; color: var(--ink); }
   .set-row.filled .sr-label { color: var(--good); }
   .set-hint { text-align: center; font-size: 12px; color: var(--ink-faint); margin: 0 0 20px; }
 
   .rest-timer { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: -6px 0 20px; }
   .rest-timer.done { border-color: var(--olive); background: var(--good-bg); }
   .rt-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-  .rt-label { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); text-transform: uppercase; }
+  .rt-label { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); text-transform: uppercase; }
   .rest-timer.done .rt-label { color: var(--good); }
   .rt-skip {
     background: var(--surface-2); border: none; border-radius: 6px; padding: 5px 12px;
-    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 11.5px; color: var(--ink-soft);
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 11.5px; color: var(--ink-soft);
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   .rt-time {
-    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.7rem;
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 1.7rem;
     font-variant-numeric: tabular-nums; color: var(--ink); margin-bottom: 8px; display: flex; align-items: center;
   }
   .rest-timer.done .rt-time { color: var(--good); }
@@ -319,7 +336,7 @@
   .sk-svg .sk-prop-fill { fill: var(--rust); stroke: none; }
   .sk-svg .sk-ground { stroke: var(--line-strong); stroke-width: 1.5; }
   .sk-svg .sk-div { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
-  .sk-svg .sk-label { fill: var(--ink-faint); font-family: 'JetBrains Mono', monospace; font-size: 7px; text-transform: uppercase; letter-spacing: 0.04em; text-anchor: middle; }
+  .sk-svg .sk-label { fill: var(--ink-faint); font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 7px; text-transform: uppercase; letter-spacing: 0.04em; text-anchor: middle; }
   .manual-sketch { margin: 6px 0 2px; }
   .ex-photo { width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--line); }
 
@@ -331,7 +348,7 @@
   .named-item-list .ni-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .named-item-list .ni-row span { flex: 1; }
   .ni-photo-btn {
-    flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
+    flex-shrink: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
     background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); border-radius: 6px;
     padding: 6px 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
@@ -357,7 +374,7 @@
     width: 64px; height: 64px; border-radius: 50%; background: var(--good-bg); color: var(--good);
     display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
   }
-  .summary-hero h2 { font-family: 'Oswald', sans-serif; font-size: 1.6rem; margin: 0 0 4px; }
+  .summary-hero h2 { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 1.6rem; margin: 0 0 4px; }
   .summary-hero p { color: var(--ink-soft); margin: 0; font-size: 14px; }
   .summary-list { list-style: none; margin: 0; padding: 0; }
   .summary-list li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
@@ -370,36 +387,37 @@
     padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
   .g-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; }
   .g-x { background: var(--surface-2); border: none; border-radius: 8px; padding: 8px 14px; color: var(--ink-soft);
-    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .g-count { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); }
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .g-count { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); }
   .g-progress { height: 4px; background: var(--surface-2); margin: 0 16px; border-radius: 2px; overflow: hidden; }
   .g-pfill { height: 100%; background: var(--olive); width: 0; transition: width .3s; }
   .g-main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px 20px; gap: 6px; overflow: hidden; }
   .g-photo { max-width: 100%; max-height: 34vh; object-fit: contain; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
-  .g-phase { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--olive); margin-top: 6px; }
+  .g-phase { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--olive); margin-top: 6px; }
   .g-rest .g-phase { color: var(--amber); }
-  .g-title { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 1.5rem; line-height: 1.15; color: var(--ink); }
+  .g-title { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1.5rem; line-height: 1.15; color: var(--ink); }
   .g-sub { font-size: 14px; color: var(--ink-soft); min-height: 20px; }
-  .g-time { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 4.6rem; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); }
-  .g-reps { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 2.6rem; color: var(--ink); }
+  .g-time { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 4.6rem; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .g-reps { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 2.6rem; color: var(--ink); }
   .g-bar { width: 100%; max-width: 360px; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
   .g-fill { height: 100%; background: var(--olive); width: 0; }
   .g-rest .g-fill { background: var(--amber); }
   .g-next { padding: 10px 20px; text-align: center; font-size: 13px; color: var(--ink-soft); border-top: 1px solid var(--line); background: var(--surface); }
-  .g-next b { font-family: 'Oswald', sans-serif; color: var(--ink); font-weight: 600; }
+  .g-next b { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; color: var(--ink); font-weight: 600; }
   .g-controls { display: flex; gap: 10px; padding: 12px 16px 14px; background: var(--surface); }
   .g-controls .btn { flex: 1; }
   .g-controls .btn[disabled] { opacity: .4; }
   .g-done { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; gap: 8px; }
-  .g-done h2 { font-family: 'Oswald', sans-serif; margin: 6px 0 0; }
+  .g-done h2 { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; margin: 6px 0 0; }
   .g-done p { margin: 0 0 14px; color: var(--ink-soft); }
+  .g-done .btn { flex: none; width: 100%; max-width: 320px; }
   .guided-start { margin-bottom: 14px; }
   .guided-start-note { font-size: 12px; color: var(--ink-faint); text-align: center; margin: -6px 0 14px; }
 
   /* ---- exit confirm overlay ---- */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
   .overlay-sheet { background: var(--surface); width: 100%; max-width: 520px; border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); }
-  .overlay-sheet h3 { font-family: 'Oswald', sans-serif; font-size: 1.1rem; margin: 0 0 6px; }
+  .overlay-sheet h3 { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 1.1rem; margin: 0 0 6px; }
   .overlay-sheet p { margin: 0 0 16px; font-size: 14px; color: var(--ink-soft); }
   .overlay-sheet .ov-actions { display: flex; gap: 10px; }
 
@@ -408,56 +426,56 @@
 
   /* ---- manual screen ---- */
   .manual-hero { background: var(--olive-deep); color: var(--on-accent); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
-  .manual-hero .mh-title { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 2px; }
+  .manual-hero .mh-title { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 2px; }
   .manual-hero .mh-sub { font-size: 13px; color: var(--on-accent-soft); margin-bottom: 8px; }
-  .manual-hero .mh-stats { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--on-accent-soft); letter-spacing: 0.03em; }
+  .manual-hero .mh-stats { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10.5px; color: var(--on-accent-soft); letter-spacing: 0.03em; }
 
   .manual-nav { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; margin-bottom: 18px; }
   .mn-chip {
     flex-shrink: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
-    padding: 6px 13px; font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; color: var(--ink-soft);
+    padding: 6px 13px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; font-weight: 600; color: var(--ink-soft);
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   .mn-chip:active { background: var(--olive); color: #fff; border-color: var(--olive); }
 
-  .mn-cardhead { margin: 0 0 6px; font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14.5px; }
+  .mn-cardhead { margin: 0 0 6px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 14.5px; }
   .mn-cardbody { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
-  .mn-label { margin: 0 0 4px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+  .mn-label { margin: 0 0 4px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
   .mn-label.amber { color: var(--amber); }
   .mn-label.olive { color: var(--olive); }
-  .mn-calloutlabel { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; }
+  .mn-calloutlabel { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; }
 
   .manual-workout { padding: 0; overflow: hidden; margin-bottom: 14px; }
-  .manual-workout .mw-head { background: var(--surface-2); padding: 11px 14px; font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; }
+  .manual-workout .mw-head { background: var(--surface-2); padding: 11px 14px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 15px; }
   .manual-workout .mw-body { padding: 14px; }
 
   .guide-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .guide-table th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); padding: 4px 6px; border-bottom: 1px solid var(--line-strong); }
+  .guide-table th { text-align: left; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); padding: 4px 6px; border-bottom: 1px solid var(--line-strong); }
   .guide-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.35; }
   .guide-table tr:last-child td { border-bottom: none; }
   .guide-table td:first-child { font-weight: 600; }
   .moves-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .moves-table th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); padding: 4px 6px; border-bottom: 1px solid var(--line-strong); }
+  .moves-table th { text-align: left; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); padding: 4px 6px; border-bottom: 1px solid var(--line-strong); }
   .moves-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); }
   .moves-table tr:last-child td { border-bottom: none; }
   .moves-table td:first-child { font-weight: 600; }
-  .moves-table td:nth-child(2), .moves-table td:nth-child(3) { font-family: 'JetBrains Mono', monospace; white-space: nowrap; color: var(--ink-soft); }
+  .moves-table td:nth-child(2), .moves-table td:nth-child(3) { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; white-space: nowrap; color: var(--ink-soft); }
 
   /* ---- weight / progression card (on a workout's main lift step) ---- */
   .weight-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
   .weight-hint { font-size: 13px; color: var(--ink-soft); line-height: 1.4; margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; }
   .weight-hint svg { flex-shrink: 0; width: 15px; height: 15px; margin-top: 1px; color: var(--amber); }
   .weight-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .weight-row label { font-family: 'Oswald', sans-serif; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); flex-shrink: 0; }
+  .weight-row label { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); flex-shrink: 0; }
   .weight-input {
-    flex: 1; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600;
+    flex: 1; min-width: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 15px; font-weight: 600;
     background: var(--raised); border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 10px; color: var(--ink);
   }
   .weight-input:focus { outline: 2px solid var(--olive); outline-offset: -1px; }
   .hitall-toggle { display: flex; gap: 6px; }
   .hitall-btn {
     flex: 1; background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: 8px 6px;
-    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12.5px; color: var(--ink-soft);
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 12.5px; color: var(--ink-soft);
     cursor: pointer; -webkit-tap-highlight-color: transparent; text-align: center;
   }
   .hitall-btn.active.yes { background: var(--olive); color: #fff; border-color: var(--olive); }
@@ -467,24 +485,163 @@
   .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 2px; border-bottom: 1px solid var(--line); }
   .settings-row:last-child { border-bottom: none; }
   .settings-row .sr-k { font-size: 13.5px; color: var(--ink-soft); }
-  .settings-row .sr-v { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; color: var(--ink); text-align: right; }
+  .settings-row .sr-v { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 14px; color: var(--ink); text-align: right; }
 
   /* ---- profile screen ---- */
   .field-row { margin-bottom: 12px; }
-  .field-row label { display: block; font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
+  .field-row label { display: block; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
   .field-input {
-    width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 15px;
+    width: 100%; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 15px;
     background: var(--raised); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; color: var(--ink);
   }
   .field-input:focus { outline: 2px solid var(--olive); outline-offset: -1px; }
-  .field-input.notes { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; resize: vertical; min-height: 54px; }
+  .field-input.notes { font-family: 'Barlow', system-ui, sans-serif; font-size: 14px; resize: vertical; min-height: 54px; }
   .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
   .measure-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
   .measure-row:last-child { border-bottom: none; }
   .measure-main { flex: 1; min-width: 0; }
-  .measure-date { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-faint); margin-bottom: 2px; }
+  .measure-date { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; color: var(--ink-faint); margin-bottom: 2px; }
   .measure-vals { font-size: 13.5px; color: var(--ink); }
   .measure-vals b { color: var(--olive); }
+
+  /* ============ REDESIGN LAYER (v2.4) — graphite + signal yellow, Barlow ============ */
+  body { font-size: 16px; line-height: 1.4; letter-spacing: 0; }
+  .btn, .step-title, .next-card .nc-title, .onb-head, .summary-hero h2, .g-title { letter-spacing: 0.005em; }
+
+  /* top bar + banner */
+  .topbar { background: var(--olive-deep); border-bottom: 3px solid var(--accent); padding-bottom: 14px; }
+  .topbar .tb-main, .tb-title-wrap .tb-main { font-weight: 700; font-size: 1.3rem; letter-spacing: 0.01em; }
+  .tb-title-wrap .tb-sub { font-weight: 500; font-size: 12px; letter-spacing: 0.08em; color: var(--accent); }
+  .home-banner { background: var(--olive-deep); border-bottom: 3px solid var(--accent); }
+  .progress-wrap { background: var(--olive-deep); }
+  .progress-track { background: rgba(255,255,255,0.14); }
+  .progress-fill { background: var(--accent); }
+  .progress-label { color: var(--on-accent-soft); font-size: 12px; font-weight: 500; letter-spacing: 0.06em; }
+
+  /* bottom nav */
+  .bottomnav { background: var(--surface); border-top: 1px solid var(--line); }
+  .bottomnav button, .bottomnav .nav-link { position: relative; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; padding: 12px 4px 9px; }
+  .bottomnav button.active { color: var(--ink); }
+  .bottomnav button.active::before { content: ""; position: absolute; top: -1px; left: 28%; right: 28%; height: 3px; background: var(--accent); border-radius: 0 0 3px 3px; }
+  .bottomnav svg { width: 22px; height: 22px; }
+
+  /* buttons */
+  .btn { font-size: 18px; font-weight: 700; letter-spacing: 0.03em; border-radius: 14px; padding: 15px 22px; min-height: 54px; }
+  .btn-primary { background: var(--olive); color: var(--on-primary); }
+  .btn-primary:active { background: var(--olive); filter: brightness(.9); }
+  .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); }
+  .btn-danger { color: #fff; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* section labels + cards */
+  .section-label { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; text-transform: none; color: var(--ink-soft); margin: 26px 0 10px; }
+  .card, .item-list li, .instr-card, .weight-card, .stat-big, .stat-tile, .rest-timer, .tendon-box { border-radius: 16px; border-color: var(--line); }
+  .card, .instr-card, .weight-card, .stat-tile { box-shadow: var(--shadow); }
+  .card { padding: 18px; }
+
+  /* hero "next up" card */
+  .next-card { position: relative; overflow: hidden; border-radius: 20px; padding: 22px 22px 22px 26px;
+    background: linear-gradient(155deg, #1D1D20 0%, #0E0E10 100%); color: #F4F2EA; border: 1px solid #2C2C30; box-shadow: var(--shadow); }
+  .next-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--accent); }
+  .next-card .nc-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 6px; }
+  .next-card .nc-title { font-weight: 800; font-size: 2rem; line-height: 1.05; margin-bottom: 6px; }
+  .next-card .nc-meta { font-size: 14px; color: #B9B7AC; margin-bottom: 18px; }
+  .next-card .btn-primary { background: var(--accent); color: #141416; }
+  .next-card .btn-primary:active { background: var(--accent); filter: brightness(.92); }
+
+  /* day chips, phase select */
+  .day-chip { border-radius: 12px; padding: 9px 2px 8px; background: var(--surface); }
+  .day-chip .dc-n { font-size: 11px; font-weight: 600; }
+  .day-chip .dc-t { font-size: 11.5px; font-weight: 700; }
+  .day-chip.is-next { background: var(--accent-bg); border-color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }
+  .day-chip.lift .dc-t { color: var(--ink); }
+  .phase-btn { border-radius: 12px; font-size: 15px; font-weight: 700; padding: 11px 6px; }
+  .phase-btn.active { background: var(--olive-deep); border-color: var(--olive-deep); color: var(--accent); }
+
+  /* session */
+  .step-kind { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--rust); }
+  .step-kind.warmup, .step-kind.stretch { color: var(--cool); }
+  .step-kind.tendon { color: var(--amber); }
+  .step-title { font-weight: 800; font-size: 2.15rem; line-height: 1.02; margin-bottom: 20px; }
+  .ex-icon { border-radius: 12px; background: var(--accent-bg); color: var(--ink); }
+  .stat-big .sb-v { font-weight: 800; font-size: 2rem; }
+  .stat-big .sb-l { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; }
+  .set-row { border-radius: 14px; padding: 13px 16px; background: var(--surface); }
+  .set-row.filled { background: var(--accent-bg); border-color: var(--accent); }
+  .set-row .sr-check { color: transparent; border-color: var(--line-strong); }
+  .set-row.filled .sr-check { background: var(--accent); border-color: var(--accent); color: #141416; }
+  .set-row .sr-label { font-size: 17px; font-weight: 700; }
+  .set-row.filled .sr-label { color: var(--ink); }
+  .rest-timer.done { background: var(--accent-bg); border-color: var(--accent); }
+  .rest-timer.done .rt-label, .rest-timer.done .rt-time { color: var(--ink); }
+  .rt-label { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; }
+  .rt-time { font-weight: 800; font-size: 2.1rem; }
+  .rt-fill { background: var(--cool); }
+  .rest-timer.done .rt-fill { background: var(--accent); }
+  .rt-skip { border-radius: 8px; font-size: 13px; padding: 6px 14px; }
+  .ex-photo, .g-photo { border-radius: 14px; }
+  .ni-photo-btn { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; border-radius: 8px; }
+  .ni-photo-btn:active, .mn-chip:active { background: var(--accent); color: #141416; border-color: var(--accent); }
+  .hitall-btn { border-radius: 10px; font-size: 14px; }
+  .hitall-btn.active.yes { background: var(--accent); color: #141416; border-color: var(--accent); }
+  .weight-input, .field-input { border-radius: 12px; font-size: 17px; font-weight: 600; }
+  .weight-input:focus, .field-input:focus { outline-color: var(--accent); }
+  .field-row label { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; }
+  .summary-hero .check-circle { background: var(--accent); color: #141416; }
+  .summary-hero h2 { font-weight: 800; font-size: 2rem; }
+
+  /* guided timer */
+  .g-pfill, .g-fill { background: var(--accent); }
+  .g-rest .g-fill { background: var(--cool); }
+  .g-phase { font-size: 15px; font-weight: 700; letter-spacing: 0.16em; color: var(--ink-soft); }
+  .g-rest .g-phase { color: var(--cool); }
+  .g-title { font-weight: 800; font-size: 1.9rem; }
+  .g-time { font-weight: 800; font-size: 6rem; letter-spacing: -0.01em; }
+  .g-reps { font-weight: 800; font-size: 3.2rem; }
+  .g-bar { height: 10px; border-radius: 5px; }
+  .g-count { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; }
+
+  /* overlays, manual, settings */
+  .overlay-sheet { border-radius: 22px 22px 0 0; }
+  .manual-hero { background: linear-gradient(155deg, #1D1D20 0%, #0E0E10 100%); border-radius: 20px; border-left: 6px solid var(--accent); }
+  .manual-hero .mh-title { font-weight: 800; font-size: 1.7rem; }
+  .manual-hero .mh-stats { color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: 0.06em; }
+  .mn-chip { font-size: 14px; font-weight: 600; padding: 8px 15px; }
+  .mn-cardhead { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+  .manual-workout { border-radius: 16px; }
+  .manual-workout .mw-head { font-size: 17px; font-weight: 700; padding: 13px 16px; }
+  .settings-row .sr-v { font-weight: 700; font-size: 16px; }
+  .step-kind.warmup, .step-kind.stretch { color: var(--cool); }
+  a.textlink, .measure-vals b { color: var(--ink); text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+
+  /* onboarding choices */
+  .onb-head { font-weight: 800; font-size: 2rem; line-height: 1.05; }
+  .onb-sub { font-size: 15px; }
+  .onb-label { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; }
+  .choice-item { border-radius: 14px; padding: 14px 16px; background: var(--surface); }
+  .choice-item .ci-title { font-size: 17px; font-weight: 700; }
+  .choice-item .ci-sub { font-size: 13px; }
+  .choice-item.active { background: var(--accent-bg); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .choice-item.active .ci-title { color: var(--ink); }
+
+  /* welcome */
+  .welcome { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--bg); }
+  .welcome .home-banner { border-bottom: 3px solid var(--accent); }
+  .wl-body { flex: 1; min-height: 0; overflow-y: auto; padding: 26px 22px 12px; display: flex; flex-direction: column; justify-content: center; }
+  .wl-h { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 3rem; line-height: .98; margin: 0 0 12px; text-wrap: balance; letter-spacing: 0; }
+  .wl-p { font-size: 16.5px; line-height: 1.45; color: var(--ink-soft); margin: 0 0 24px; max-width: 34ch; }
+  .wl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+  .wl-list li { display: flex; flex-direction: column; gap: 1px; font-size: 16px; line-height: 1.3; color: var(--ink); }
+  .wl-list li b { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 19px; position: relative; padding-left: 16px; }
+  .wl-list li b::before { content: ""; position: absolute; left: 0; top: .32em; width: 6px; height: 1em; background: var(--accent); border-radius: 2px; }
+  .wl-list li span { color: var(--ink-soft); padding-left: 16px; }
+  .wl-foot { flex-shrink: 0; padding: 12px 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
+  .wl-foot .btn { background: var(--accent); color: #141416; font-size: 20px; min-height: 58px; }
+
+  /* manual: clear, unmistakable section headings */
+  .section-label[id^="m-"] { display: flex; align-items: center; gap: 12px; font-size: 1.7rem; font-weight: 800; line-height: 1.05; letter-spacing: 0.005em; color: var(--ink); margin: 44px 0 16px; padding-top: 28px; border-top: 2px solid var(--line-strong); text-wrap: balance; }
+  .section-label[id^="m-"]::before { content: ""; flex-shrink: 0; width: 8px; align-self: stretch; min-height: 1.5rem; background: var(--accent); border-radius: 2px; }
+  .section-label[id^="m-"]:first-child, .manual-nav + .section-label[id^="m-"] { margin-top: 28px; border-top: none; padding-top: 0; }
 </style>
 </head>
 <body>
@@ -499,10 +656,10 @@
 (function(){
   "use strict";
 
-  // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
+  // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v36 · 2026-10-05";
+  var APP_VERSION = "2.4.0";
 
   /* ============================================================
      DATA
@@ -760,13 +917,41 @@
   // onboarding; defaults to the men's track only in the brief window before
   // onboarding has ever run (render() gates the whole app behind onboarding,
   // so in practice this fallback is never actually shown to anyone).
-  function getPhases() { return (state.profile && state.profile.sex === "female") ? PHASES_WOMEN : PHASES_MEN; }
+  function getPhases() {
+    var female = state.profile && state.profile.sex === "female";
+    var base = female ? PHASES_WOMEN : PHASES_MEN;
+    if (state.profile && state.profile.equipment === "home") return homePhases(female ? "w" : "m", base);
+    return base;
+  }
 
   // Plain-language setup/execution/cue for every named lift and accessory
   // movement in both tracks, keyed by exact exercise name. Shown on the
   // live step screen and in the Manual so nobody has to already know what
   // a "Pallof Press" is before they can do one.
   var EX_HOWTO = {
+    "Backpack Squat": "Load a sturdy backpack and wear it on your back (straps tight, pack high). Feet shoulder-width, toes slightly out. Sit down and back until your thighs are at least parallel, then drive up through your whole foot. Chest up, knees tracking over your toes. Add books or water bottles as it gets easy.",
+    "Feet-Elevated Push-ups": "Hands on the floor under your shoulders, feet up on a chair or sofa edge. Body in one straight line — squeeze your glutes and brace your abs. Lower your chest to the floor, elbows about 45° from your body, then press all the way up. Add a loaded backpack on your upper back when it gets easy.",
+    "Table Inverted Row": "Lie under a sturdy table and grip its edge with both hands, arms straight and body in a straight line, heels on the floor. Pull your chest up to the table edge, squeezing your shoulder blades together, then lower under control. Bend your knees to make it easier. Check the table is solid and won't tip first.",
+    "Jug Farmer's Walk": "Fill two jugs or buckets with water (or carry two loaded bags), one in each hand. Walk the distance with tall posture — shoulders back, core braced, no leaning. Short controlled steps; set them down gently.",
+    "Backpack Deadlift": "Pack on the floor in front of you, held by its top handle (or hug it against your thighs). Feet hip-width, push your hips back with a flat back, grip the pack, then stand tall by driving your hips forward. Lower by pushing your hips back again. Load it with books until it feels heavy.",
+    "Pike Push-ups": "Start in a push-up position, then walk your feet in and lift your hips high so your body makes an upside-down V. Bend your elbows to lower the top of your head toward the floor between your hands, then press back up. Put your feet on a chair to make it harder.",
+    "Backpack Bent-Over Row": "Hold a loaded backpack by its handle or straps in both hands. Hinge forward at the hips with a flat back, knees slightly bent. Pull the pack toward your belly, squeeze your shoulder blades, then lower with control. Don't let your back round.",
+    "Lying Leg Raises": "Lie on your back, arms by your sides or hands under your hips. Keep your lower back pressed into the floor and your legs straight. Raise your legs to vertical, then lower slowly without letting your back arch off the floor. Bend your knees if you can't keep your back flat.",
+    "Chair Dips": "Sit on the edge of a sturdy chair, hands gripping the edge beside your hips, then slide your hips off the seat. Bend your elbows to lower until your upper arms are about parallel to the floor, then press back up. Keep your back close to the chair. Straighten your legs, or add a pack on your lap, to make it harder.",
+    "Feet-Elevated Inverted Row": "Lie under a sturdy table, grip its edge, and rest your heels on a chair so your body is level and straight. Pull your chest to the table edge, squeezing your shoulder blades, then lower slowly. Keep hips up and body in one line.",
+    "Backpack Bear-Hug Carry": "Hug a heavy loaded backpack against your chest with both arms wrapped around it. Walk the distance with tall posture, chest up, core braced and short steady steps. Don't let the load pull you into a lean.",
+    "Single-Leg Backpack RDL": "Hold a loaded backpack in front of you. Stand on one leg with a soft knee, push your hips back and lower the pack toward the floor while your other leg extends behind you in line with your back. Stand tall by driving your hips forward. Rest a hand on a wall if you wobble. Reps are per leg.",
+    "Single-Arm Backpack Row": "Hold the backpack by its handle in one hand, other hand on a chair or table for support. Hinge forward with a flat back, pull the pack to your hip, squeeze your shoulder blade, then lower under control. Reps are per arm.",
+    "Backpack Thruster": "Hold a loaded backpack at your chest, elbows in front. Squat down until your thighs are parallel, then drive up and use that momentum to press the pack overhead to full lockout. Lower it back to your chest and go into the next squat.",
+    "Backpack Swings": "Hold a loaded backpack by its handle (or both straps) in both hands. Feet shoulder-width, hinge back and let the pack swing between your legs, then snap your hips forward to swing it to chest height. The power comes from your hips, not your arms. Arms stay straight.",
+    "Explosive Inverted Row": "Set up under a sturdy table as for an inverted row. Pull as fast and hard as you can, aiming to pull your chest well past the table edge and lift your hands slightly off it if you can. Lower under control. Reset between reps. Check the table is rock solid.",
+    "Heavy Bag Drag": "Load a duffel bag or large sack until it's heavy, and drag it across a smooth floor or grass by its handles, walking backward or leaning forward into a push. Keep your back flat and take driving steps. Stop and reset if your form breaks down.",
+    "Slow Lying Leg Lowers": "Lie on your back with your legs straight up and your hands gripping something behind your head (a sofa leg works). Keep your lower back pressed down and lower your legs as slowly as you can — aim for 3–5 seconds — to just above the floor, then bring them back up. Bend your knees to make it easier.",
+    "Backpack Cleans": "Place a heavy backpack on the floor. Hinge down and grip it by the handle, then explosively stand and pull it up, rotating your elbows under it to catch it at your chest. Lower it back down with control and reset.",
+    "Backpack Goblet Squat": "Hug a loaded backpack tight against your chest. Feet slightly wider than shoulder-width, toes out. Squat deep, keeping your chest tall and elbows inside your knees at the bottom, then stand up through your whole foot.",
+    "Loaded Inverted Row": "Set up for a feet-elevated inverted row under a sturdy table, and rest a loaded backpack on your lower chest/hips. Pull your chest to the table edge, squeeze, and lower slowly. Keep your body in one straight line.",
+    "Single-Jug Suitcase Carry": "Hold one heavy jug, bucket or bag in one hand at your side. Walk the distance standing perfectly tall — don't lean toward the weight or let your shoulder drop. Switch hands for the second set. Core braced the whole way.",
+    "Inverted Row Hold": "Set up under a sturdy table as for an inverted row. Pull up so your chest is at the table edge and hold that top position, shoulder blades squeezed, body straight, for the full time. Lower under control when done.",
     "Barbell Back Squat": "Bar racked across your upper back (not your neck), feet shoulder-width, toes slightly out. Break at the hips and knees together, sit down until your thighs are at least parallel to the floor, then drive back up through your whole foot. Keep your chest up and knees tracking over your toes.",
     "Flat Bench Press": "Lie on the bench, feet flat on the floor, shoulder blades pulled back and down. Lower the bar to your mid-chest under control, elbows at roughly 45° to your torso, then press it back up to lockout over your shoulders.",
     "Assisted Pull-ups": "Loop a resistance band over the bar and under one knee or foot (or use an assist machine) to remove just enough bodyweight that you can complete every rep in full. Pull your chest toward the bar, then lower all the way to a dead hang each rep — don't stop at the halfway point.",
@@ -860,7 +1045,121 @@
     2: { label:"Gatekeeper — clear before Phase 3", items:["3 strict, unassisted pull-ups (or 12 band-assisted)","Barbell back squat at bodyweight × 5","15 unbroken kettlebell swings with a 16kg bell"] },
     3: { label:"Reality check", text:"Pull-up and pistol-squat strength usually take longer to build than squat/deadlift strength — that's leverage and starting point, not effort. Muscle-up and front lever are long-term progressions, not Month-9 targets. Keep working them." }
   };
-  function getCallouts() { return (state.profile && state.profile.sex === "female") ? PHASE_CALLOUTS_WOMEN : PHASE_CALLOUTS_MEN; }
+  function getCallouts() {
+    var female = state.profile && state.profile.sex === "female";
+    var base = female ? PHASE_CALLOUTS_WOMEN : PHASE_CALLOUTS_MEN;
+    if (state.profile && state.profile.equipment === "home") return homeCallouts(base);
+    return base;
+  }
+
+  /* ============================================================
+     HOME / LIMITED-EQUIPMENT PROGRAM
+     Same plan, same sets/reps/rest — every gym-only lift is swapped for a
+     version done with a loaded backpack, a sturdy table/chair, a doorway
+     or bodyweight. Built once per track as a deep copy of the gym plan, so
+     everything that reads getPhases() (live session, Manual, previews,
+     deload) picks it up with no other changes. Moves that already need no
+     gym (push-ups, planks, pistols, band work…) are left alone.
+  ============================================================ */
+  var HOME_SWAPS = {
+    "Barbell Back Squat": {name: "Backpack Squat"},
+    "Flat Bench Press": {name: "Feet-Elevated Push-ups"},
+    "Assisted Pull-ups": {name: "Table Inverted Row"},
+    "Farmer's Walk": {name: "Jug Farmer's Walk"},
+    "Conventional Deadlift": {name: "Backpack Deadlift"},
+    "Standing Overhead Press": {name: "Pike Push-ups"},
+    "Bent-Over Barbell Row": {name: "Backpack Bent-Over Row"},
+    "Hanging Knee Raises": {name: "Lying Leg Raises"},
+    "Weighted Dips": {name: "Chair Dips"},
+    "Strict Pull-ups": {name: "Feet-Elevated Inverted Row"},
+    "Sandbag Bear-Hug Carry": {name: "Backpack Bear-Hug Carry"},
+    "Romanian Deadlift": {name: "Single-Leg Backpack RDL", sets: "3×8/leg"},
+    "Single-Arm DB Row": {name: "Single-Arm Backpack Row"},
+    "Push Press": {name: "Backpack Thruster"},
+    "Kettlebell Swings": {name: "Backpack Swings"},
+    "Muscle-Up Progressions": {name: "Explosive Inverted Row"},
+    "Heavy Sled Push/Pull": {name: "Heavy Bag Drag"},
+    "Dragon Flags": {name: "Slow Lying Leg Lowers"},
+    "Heavy Sandbag Cleans": {name: "Backpack Cleans"},
+    "Front Squat": {name: "Backpack Goblet Squat"},
+    "Weighted Pull-ups": {name: "Loaded Inverted Row"},
+    "Suitcase Carries": {name: "Single-Jug Suitcase Carry"},
+    "Front Lever Progressions": {name: "Inverted Row Hold"}
+  };
+  var HOME_TENDON = {
+    "Back Squat hold, mid-squat (thighs parallel)": {text: "Backpack Squat hold, mid-squat (thighs parallel), loaded pack on your back", names: ["Backpack Squat Hold"]},
+    "Deadlift hold, bar at mid-shin against pins/blocks": {text: "Backpack Deadlift hold, pack held at mid-shin height", names: ["Backpack Deadlift Hold"]},
+    "Front Squat hold, bottom position (bar on front delts)": {text: "Backpack Goblet Squat hold, bottom position (pack hugged at your chest)", names: ["Backpack Goblet Squat Hold"]},
+    "Romanian Deadlift hold, mid-hinge": {text: "Backpack RDL hold, mid-hinge, pack held in front of your thighs", names: ["Backpack RDL Hold"]},
+    "Bulgarian Split Squat hold, bottom position (alternate legs), 4×20s. Also: Weighted dead-hang, 2×20s — light elbow/shoulder tendon prep before today's dips and pull-ups.": {
+      text: "Bulgarian Split Squat hold, bottom position (alternate legs), 4×20s. Also: Inverted-row hold, 2×20s — light elbow/shoulder tendon prep before today's chair dips and rows.",
+      names: ["Bulgarian Split Squat Hold", "Inverted Row Hold"]},
+    "Pistol Squat hold, bottom position (assisted as needed, alternate legs), 4×20s. Also: Weighted dead-hang, 2×20s — light elbow/shoulder tendon prep before today's muscle-ups and handstand push-ups.": {
+      text: "Pistol Squat hold, bottom position (assisted as needed, alternate legs), 4×20s. Also: Inverted-row hold, 2×20s — light elbow/shoulder tendon prep before today's explosive rows and handstand push-ups.",
+      names: ["Pistol Squat Hold", "Inverted Row Hold"]}
+  };
+  var HOME_WARMUP = {
+    "Hip circles, leg swings, a light empty-bar front squat set": "Hip circles, leg swings, a light bodyweight goblet squat set",
+    "A few easy pull-up/dip reps before working sets": "A few easy inverted-row/chair-dip reps before working sets",
+    "Ramp-up sets before dips/pull-ups": "Ramp-up sets before chair dips/inverted rows",
+    "Ramp-up sets before the sandbag cleans": "Ramp-up sets before the backpack cleans",
+    "2–3 ramp-up sets before the deadlift": "2–3 ramp-up sets before the backpack deadlift",
+    "Ramp-up sets before push press": "Ramp-up sets before the thrusters"
+  };
+  var HOME_INTRO = "Home version: every lift today is swapped for one you can do at home — same sets, reps and rest. You need a sturdy backpack you can load (books, water bottles, sand), a solid table or chair, and a doorway. A resistance band covers the band moves. When a set feels easy, add weight to the pack.";
+  // Register the home tendon paragraphs with the same lookup the gym ones use,
+  // and the one new warm-up line with its drills, so photos/timer pick them up.
+  var homeMapsRegistered = false;
+  function registerHomeMaps() {
+    if (homeMapsRegistered) return;
+    homeMapsRegistered = true;
+    Object.keys(HOME_TENDON).forEach(function(k) { TENDON_LINE_MAP[HOME_TENDON[k].text] = HOME_TENDON[k].names; });
+    WARMUP_LINE_MAP["Hip circles, leg swings, a light bodyweight goblet squat set"] = ["Hip Circles", "Leg Swings"];
+  }
+
+  function homeWords(str) {
+    if (!(state.profile && state.profile.equipment === "home")) return str;
+    return str.replace("Empty bar in Week 1", "Light pack in Week 1").replace("the number on the bar", "the weight in the pack").replace("Start Week 1 with the empty bar", "Start Week 1 with a light pack");
+  }
+  var homeCache = {};
+  function homePhases(track, base) {
+    registerHomeMaps();
+    if (homeCache[track]) return homeCache[track];
+    var copy = JSON.parse(JSON.stringify(base));
+    Object.keys(copy).forEach(function(pk) {
+      ["A", "B"].forEach(function(wk) {
+        var w = copy[pk].workouts[wk];
+        w.exercises = w.exercises.map(function(e) {
+          var sw = HOME_SWAPS[e.name];
+          if (!sw) return e;
+          var out = {}; Object.keys(e).forEach(function(k) { out[k] = e[k]; });
+          out.name = sw.name; if (sw.sets) out.sets = sw.sets;
+          return out;
+        });
+        if (HOME_TENDON[w.tendon]) w.tendon = HOME_TENDON[w.tendon].text;
+        w.warmup = w.warmup.map(function(l) { return HOME_WARMUP[l] || l; });
+        w.homeAlt = HOME_INTRO;
+      });
+      copy[pk].note = copy[pk].note.replace(/Empty 20kg bar( \(or your lightest dumbbells\))? in Week 1\./, "A light (or empty) backpack in Week 1.").replace("+1.25kg on main lifts weekly", "Add a little weight to the pack on main lifts weekly");
+    });
+    homeCache[track] = copy;
+    return copy;
+  }
+  // Gatekeeper / callout wording that names gym-only tests, rewritten for home.
+  var HOME_CALLOUT_ITEMS = {
+    "5 strict, unassisted pull-ups": "10 feet-elevated inverted rows, chest to the table",
+    "3 strict, unassisted pull-ups (or 12 band-assisted)": "8 feet-elevated inverted rows, chest to the table",
+    "Barbell back squat at bodyweight × 5": "Backpack squat with a pack at about half your bodyweight × 10",
+    "15 unbroken kettlebell swings with a 24kg bell": "15 unbroken backpack swings with a 12kg pack",
+    "15 unbroken kettlebell swings with a 16kg bell": "15 unbroken backpack swings with an 8kg pack"
+  };
+  function homeCallouts(base) {
+    var out = JSON.parse(JSON.stringify(base));
+    if (out[1] && out[1].text) out[1].text = out[1].text.replace("Romanian Deadlift or kettlebell deadlift before loading a full conventional deadlift from the floor", "backpack hip-hinge (Single-Leg Backpack RDL) before loading a full backpack deadlift from the floor");
+    if (out[2] && out[2].items) out[2].items = out[2].items.map(function(i) { return HOME_CALLOUT_ITEMS[i] || i; });
+    if (out[3] && out[3].text) out[3].text = out[3].text.replace(/Muscle-up and front lever are/, "Explosive rows and row holds are").replace("Pull-up and pistol-squat strength", "Inverted-row and pistol-squat strength");
+    return out;
+  }
 
   function dayHeadline(dayNum, phase, liftType, gppType) {
     var t = DAY_TYPE[dayNum];
@@ -877,7 +1176,7 @@
       var w = getPhases()[phase].workouts[liftType];
       steps.push({kind:"warmup", title:"Warm-up", sub:"10 min", items:w.warmup});
       if (state.profile && state.profile.equipment === "home" && w.homeAlt) {
-        steps.push({kind:"homealt", title:"No Gym? No Problem", text:w.homeAlt});
+        steps.push({kind:"homealt", title:"Your Home Workout", text:w.homeAlt});
       }
       steps.push({kind:"tendon", title:"Tendon Prep", sub:"4×20s · 60s rest", text:w.tendon});
       w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets: deload ? deloadSetsString(e.sets) : e.sets, rest:e.rest, isMainLift:!!e.main}); });
@@ -927,6 +1226,7 @@
     // only change coaching text/tips, never the underlying data shape.
     profile: null,
     onboardDraft: { sex: null, level: null, equipment: null, age: "", weight: "" },
+    welcomed: false,
     onboardError: null,
 
     logError: null,
@@ -1444,6 +1744,17 @@
     catch (e) { return false; }
   }
 
+  // Appearance: "auto" follows the phone, otherwise force light/dark.
+  var LS_THEME_KEY = "ironclad_theme_v1";
+  function getTheme() { var t = lsGet(LS_THEME_KEY, "auto"); return (t === "light" || t === "dark") ? t : "auto"; }
+  function applyTheme() {
+    var t = getTheme(), root = document.documentElement;
+    if (t === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", t);
+    var dark = t === "dark" || (t === "auto" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", dark ? "#0A0A0B" : "#141416");
+  }
+  applyTheme();
+
   function initDb() {
     var saved = lsGet(LS_SETTINGS_KEY, null);
     if (saved) {
@@ -1516,6 +1827,7 @@
       age: (p.age != null ? String(p.age) : ""), weight: (p.weightKg != null ? String(p.weightKg) : "")
     } : { sex: null, level: null, equipment: null, age: "", weight: "" };
     state.profile = null;
+    state.welcomed = true;
     state.onboardError = null;
     render();
   }
@@ -1877,6 +2189,22 @@
   ============================================================ */
   var GUIDE_DEFAULTS = { sideRest: 5, exRest: 10, lead: 5, tendonRest: 60, repEstimate: 20 };
   var guidedInterval = null, wakeLock = null;
+  var GUIDE_ONE_SIDED = {"Lat Stretch": ["Left arm", "Right arm"], "Forearm Stretch": ["Left arm", "Right arm"], "Shoulder Stretch": ["Left arm", "Right arm"]};
+
+  // Default timing for each warm-up drill that has no seconds written in the
+  // plan: 30s per drill (per side/direction where it has two), reps for the
+  // rep-based ones. Anything not listed here (ramp-up sets, "a few swings",
+  // a light empty-bar set) is lifting work and is left for you to do by hand.
+  var WARMUP_TIMING = {
+    "Leg Swings": {sec: 30, labels: ["Left leg", "Right leg"]},
+    "Hip Circles": {sec: 30, labels: ["Clockwise", "Counter-clockwise"]},
+    "Arm Circles": {sec: 30},
+    "Shoulder Circles": {sec: 30},
+    "Cat-Cow": {sec: 30},
+    "Deep Squat Hold": {sec: 30, rounds: 2},
+    "Band Pull-Apart": {reps: 15},
+    "Walking Lunges": {reps: 10, labels: ["Each leg"]}
+  };
 
   function guideSideLabels(text) {
     if (/each direction/i.test(text)) return ["Clockwise", "Counter-clockwise"];
@@ -1902,7 +2230,7 @@
   // photo, group, next}. "rep" segments (e.g. 8 reps) have no countdown —
   // they wait for a tap on Done.
   function buildGuidedSeq(step) {
-    var G = GUIDE_DEFAULTS, groups = [];
+    var G = GUIDE_DEFAULTS, groups = [], phaseWord = null;
     function addGroup(name, labels, rounds, sec, reps, innerRest, restAfter) {
       var grp = { items: [], innerRest: innerRest, restAfter: restAfter };
       for (var r = 1; r <= rounds; r++) {
@@ -1911,17 +2239,35 @@
           if (!sec && reps) parts.push(reps + " reps");
           if (lab) parts.push(lab);
           if (rounds > 1) parts.push("Round " + r + " of " + rounds);
-          grp.items.push({ type: sec ? "work" : "rep", title: name, sub: parts.join(" · "), sec: sec || 0, photo: name });
+          grp.items.push({ type: sec ? "work" : "rep", title: name, sub: parts.join(" · "), sec: sec || 0, photo: name, phase: phaseWord });
         });
       }
       groups.push(grp);
     }
-    if (step.kind === "stretch") {
+    if (step.kind === "warmup") {
+      phaseWord = "Go";
+      (step.items || []).forEach(function(line) {
+        if (/light cardio/i.test(line)) { addGroup("Light Cardio", [null], 1, 300, 0, 0, G.exRest); return; }
+        var names = WARMUP_LINE_MAP[line];
+        if (!names) return;
+        names.forEach(function(n) {
+          var t = WARMUP_TIMING[n];
+          if (!t) return;
+          addGroup(n, t.labels || [null], t.rounds || 1, t.sec || 0, t.reps || 0, G.sideRest, G.exRest);
+        });
+      });
+    } else if (step.kind === "stretch") {
       (step.items || []).forEach(function(line) {
         var m = STRETCH_LINE_MAP[line];
         if (!m) return;
-        var labels = /each side/i.test(m.dose) ? ["Left side", "Right side"] : [null];
-        m.names.forEach(function(n) { addGroup(n, labels, guideRounds(m.dose), guideHoldSeconds(m.dose) || 30, 0, G.sideRest, G.exRest); });
+        var eachSide = /each side/i.test(m.dose);
+        m.names.forEach(function(n) {
+          // One-sided stretches whose plan line just says "×2" (no "each side")
+          // are done once per side — the two holds ARE the two sides.
+          var oneSided = !eachSide && GUIDE_ONE_SIDED[n];
+          var labels = eachSide ? ["Left side", "Right side"] : (oneSided ? GUIDE_ONE_SIDED[n] : [null]);
+          addGroup(n, labels, oneSided ? 1 : guideRounds(m.dose), guideHoldSeconds(m.dose) || 30, 0, G.sideRest, G.exRest);
+        });
       });
     } else if (step.kind === "balance") {
       (step.items || []).forEach(function(line) {
@@ -1944,7 +2290,12 @@
     } else if (step.kind === "tendon") {
       var names = TENDON_LINE_MAP[step.text];
       if (!names) return null;
-      names.forEach(function(n, i) { addGroup(n, [null], i === 0 ? 4 : 2, 20, 0, G.tendonRest, G.tendonRest); });
+      var alternate = /alternate legs/i.test(step.text);
+      names.forEach(function(n, i) {
+        // "alternate legs" holds: 4 holds = left, right, left, right.
+        if (i === 0 && alternate) addGroup(n, ["Left leg", "Right leg"], 2, 20, 0, G.tendonRest, G.tendonRest);
+        else addGroup(n, [null], i === 0 ? 4 : 2, 20, 0, G.tendonRest, G.tendonRest);
+      });
     }
     var segs = [];
     groups.forEach(function(grp, gi) {
@@ -2115,7 +2466,7 @@
     html += '<div class="g-progress"><div class="g-pfill" style="width:' + Math.round((g.idx / g.segs.length) * 100) + '%"></div></div>';
     html += '<div class="g-main">';
     if (photo) html += '<img class="g-photo" src="' + photo + '" alt="' + esc(seg.photo) + '">';
-    html += '<div class="g-phase">' + (seg.lead ? 'Get ready' : (isRest ? 'Rest' : (isRep ? 'Reps' : 'Hold'))) + '</div>';
+    html += '<div class="g-phase">' + (seg.lead ? 'Get ready' : (isRest ? 'Rest' : (seg.phase || (isRep ? 'Reps' : 'Hold')))) + '</div>';
     if (!isRest) html += '<div class="g-title">' + esc(seg.title) + '</div>';
     else html += '<div class="g-title">' + (seg.lead ? 'Starting soon' : 'Rest') + '</div>';
     html += '<div class="g-sub">' + esc(seg.sub || '') + '</div>';
@@ -2324,18 +2675,34 @@
   /* ============================================================
      SCREENS
   ============================================================ */
+  // First-ever launch: banner, what the app is, what to expect, one button.
+  function renderWelcome() {
+    var html = '<div class="welcome"><div class="home-banner"><img src="banner-home.jpg" alt="Ironclad Fitness" loading="eager"></div>';
+    html += '<div class="wl-body"><h1 class="wl-h">Strength for real life.</h1>';
+    html += '<p class="wl-p">A 12-month functional strength and conditioning program that guides every session and tracks every lift.</p>';
+    html += '<ul class="wl-list">';
+    [["12 months","Three phases that build on each other"],
+     ["Guided sessions","Timers, photos and form cues"],
+     ["Gym or home","The plan adapts to your equipment"]].forEach(function(o){
+      html += '<li><b>' + o[0] + '</b><span>' + o[1] + '</span></li>';
+    });
+    html += '</ul></div>';
+    html += '<div class="wl-foot"><button class="btn btn-block" data-action="welcome-start">Get started</button></div></div>';
+    return html;
+  }
+
   // First-launch intake. render() shows this and nothing else — no tabs,
   // no bottom nav — until a profile is saved, so every question is answered
   // once up front rather than drip-fed later.
   function renderOnboarding() {
     var d = state.onboardDraft;
     var html = '<div class="body-scroll"><div class="onb-wrap">';
-    html += '<div class="onb-head">Welcome to Ironclad</div>';
+    html += '<div class="onb-head">Set Up Your Plan</div>';
     html += '<p class="onb-sub">Answer a few questions and we’ll set you up with the right plan — the men’s or women’s track, scaled to your level and whatever equipment you have.</p>';
 
-    html += '<div class="onb-label">Sex</div>';
+    html += '<div class="onb-label">Choose Your Path</div>';
     html += '<div class="choice-row">';
-    [["male","Male"],["female","Female"]].forEach(function(o){
+    [["male","Men’s Path"],["female","Women’s Path"]].forEach(function(o){
       html += '<div class="choice-item' + (d.sex===o[0]?' active':'') + '" data-action="onb-set-sex" data-val="' + o[0] + '"><div class="ci-title">' + o[1] + '</div></div>';
     });
     html += '</div>';
@@ -2428,7 +2795,7 @@
     }
 
     if (s.phase === 1 && state.profile && LEVEL_TIPS[state.profile.level]) {
-      html += '<div class="banner">' + ICONS.check + '<span>' + esc(LEVEL_TIPS[state.profile.level]) + '</span></div>';
+      html += '<div class="banner">' + ICONS.check + '<span>' + esc(homeWords(LEVEL_TIPS[state.profile.level])) + '</span></div>';
     }
 
     html += '<div class="next-card">' +
@@ -2536,13 +2903,140 @@
     html += '<p class="ph-note" style="margin-bottom:12px">' + (deload
       ? ('Deload is locked in — every session you start right now is automatically lighter (fewer sets, ~60% weight) until all ' + DELOAD_WEEK_SESSIONS + ' days are done. The cycle then restarts on its own.')
       : 'Every 4 weeks the app automatically switches your next sessions to a lighter deload week and won’t let you skip it — no need to track this yourself.') + '</p>';
-    html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>' + (deload ? 'Already deloaded elsewhere — skip to full training' : 'Log an early deload week') + '</span></button>';
+    // Only offered once a deload is actually locked in — before that the app
+    // handles the 4-week cycle on its own and the button has no purpose.
+    if (deload) html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Already deloaded elsewhere — skip to full training</span></button>';
 
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
     html += '<p class="ph-note">Takes you back to Day 1, Phase 1, Workout A / Ruck, and restarts the deload clock. Your training log and body measurements are not touched.</p>';
 
-    html += '<p class="ph-note" style="text-align:center;margin-top:24px;font-family:\'JetBrains Mono\',monospace;color:var(--ink-faint)">Ironclad ' + esc(APP_VERSION) + '</p>';
+    html += '<p class="ph-note" style="text-align:center;margin-top:24px;font-family:\'Barlow Condensed\',sans-serif;color:var(--ink-faint)">Ironclad &middot; Version ' + esc(APP_VERSION) + '</p>';
+    html += '<p class="ph-note" style="text-align:center;margin-top:4px;font-size:11px;color:var(--ink-faint)">&copy; 2026 Syed Iftikhar Shah. All rights reserved.</p>';
+
+    html += '</div>';
+    return html + renderBottomNav();
+  }
+
+  function renderProfile() {
+    var html = '<div class="body-scroll">';
+    var entries = state.measurements || [];
+
+    html += '<p class="note-line">Log your own measurements here whenever you take them — nothing is required, and nothing here feeds into the training plan. It’s just a private record of how your body is changing.</p>';
+
+    if (state.measureError) {
+      html += '<div class="banner banner-warn">' + ICONS.warn + '<span>Couldn’t load your measurements (' + esc(state.measureError) + ').</span></div>';
+    }
+
+    html += '<div class="section-label">Add a Measurement</div>';
+    html += '<div class="card">';
+    html += '<div class="field-row"><label>Weight (kg)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-weight" placeholder="e.g. 94.5"></div>';
+    html += '<div class="field-grid">';
+    html += '<div class="field-row"><label>Waist (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-waist" placeholder="—"></div>';
+    html += '<div class="field-row"><label>Chest (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-chest" placeholder="—"></div>';
+    html += '<div class="field-row"><label>Arms (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-arms" placeholder="—"></div>';
+    html += '<div class="field-row"><label>Thighs (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-thighs" placeholder="—"></div>';
+    html += '</div>';
+    html += '<div class="field-row"><label>Notes</label><textarea class="field-input notes" id="pf-notes" placeholder="Optional"></textarea></div>';
+    html += '<button class="btn btn-primary btn-block" data-action="add-measurement">Save Measurement</button>';
+    html += '</div>';
+
+    html += '<div class="section-label">History</div>';
+    if (!entries.length) {
+      html += '<div class="empty-state">' + ICONS.empty + (state.measurements===null?'<p>Loading…</p>':'<p>No measurements logged yet.</p>') + '</div>';
+    } else {
+      html += '<div class="card" style="padding:4px 16px">';
+      entries.forEach(function(e){
+        var parts = [];
+        if (e.weight != null) parts.push('<b>' + esc(e.weight) + ' kg</b>');
+        if (e.waist != null) parts.push('Waist ' + esc(e.waist) + 'cm');
+        if (e.chest != null) parts.push('Chest ' + esc(e.chest) + 'cm');
+        if (e.arms != null) parts.push('Arms ' + esc(e.arms) + 'cm');
+        if (e.thighs != null) parts.push('Thighs ' + esc(e.thighs) + 'cm');
+        html += '<div class="measure-row"><div class="measure-main"><div class="measure-date">' + fmtDate(e.date) + '</div>' +
+          '<div class="measure-vals">' + (parts.length ? parts.join(' · ') : '—') + '</div>' +
+          (e.notes ? '<div class="measure-vals" style="color:var(--ink-soft);margin-top:2px">' + esc(e.notes) + '</div>' : '') + '</div>' +
+          '<button class="log-del" data-action="open-delete-measurement-confirm" data-id="' + esc(e.id||'') + '" data-date="' + esc(fmtDate(e.date)) + '" aria-label="Delete measurement">' + ICONS.trash + '</button></div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    return html + renderBottomNav();
+  }
+
+  // The Manual screen reads straight off getPhases() / RUCK_DOSING / BALANCE_ITEMS /
+  // RECOVERY_ITEMS — the same data the tracker itself runs on — plus the handful
+  // of reference-only lines in GOLDEN_RULES / getCallouts() above. No second
+  // copy of the plan to drift out of sync, and it opens instantly in-app instead
+  // of jumping to the separate field-manual page.
+  // "Start Here" chapters at the top of the Manual: why the app exists, the
+  // thinking behind it, how it differs from typical gym routines, rules, and
+  // an everyday Pakistani diet guide. Written for any reader — nothing in here
+  // assumes a particular job, background or starting level.
+  var GUIDE_P = function(t){ return '<p class="mn-cardbody" style="margin:0 0 10px">' + esc(t) + '</p>'; };
+  var GUIDE_UL = function(arr){ return '<ul class="item-list" style="margin:0 0 4px">' + arr.map(function(it){ return '<li>' + esc(it) + '</li>'; }).join('') + '</ul>'; };
+  var GUIDE_CARD = function(head, inner){ return '<div class="card" style="margin-bottom:12px"><p class="mn-cardhead">' + esc(head) + '</p>' + inner + '</div>'; };
+  var GUIDE_TABLE = function(heads, rows){
+    return '<table class="guide-table"><tr>' + heads.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr>' +
+      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+  };
+
+  function renderSettings() {
+    var s = state.settings;
+    var weeksIn = computeWeeksInCycle();
+    var deload = deloadModeActive();
+    var deloadStatus = deload
+      ? "Deload week — Day " + ((s.deloadSessionsDone||0)+1) + "/" + DELOAD_WEEK_SESSIONS
+      : "Not yet due";
+    var html = '<div class="body-scroll">';
+
+    if (state.toast) {
+      html += '<div class="banner" style="background:var(--good-bg);color:var(--good)">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
+    }
+
+    html += '<div class="section-label">Your Details</div>';
+    html += '<div class="card" style="padding:4px 16px">';
+    html += '<div class="settings-row"><span class="sr-k">Track</span><span class="sr-v">' + (state.profile && state.profile.sex === "female" ? "Women’s" : "Men’s") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Age</span><span class="sr-v">' + esc(state.profile ? state.profile.age : "—") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Weight</span><span class="sr-v">' + (state.profile && state.profile.weightKg != null ? esc(state.profile.weightKg) + ' kg' : "—") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Level</span><span class="sr-v">' + esc(LEVEL_LABELS[state.profile && state.profile.level] || "—") + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Equipment</span><span class="sr-v">' + esc(EQUIPMENT_LABELS[state.profile && state.profile.equipment] || "—") + '</span></div>';
+    html += '</div>';
+    html += '<button class="btn btn-ghost btn-block" data-action="open-edit-profile-confirm" style="margin-bottom:14px">' + ICONS.profile + '<span>Edit My Details</span></button>';
+
+    html += '<div class="section-label">Appearance</div>';
+    html += '<div class="choice-row">';
+    [["auto","Auto"],["light","Light"],["dark","Dark"]].forEach(function(o){
+      html += '<div class="choice-item' + (getTheme()===o[0]?' active':'') + '" data-action="set-theme" data-val="' + o[0] + '"><div class="ci-title">' + o[1] + '</div></div>';
+    });
+    html += '</div>';
+    html += '<p class="ph-note">Auto follows your phone’s light or dark setting.</p>';
+
+    html += '<div class="section-label">Your Progress</div>';
+    html += '<div class="card" style="padding:4px 16px">';
+    html += '<div class="settings-row"><span class="sr-k">Phase</span><span class="sr-v">' + s.phase + ' — ' + esc(getPhases()[s.phase].name.split('—')[1] ? getPhases()[s.phase].name.split('—')[1].trim() : getPhases()[s.phase].name) + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Next day</span><span class="sr-v">Day ' + s.nextDayNumber + '</span></div>';
+    html += '</div>';
+
+    html += '<div class="section-label">Deload Cycle</div>';
+    html += '<div class="card" style="padding:4px 16px">';
+    html += '<div class="settings-row"><span class="sr-k">Weeks since last deload</span><span class="sr-v">Week ' + weeksIn + '</span></div>';
+    html += '<div class="settings-row"><span class="sr-k">Status</span><span class="sr-v">' + esc(deloadStatus) + '</span></div>';
+    html += '</div>';
+    html += '<p class="ph-note" style="margin-bottom:12px">' + (deload
+      ? ('Deload is locked in — every session you start right now is automatically lighter (fewer sets, ~60% weight) until all ' + DELOAD_WEEK_SESSIONS + ' days are done. The cycle then restarts on its own.')
+      : 'Every 4 weeks the app automatically switches your next sessions to a lighter deload week and won’t let you skip it — no need to track this yourself.') + '</p>';
+    // Only offered once a deload is actually locked in — before that the app
+    // handles the 4-week cycle on its own and the button has no purpose.
+    if (deload) html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Already deloaded elsewhere — skip to full training</span></button>';
+
+    html += '<div class="section-label">Plan</div>';
+    html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
+    html += '<p class="ph-note">Takes you back to Day 1, Phase 1, Workout A / Ruck, and restarts the deload clock. Your training log and body measurements are not touched.</p>';
+
+    html += '<p class="ph-note" style="text-align:center;margin-top:24px;font-family:\'Barlow Condensed\',sans-serif;color:var(--ink-faint)">Ironclad &middot; Version ' + esc(APP_VERSION) + '</p>';
+    html += '<p class="ph-note" style="text-align:center;margin-top:4px;font-size:11px;color:var(--ink-faint)">&copy; 2026 Syed Iftikhar Shah. All rights reserved.</p>';
 
     html += '</div>';
     return html + renderBottomNav();
@@ -2687,7 +3181,7 @@
     h += '<div class="section-label" id="m-rules">What to Do &amp; What to Avoid</div>';
     h += GUIDE_CARD('Do', GUIDE_UL([
       'Warm up and brace (breath in, ribs down, belly tight) before every heavy rep.',
-      'Start Week 1 with the empty bar, even if you have trained before.',
+      homeWords('Start Week 1 with the empty bar, even if you have trained before.'),
       'Leave about 2 reps in reserve on working sets.',
       'Log every session — the app can only guide you if it knows what you did.',
       'Take your deload when the app asks for it.',
@@ -2841,7 +3335,7 @@
         html += '<div class="mw-head">' + esc(wk.name) + '</div>';
         html += '<div class="mw-body">';
         if (state.profile && state.profile.equipment === "home" && wk.homeAlt) {
-          html += '<p class="mn-label">No Gym? No Problem</p>';
+          html += '<p class="mn-label">Your Home Workout</p>';
           html += '<p class="mn-cardbody" style="margin-bottom:12px">' + esc(wk.homeAlt) + '</p>';
         }
         html += '<p class="mn-label">Warm-up</p>';
@@ -2854,7 +3348,7 @@
           return '<div class="card" style="margin-bottom:10px;padding:12px 14px">' +
             '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px">' +
             '<p class="mn-cardhead" style="margin:0">' + esc(e.name) + '</p>' +
-            '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--ink-faint);white-space:nowrap">' + esc(e.sets) + ' · ' + esc(e.rest) + '</span>' +
+            '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--ink-faint);white-space:nowrap">' + esc(e.sets) + ' · ' + esc(e.rest) + '</span>' +
             '</div>' +
             '<p class="mn-cardbody">' + esc(EX_HOWTO[e.name] || '') + '</p>' +
             '</div>';
@@ -2909,7 +3403,7 @@
     });
 
     html += '<div class="section-label">Golden Rules</div>';
-    html += '<p class="note-line" style="margin-bottom:8px">' + esc(GOLDEN_RULES) + '</p>';
+    html += '<p class="note-line" style="margin-bottom:8px">' + esc(homeWords(GOLDEN_RULES)) + '</p>';
 
     html += '</div>';
     return html + renderBottomNav();
@@ -2953,7 +3447,7 @@
     if (!built) return '';
     return '<button class="btn btn-primary btn-block guided-start" data-action="start-guided" data-step="' + stepIdx + '">' +
       '<span>Start Guided Timer · ' + guidedMinutesLabel(built.totalSec) + '</span></button>' +
-      '<p class="guided-start-note">Runs every move in order — holds, rests and beeps — so you can just follow along.</p>';
+      '<p class="guided-start-note">Runs every move in order — holds, rests and beeps — so you can just follow along.' + (step.kind === "warmup" ? ' Ramp-up sets aren\u2019t timed — do those with your working load.' : '') + '</p>';
   }
 
   function renderStepBody(step, stepIdx) {
@@ -3046,14 +3540,14 @@
       var label = step.kind === "warmup" ? "Warm-up" : "Stretch";
       html += '<div class="step-kind ' + step.kind + '">' + label + ' · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + label + '</h2>';
-      if (step.kind === "stretch") html += renderGuidedStart(step, stepIdx);
+      html += renderGuidedStart(step, stepIdx);
       var expanded = step.kind === "warmup" ? expandNamedLines(step.items, WARMUP_LINE_MAP) : expandStretchLines(step.items);
       html += renderNamedItemList(expanded, step.kind + stepIdx);
     } else if (step.kind === "homealt") {
       html += '<div class="step-kind">Equipment</div>';
       html += '<h2 class="step-title">' + esc(step.title) + '</h2>';
       html += '<div class="instr-card"><p>' + esc(step.text) + '</p></div>';
-      html += '<p class="note-line">Swap the lifts below for whatever you have on hand, same sets and reps — then tap through to the real exercise names for your rest times.</p>';
+      html += '<p class="note-line">The lifts that follow are already your home versions — tap through each step for the setup and your rest times.</p>';
     } else if (step.kind === "tendon") {
       html += '<div class="step-kind tendon">Tendon Prep · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">Tendon Prep</h2>';
@@ -3143,6 +3637,10 @@
   ============================================================ */
   function render() {
     var app = document.getElementById("app");
+    if (!state.profile && !state.welcomed) {
+      app.innerHTML = renderWelcome();
+      return;
+    }
     if (!state.profile) {
       app.innerHTML = '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Operation Ironclad</div><div class="tb-sub">TRACKER</div></div></div>' + renderOnboarding();
       return;
@@ -3189,6 +3687,7 @@
       if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
     else if (action === "go-profile") { state.screen = "profile"; render(); }
+    else if (action === "set-theme") { lsSet(LS_THEME_KEY, el.getAttribute("data-val")); applyTheme(); render(); }
     else if (action === "go-settings") { state.screen = "settings"; render(); }
     else if (action === "mark-deload-taken") { markDeloadTaken(); }
     else if (action === "add-measurement") { addMeasurementFromForm(); }
@@ -3228,6 +3727,7 @@
     else if (action === "onb-set-level") { state.onboardDraft.level = el.getAttribute("data-val"); renderKeepScroll(); }
     else if (action === "onb-set-equipment") { state.onboardDraft.equipment = el.getAttribute("data-val"); renderKeepScroll(); }
     else if (action === "onb-submit") { submitOnboarding(); }
+    else if (action === "welcome-start") { state.welcomed = true; render(); }
   });
 
   document.getElementById("app").addEventListener("input", function(e){

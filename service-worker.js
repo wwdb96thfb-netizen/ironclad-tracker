@@ -20,14 +20,22 @@
 // "Add to Home Screen" standalone mode — the message to the waiting worker
 // could silently never arrive, leaving the update stuck forever. This
 // avoids that failure mode entirely.)
-const CACHE_NAME = "ironclad-v36";
+const CACHE_NAME = "ironclad-v39";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./banner-home.jpg"
+  "./banner-home.jpg",
+  "./fonts/barlow-condensed-latin-500-normal.woff2",
+  "./fonts/barlow-condensed-latin-600-normal.woff2",
+  "./fonts/barlow-condensed-latin-700-normal.woff2",
+  "./fonts/barlow-condensed-latin-800-normal.woff2",
+  "./fonts/barlow-latin-400-normal.woff2",
+  "./fonts/barlow-latin-500-normal.woff2",
+  "./fonts/barlow-latin-600-normal.woff2",
+  "./fonts/barlow-latin-700-normal.woff2"
 ];
 
 self.addEventListener("install", function (event) {
