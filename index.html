@@ -399,6 +399,11 @@
   .manual-workout .mw-head { background: var(--surface-2); padding: 11px 14px; font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; }
   .manual-workout .mw-body { padding: 14px; }
 
+  .guide-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .guide-table th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); padding: 4px 6px; border-bottom: 1px solid var(--line-strong); }
+  .guide-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.35; }
+  .guide-table tr:last-child td { border-bottom: none; }
+  .guide-table td:first-child { font-weight: 600; }
   .moves-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .moves-table th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-faint); padding: 4px 6px; border-bottom: 1px solid var(--line-strong); }
   .moves-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); }
@@ -465,7 +470,7 @@
   // Bump this alongside CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "v34 · 2026-10-04";
+  var APP_VERSION = "v35 · 2026-10-05";
 
   /* ============================================================
      DATA
@@ -568,7 +573,7 @@
       workouts: {
         A: {
           name: "Workout A — Advanced Calisthenics",
-          warmup: ["3–5 min light cardio", "Shoulder circles, deep squat holds, wrist prep", "A few easy pull-up/dip reps before working sets"],
+          warmup: ["3–5 min light cardio", "Shoulder circles, deep squat holds", "A few easy pull-up/dip reps before working sets"],
           tendon: "Pistol Squat hold, bottom position (assisted as needed, alternate legs), 4×20s. Also: Weighted dead-hang, 2×20s — light elbow/shoulder tendon prep before today's muscle-ups and handstand push-ups.",
           exercises: [
             {name:"Pistol Squats", sets:"3×5/leg", rest:"2m", main:true},
@@ -579,7 +584,7 @@
             {name:"Face Pull (band or cable)", sets:"3×15", rest:"60s"},
             {name:"Calf Raise", sets:"3×15", rest:"45s"}
           ],
-          stretch: ["Hip/ankle mobility stretch, 20–30s each side ×2", "Shoulder + wrist stretch, 20–30s ×2"],
+          stretch: ["Hip/ankle mobility stretch, 20–30s each side ×2", "Shoulder stretch, 20–30s ×2"],
           homeAlt: "No sled? A loaded wheelbarrow, or just pushing/dragging a heavy duffel bag across the floor, works the same pattern."
         },
         B: {
@@ -685,7 +690,7 @@
       workouts: {
         A: {
           name: "Workout A — Advanced Calisthenics",
-          warmup: ["3–5 min light cardio", "Shoulder circles, deep squat holds, wrist prep", "A few easy pull-up/dip reps before working sets"],
+          warmup: ["3–5 min light cardio", "Shoulder circles, deep squat holds", "A few easy pull-up/dip reps before working sets"],
           tendon: "Pistol Squat hold, bottom position (assisted as needed, alternate legs), 4×20s. Also: Weighted dead-hang, 2×20s — light elbow/shoulder tendon prep before today's muscle-ups and handstand push-ups.",
           exercises: [
             {name:"Pistol Squats", sets:"3×5/leg", rest:"2m", main:true},
@@ -696,7 +701,7 @@
             {name:"Face Pull (band or cable)", sets:"3×15", rest:"60s"},
             {name:"Calf Raise", sets:"3×15", rest:"45s"}
           ],
-          stretch: ["Hip/ankle mobility stretch, 20–30s each side ×2", "Shoulder + wrist stretch, 20–30s ×2"],
+          stretch: ["Hip/ankle mobility stretch, 20–30s each side ×2", "Shoulder stretch, 20–30s ×2"],
           homeAlt: "No sled? A loaded wheelbarrow, or just pushing/dragging a heavy duffel bag across the floor, works the same pattern."
         },
         B: {
@@ -781,7 +786,7 @@
     2: {load:"10–15%", duration:"25–30m"},
     3: {load:"15–20%", duration:"30–35m"}
   };
-  var BALANCE_ITEMS = ["Single-leg stance, eyes open then closed — 30s/side ×2", "Single-leg reach (no load) — 8/side", "Stand on a folded towel/cushion — 30s/side"];
+  var BALANCE_ITEMS = ["Single-leg stance, eyes open then closed — 30s/side ×2", "Single-leg reach (no load) — 8/side"];
   var RECOVERY_ITEMS = [
     {name:"Deep Squat Hold", dur:"5 min", desc:"Rest in a deep bodyweight squat, heels flat on the floor. Break it into shorter chunks through the day if 5 minutes straight is hard at first. Restores ankle, hip, and lower-back mobility that chairs and boots take away."},
     {name:"Guided Mobility Flow", dur:"15–20 min", desc:"Move slowly and keep breathing through each one — nothing here should feel like a hard stretch, just gentle full-range movement.", items:[
@@ -1231,7 +1236,7 @@
   // added one at a time as they're supplied, at muscles/<slug>.jpg. Until an
   // exercise has one, the Manual simply shows nothing for that section
   // (no tan body-diagram placeholder anymore).
-  var EX_MUSCLE_PHOTOS = ["Barbell Back Squat", "Bulgarian Split Squat", "Flat Bench Press", "Assisted Pull-ups", "Farmer's Walk", "Forearm Plank", "Calf Raise", "Band Pull-Apart", "Conventional Deadlift", "Standing Overhead Press", "Strict Push-ups", "Banded Lateral Walk", "Bent-Over Barbell Row", "Dragon Flags", "Face Pull (band or cable)", "Front Lever Progressions", "Front Squat", "Handstand Push-ups", "Hanging Knee Raises", "Heavy Sandbag Cleans", "Heavy Sled Push/Pull", "Hollow Body Hold", "Kettlebell Swings", "L-Sit Progressions", "Lateral Bound, Stick the Landing", "Muscle-Up Progressions", "Pallof Press", "Pistol Squats", "Push Press", "Weighted Dips", "Sandbag Bear-Hug Carry", "Romanian Deadlift", "Single-Arm DB Row", "Weighted Pull-ups", "Suitcase Carries"];
+  var EX_MUSCLE_PHOTOS = ["Barbell Back Squat", "Bulgarian Split Squat", "Flat Bench Press", "Assisted Pull-ups", "Farmer's Walk", "Forearm Plank", "Calf Raise", "Band Pull-Apart", "Conventional Deadlift", "Standing Overhead Press", "Strict Push-ups", "Banded Lateral Walk", "Bent-Over Barbell Row", "Dragon Flags", "Face Pull (band or cable)", "Front Lever Progressions", "Front Squat", "Handstand Push-ups", "Hanging Knee Raises", "Heavy Sandbag Cleans", "Heavy Sled Push/Pull", "Hollow Body Hold", "Kettlebell Swings", "L-Sit Progressions", "Lateral Bound, Stick the Landing", "Muscle-Up Progressions", "Pallof Press", "Pistol Squats", "Push Press", "Weighted Dips", "Sandbag Bear-Hug Carry", "Romanian Deadlift", "Single-Arm DB Row", "Weighted Pull-ups", "Suitcase Carries", "Strict Pull-ups"];
   function musclePhotoPath(name) { return 'muscles/' + photoSlug(name) + '.jpg'; }
 
   // ------------------------------------------------------------------
@@ -1242,7 +1247,7 @@
   // Squat Hold, Cat-Cow) are shared by name across warm-up and recovery, or
   // are already one of the 36 main lifts — resolvePhotoPath() below checks
   // EX_PHOTOS first so a shared name never needs a second photo.
-  var SUPPORT_PHOTOS = []; // filled in as real photos are supplied, same as EX_PHOTOS was
+  var SUPPORT_PHOTOS = ["Ankle Circles", "Arm Circles", "Back Squat Hold", "Bulgarian Split Squat Hold", "Cat-Cow", "Chest/Shoulder Doorway Stretch", "Deadlift Hold", "Deep Squat Hold", "Forearm Stretch", "Front Squat Hold", "Glute Stretch", "Hamstring Stretch", "Hip Circles", "Hip Flexor Stretch", "Hip/Ankle Mobility Stretch", "Lat Stretch", "Leg Swings", "Pistol Squat Hold", "Quad Stretch", "Romanian Deadlift Hold", "Shoulder Circles", "Shoulder Stretch", "Single-Leg Reach", "Single-Leg Stance", "Standing Forward Fold Roll-Up", "Thoracic Rotations", "Walking Lunges", "Weighted Dead-Hang", "World's Greatest Stretch"]; // filled in as real photos are supplied, same as EX_PHOTOS was
   function supportPhotoPath(name) { return 'support/' + photoSlug(name) + '.jpg'; }
   function resolvePhotoPath(name) {
     if (!name) return null;
@@ -1257,8 +1262,8 @@
     "Front Squat Hold", "Glute Stretch", "Hamstring Stretch", "Hip Circles", "Hip Flexor Stretch",
     "Hip/Ankle Mobility Stretch", "Lat Stretch", "Leg Swings", "Pistol Squat Hold", "Quad Stretch",
     "Romanian Deadlift Hold", "Shoulder Circles", "Shoulder Stretch", "Single-Leg Reach", "Single-Leg Stance",
-    "Standing Forward Fold Roll-Up", "Standing on a Folded Towel/Cushion", "Thoracic Rotations",
-    "Walking Lunges", "Weighted Dead-Hang", "Wrist Prep", "Wrist Stretch", "World's Greatest Stretch"];
+    "Standing Forward Fold Roll-Up", "Thoracic Rotations",
+    "Walking Lunges", "Weighted Dead-Hang", "World's Greatest Stretch"];
 
   // Each distinct warm-up bullet actually written in the plan, mapped to the
   // individual movement(s) it names — exact-string keyed, deliberately not
@@ -1270,7 +1275,7 @@
     "Leg swings, hip circles, cat-cow, band pull-aparts": ["Leg Swings", "Hip Circles", "Cat-Cow", "Band Pull-Apart"],
     "Leg swings, hip circles, walking lunges": ["Leg Swings", "Hip Circles", "Walking Lunges"],
     "Hip circles, arm circles, a few bodyweight swings": ["Hip Circles", "Arm Circles"],
-    "Shoulder circles, deep squat holds, wrist prep": ["Shoulder Circles", "Deep Squat Hold", "Wrist Prep"],
+    "Shoulder circles, deep squat holds": ["Shoulder Circles", "Deep Squat Hold"],
     "Hip circles, leg swings, a light empty-bar front squat set": ["Hip Circles", "Leg Swings"]
   };
 
@@ -1300,7 +1305,7 @@
     "Hamstring + glute stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Hamstring Stretch", "Glute Stretch"]},
     "Lat stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Lat Stretch"]},
     "Hip/ankle mobility stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Hip/Ankle Mobility Stretch"]},
-    "Shoulder + wrist stretch, 20–30s ×2": {dose: "20–30s ×2", names: ["Shoulder Stretch", "Wrist Stretch"]},
+    "Shoulder stretch, 20–30s ×2": {dose: "20–30s ×2", names: ["Shoulder Stretch"]},
     "Quad + hamstring stretch, 20–30s each side ×2": {dose: "20–30s each side ×2", names: ["Quad Stretch", "Hamstring Stretch"]},
     "Lat + forearm stretch, 20–30s ×2": {dose: "20–30s ×2", names: ["Lat Stretch", "Forearm Stretch"]}
   };
@@ -1310,8 +1315,7 @@
   // mapped the same way, right next to where those arrays are defined.
   var BALANCE_LINE_MAP = {
     "Single-leg stance, eyes open then closed — 30s/side ×2": "Single-Leg Stance",
-    "Single-leg reach (no load) — 8/side": "Single-Leg Reach",
-    "Stand on a folded towel/cushion — 30s/side": "Standing on a Folded Towel/Cushion"
+    "Single-leg reach (no load) — 8/side": "Single-Leg Reach"
   };
 
   // The Guided Mobility Flow's own sub-items (inside RECOVERY_ITEMS, below).
@@ -2286,6 +2290,196 @@
   // of reference-only lines in GOLDEN_RULES / getCallouts() above. No second
   // copy of the plan to drift out of sync, and it opens instantly in-app instead
   // of jumping to the separate field-manual page.
+  // "Start Here" chapters at the top of the Manual: why the app exists, the
+  // thinking behind it, how it differs from typical gym routines, rules, and
+  // an everyday Pakistani diet guide. Written for any reader — nothing in here
+  // assumes a particular job, background or starting level.
+  var GUIDE_P = function(t){ return '<p class="mn-cardbody" style="margin:0 0 10px">' + esc(t) + '</p>'; };
+  var GUIDE_UL = function(arr){ return '<ul class="item-list" style="margin:0 0 4px">' + arr.map(function(it){ return '<li>' + esc(it) + '</li>'; }).join('') + '</ul>'; };
+  var GUIDE_CARD = function(head, inner){ return '<div class="card" style="margin-bottom:12px"><p class="mn-cardhead">' + esc(head) + '</p>' + inner + '</div>'; };
+  var GUIDE_TABLE = function(heads, rows){
+    return '<table class="guide-table"><tr>' + heads.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr>' +
+      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+  };
+
+  function renderManualGuide() {
+    var h = '';
+
+    // ---- Why ----
+    h += '<div class="section-label" id="m-why">Why Ironclad Exists</div>';
+    h += '<p class="note-line">Most training apps either hand you a random list of exercises or copy a bodybuilder\'s routine. Ironclad exists to give anyone one clear 12-month path to being strong, fit and hard to injure — without needing a coach, a perfect gym, or a lot of spare time.</p>';
+    h += GUIDE_CARD('Who it is for', GUIDE_UL([
+      'Anyone who wants real, usable strength and fitness — not just a good look in the mirror.',
+      'Beginners and experienced lifters: the starting loads and pace follow the level you chose at setup.',
+      'People with a gym and people training at home — home alternatives are built in.',
+      'Busy people: a fixed weekly rhythm so you never have to decide what to do today.'
+    ]));
+    h += GUIDE_CARD('What the app does for you', GUIDE_UL([
+      'Tells you exactly what to do today, step by step.',
+      'Remembers your weights and suggests the next ones.',
+      'Locks in a lighter deload week when it is due, so you actually recover.',
+      'Keeps a log so you can see progress instead of guessing.'
+    ]));
+
+    // ---- Philosophy ----
+    h += '<div class="section-label" id="m-phil">The Philosophy</div>';
+    h += GUIDE_CARD('Five ideas the whole plan is built on', GUIDE_UL([
+      '1. Strength is the base. Heavy, simple lifts (squat, hinge, press, pull) build the most usable strength. Everything else sits on top of it.',
+      '2. Fitness for real life. Carrying, sprinting, changing direction, gripping and balancing — General Physical Preparedness (GPP) — so your strength works outside the gym too.',
+      '3. Durability. Warm-ups, tendon holds, mobility, balance work and deloads are part of the training, not optional extras. A plan you can follow for years beats one that breaks you in months.',
+      '4. Slow, honest progress. Start light, add a little each week, stop with reps left in the tank. It looks boring on purpose — it is what keeps working.',
+      '5. Consistency beats intensity. Showing up for 12 months at 80% effort beats three crazy weeks and a long break.'
+    ]));
+
+    // ---- Versus ----
+    h += '<div class="section-label" id="m-vs">Ironclad vs. Typical Gym Routines</div>';
+    h += '<div class="card" style="margin-bottom:12px">' + GUIDE_TABLE(['', 'Typical routine', 'Ironclad'], [
+      ['Goal', 'Bigger muscles, a better look', 'Strength, fitness and durability'],
+      ['Structure', 'Random sessions or "chest day, arm day" splits', 'Fixed 12 months in 3 phases, each building on the last'],
+      ['Progress', 'Whatever feels right — often too much, too soon', 'Small weekly increases; miss reps and you repeat the weight'],
+      ['Recovery', 'Usually ignored until something hurts', 'Forced deload every 4 weeks, a recovery day and a full rest day'],
+      ['Joints', 'Little or no warm-up or tendon care', 'Warm-ups, tendon holds and balance work every week'],
+      ['Conditioning', 'Treadmill, or nothing', 'Rucking, sprints, agility and carries'],
+      ['Tracking', 'Memory', 'Every set and weight logged']
+    ]) + '</div>';
+    h += '<div class="banner" style="flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:20px"><strong class="mn-calloutlabel">The fair trade-off</strong><span>If your only goal is the maximum possible muscle size, a dedicated bodybuilding plan with more volume and isolation work will usually build size faster. Ironclad still builds good muscle, especially in the first phases, but it is built for being strong and capable first. Plenty of gym routines are well designed too — this is about what this plan puts first.</span></div>';
+
+    // ---- How it was built ----
+    h += '<div class="section-label" id="m-how">How the Plan Was Built</div>';
+    h += GUIDE_CARD('The design decisions', GUIDE_UL([
+      'Three phases over 12 months: Phase 1 builds technique and a base, Phase 2 adds load and single-limb strength, Phase 3 sharpens and tests it.',
+      'Every week covers the basic movement patterns: squat, hinge, push, pull and carry.',
+      'Three lifting days a week, never back to back, with two rotating workouts (A and B) per phase.',
+      'Main lifts go up about 1.25 kg a week. Miss your reps? Repeat the weight. Always finish with about 2 reps still in the tank.',
+      'Every 4 weeks a lighter deload week (about 60% of your working weights and fewer sets) switches on automatically. You finish it before normal training resumes — it cannot be skipped.',
+      'Tendon prep before working sets, daily grip hangs and a 5-minute deep squat keep joints and connective tissue up with the muscles.',
+      'One weekly conditioning day alternates between rucking (loaded walking) and sprints and agility, and a cardio day keeps your engine ticking.'
+    ]));
+
+    // ---- How to read a workout ----
+    h += '<div class="section-label" id="m-read">How to Read a Workout</div>';
+    h += GUIDE_CARD('The shorthand', GUIDE_TABLE(['You see', 'It means'], [
+      ['3×5–8', '3 sets of 5 to 8 reps. Work within that range; the top of the range is the goal.'],
+      ['Rest 2m', 'Rest 2 minutes between sets. On heavy lifts, take the full time — it is part of the workout.'],
+      ['Reps in reserve', 'How many more reps you could still have done. Stop about 2 short of failure.'],
+      ['Hit all reps / Missed a rep', 'After a main lift, tell the app honestly. Hit them all and it suggests a small increase next time (about 1.25 kg). Missed one and it suggests repeating the same weight.']
+    ]));
+    h += GUIDE_CARD('Small glossary', GUIDE_UL([
+      'GPP: General Physical Preparedness — conditioning work like rucking, sprints, agility and carries.',
+      'Ruck: walking with a loaded backpack at a steady pace.',
+      'Deload: a planned lighter week (about 60% of normal weights, fewer sets) so your body can catch up.',
+      'Tendon hold: holding a lift at mid-range for a set time to strengthen tendons and joints.',
+      'Unilateral: working one side at a time (one leg or one arm).',
+      'Brace: tightening your trunk like you are about to take a punch, so your spine stays safe under load.'
+    ]));
+
+    // ---- Rules ----
+    h += '<div class="section-label" id="m-rules">What to Do &amp; What to Avoid</div>';
+    h += GUIDE_CARD('Do', GUIDE_UL([
+      'Warm up and brace (breath in, ribs down, belly tight) before every heavy rep.',
+      'Start Week 1 with the empty bar, even if you have trained before.',
+      'Leave about 2 reps in reserve on working sets.',
+      'Log every session — the app can only guide you if it knows what you did.',
+      'Take your deload when the app asks for it.',
+      'Sleep 7–8 hours and eat protein at every meal.',
+      'Drink water through the day, especially in hot weather.',
+      'Film your lifts occasionally and compare to the photos in the Exercise Library.'
+    ]));
+    h += GUIDE_CARD('Avoid', GUIDE_UL([
+      'Ego lifting — adding weight to impress someone or to chase a number.',
+      'Adding weight after you missed reps.',
+      'Training through sharp or joint pain. Muscle burn is normal; sharp pain is a stop sign.',
+      'Skipping deloads or rest days because you "feel fine".',
+      'Two heavy lifting days back to back.',
+      'Training hungry, dehydrated or on very little sleep.',
+      'Crash diets, steroids and unverified supplements.',
+      'Comparing your Week 3 to someone else\'s Year 3.'
+    ]));
+    h += '<p class="note-line" style="margin-bottom:20px">This guide is general information, not medical advice. If you have an injury, a heart or blood-pressure condition, or any doubt, see a doctor before you start.</p>';
+
+    // ---- Safety ----
+    h += '<div class="section-label" id="m-safe">Safety &amp; Warning Signs</div>';
+    h += GUIDE_CARD('Soreness vs. pain', GUIDE_UL([
+      'Normal: dull muscle ache 1–2 days after training, mild tiredness, a burning feeling in the muscle during a hard set.',
+      'Stop and lighten up: sharp, pinching or stabbing pain, pain in a joint or tendon, pain that gets worse as you continue, or pain that lasts more than a few days.',
+      'Rule of thumb: if in doubt, lower the weight or skip that exercise for the day.'
+    ]));
+    h += GUIDE_CARD('Stop training and get medical advice if you notice', GUIDE_UL([
+      'Chest pain or pressure, or an unusual racing or irregular heartbeat.',
+      'Dizziness, fainting, or sudden severe shortness of breath.',
+      'Numbness, tingling or weakness in an arm or leg.',
+      'A sudden sharp pain or a "pop" in a joint or muscle, followed by swelling.'
+    ]));
+    h += GUIDE_CARD('Training in hot weather', GUIDE_UL([
+      'Drink water before, during and after sessions. Add a pinch of salt or have an ORS sachet if you sweat a lot.',
+      'Do rucks, sprints and cardio early morning or after sunset, not in midday heat.',
+      'Headache, nausea, cramps, confusion or stopping sweating are warning signs: stop, move to shade, cool down and drink.',
+      'Heat makes everything harder. On very hot days, shorten the session or lighten the weight.'
+    ]));
+
+    // ---- Missed days ----
+    h += '<div class="section-label" id="m-miss">When Life Interrupts</div>';
+    h += '<p class="note-line">Illness, travel, work and Ramadan happen to everyone. Missing time is normal; quitting is the real problem. These are general rules of thumb, not a precise science.</p>';
+    h += GUIDE_CARD('How to restart', GUIDE_TABLE(['Time missed', 'What to do'], [
+      ['1–3 days', 'Carry on as planned. Do not try to "make up" the sessions.'],
+      ['About a week', 'Repeat your last week at the same or slightly lighter weights.'],
+      ['2–3 weeks', 'Restart at about 80% of your last weights for a week, then build back up.'],
+      ['More than a month', 'Treat it like a fresh start: begin the phase again with light weights.']
+    ]));
+    h += GUIDE_CARD('Good to know', GUIDE_UL([
+      'Sick with fever or chest symptoms: rest completely and return only when you feel normal for a day or two.',
+      'Travelling: do the warm-ups, bodyweight lifts and some walking — something is much better than nothing.',
+      'Ramadan: train lighter, ideally 1–2 hours after iftar, and aim to maintain, not set records.'
+    ]));
+
+    // ---- Diet ----
+    h += '<div class="section-label" id="m-diet">Eating for the Plan (Pakistan)</div>';
+    h += '<p class="note-line">Simple, affordable halal food you can find at any local shop or bazaar. These are guidelines, not a strict diet.</p>';
+    h += GUIDE_CARD('The basics', GUIDE_UL([
+      'Protein: roughly 1.6–2.0 g per kg of bodyweight per day. Example: 75 kg → about 120–150 g.',
+      'Calories: eat around your maintenance to hold weight, about 200–300 kcal more to gain muscle, or about 300–500 less to lose fat slowly. Check your weight weekly in the Body tab and adjust.',
+      'Meals: 3 meals plus 1–2 snacks, with some protein in each.',
+      'Water: about 2.5–3 litres a day, more in hot weather and on training days.'
+    ]));
+    h += GUIDE_CARD('Easy protein sources (approximate)', GUIDE_TABLE(['Food', 'Portion', 'Protein'], [
+      ['Egg', '1 whole egg', '~6 g'],
+      ['Chicken (boti / breast)', '100 g cooked', '~28 g'],
+      ['Beef or mutton', '100 g cooked', '~25 g'],
+      ['Fish (rohu, pomfret, etc.)', '100 g cooked', '~20 g'],
+      ['Daal', '1 katori', '~9 g'],
+      ['Chana / lobia / rajma', '1 katori cooked', '~10 g'],
+      ['Soya chunks', '30 g dry', '~15 g'],
+      ['Milk', '1 glass (250 ml)', '~8 g'],
+      ['Dahi', '1 katori', '~6 g'],
+      ['Peanuts', '30 g', '~7 g'],
+      ['Roti (atta)', '1 roti', '~3 g']
+    ]));
+    h += GUIDE_CARD('Carbs and fats', GUIDE_UL([
+      'Carbs fuel training: roti, rice, oats or daliya, potatoes, bananas, dates and seasonal fruit. Eat more on lifting and conditioning days, less on rest days.',
+      'Fats: 1–2 teaspoons of desi ghee or cooking oil per meal is fine, plus a few nuts. No need to avoid ghee — just do not drown the food in it.'
+    ]));
+    h += GUIDE_CARD('A sample training day', GUIDE_UL([
+      'Breakfast: 2–3 eggs, 1–2 rotis or oats with milk, a banana.',
+      'Lunch: chicken or fish (or daal plus chana), 1–2 rotis or a plate of rice, salad, a katori of dahi.',
+      '1–2 hours before training: a banana with a few dates and a glass of milk, or a roti with an egg.',
+      'After training / dinner: a palm-and-a-half portion of chicken, beef or fish (or daal plus soya), vegetables and roti.',
+      'Evening snack: roasted chana, peanuts, or unsweetened lassi. A glass of milk before bed is a cheap protein top-up.'
+    ]));
+    h += GUIDE_CARD('On a budget', GUIDE_P('Eggs, daal, chana, soya chunks, milk and dahi are the cheapest protein for the rupee. You do not need protein powder. Buy fruit in season, and cook in batches to save time and money.'));
+    h += GUIDE_CARD('If you eat little or no meat', GUIDE_P('Combine daal with roti or rice, add chana, lobia or rajma, soya chunks, dahi, milk, eggs if you eat them, or paneer. Portions may need to be a bit bigger to reach your protein target.'));
+    h += GUIDE_CARD('Limit', GUIDE_UL([
+      'Very sugary chai (more than 2 cups a day), soft drinks and energy drinks.',
+      'Fried snacks and heavy parathas every day, plus sweets and bakery items.',
+      'Mass gainers. Protein powder is optional — whey is fine if you cannot reach your target from food, but counterfeit supplements are a known problem, so buy only from a trusted, authorised seller.'
+    ]));
+    h += GUIDE_CARD('Fasting days (Ramadan or voluntary)', GUIDE_P('Keep your protein up between iftar and suhoor, drink plenty of water, and train lighter or 1–2 hours after iftar. This is a time to maintain, not chase personal bests.'));
+    h += '<p class="note-line" style="margin-bottom:24px">This is general guidance, not a dietitian\'s plan. If you have diabetes, kidney or heart problems, or any other medical condition, ask your doctor before changing how you eat.</p>';
+
+    h += '<div class="section-label" id="m-ref">Training Reference</div>';
+    h += '<p class="note-line">Everything below is the working detail behind the plan: the weekly schedule, each phase, recovery, and the Exercise Library.</p>';
+    return h;
+  }
+
   function renderManual() {
     var html = '<div class="body-scroll">';
 
@@ -2296,10 +2490,12 @@
     '</div>';
 
     html += '<div class="manual-nav">';
-    [["m-sch","Week"],["m-gpp","GPP"],["m-p1","Phase 1"],["m-p2","Phase 2"],["m-p3","Phase 3"],["m-rec","Recovery"],["m-lib","Exercise Library"]].forEach(function(n){
+    [["m-why","Why"],["m-phil","Philosophy"],["m-vs","vs. Gym"],["m-how","How Built"],["m-read","Read a Workout"],["m-rules","Do &amp; Avoid"],["m-safe","Safety"],["m-miss","Missed Days"],["m-diet","Diet"],["m-sch","Week"],["m-gpp","GPP"],["m-p1","Phase 1"],["m-p2","Phase 2"],["m-p3","Phase 3"],["m-rec","Recovery"],["m-lib","Exercise Library"]].forEach(function(n){
       html += '<button class="mn-chip" data-action="manual-jump" data-target="' + n[0] + '">' + n[1] + '</button>';
     });
     html += '</div>';
+
+    html += renderManualGuide();
 
     html += '<div class="section-label" id="m-sch">Weekly Schedule</div>';
     html += '<p class="note-line">Three lifting days, one GPP day, one cardio day, one active-recovery day, one full rest day. Never two lifting days back to back.</p>';
