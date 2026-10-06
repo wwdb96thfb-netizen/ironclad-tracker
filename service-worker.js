@@ -20,7 +20,7 @@
 // "Add to Home Screen" standalone mode — the message to the waiting worker
 // could silently never arrive, leaving the update stuck forever. This
 // avoids that failure mode entirely.)
-const CACHE_NAME = "ironclad-v45";
+const CACHE_NAME = "ironclad-v46";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -41,7 +41,7 @@ const APP_SHELL = [
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(function (cache) { return cache.addAll(APP_SHELL); })
+      .then(function (cache) { return cache.addAll(APP_SHELL.map(function (u) { return new Request(u, { cache: "no-cache" }); })); })
       .then(function () { return self.skipWaiting(); })
   );
 });
@@ -61,7 +61,10 @@ self.addEventListener("fetch", function (event) {
   event.respondWith(
     caches.match(req).then(function (cached) {
       if (cached) return cached;
-      return fetch(req).then(function (res) {
+      // Bypass the browser's own HTTP cache so a replaced picture at the same
+      // URL is fetched fresh instead of an old copy being stored again.
+      var fresh = (new URL(req.url).origin === self.location.origin) ? fetch(req.url, { cache: "no-cache" }) : fetch(req);
+      return fresh.then(function (res) {
         if (res && res.ok) {
           var copy = res.clone();
           caches.open(CACHE_NAME).then(function (cache) { cache.put(req, copy); });
