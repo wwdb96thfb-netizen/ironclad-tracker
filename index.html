@@ -563,6 +563,10 @@
   .day-chip.lift .dc-t { color: var(--ink); }
   .phase-btn { border-radius: 12px; font-size: 15px; font-weight: 700; padding: 11px 6px; }
   .phase-btn.active { background: var(--olive-deep); border-color: var(--olive-deep); color: var(--accent); }
+  .toast-fixed { position: fixed; left: 16px; right: 16px; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); z-index: 60; margin: 0; background: #1c1c1e; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  .stage-select { gap: 4px; }
+  .stage-select .phase-btn { font-size: 12.5px; padding: 11px 2px; white-space: nowrap; flex: 1 1 0; min-width: 0; text-align: center; }
+  .stage-select .phase-btn.done { opacity: .6; }
 
   /* session */
   .step-kind { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--rust); }
@@ -665,7 +669,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.14.0";
+  var APP_VERSION = "2.15.0";
 
   /* ============================================================
      DATA
@@ -1058,6 +1062,18 @@
   function standardMet(level) { return standardStatus(level).every(function(r) { return r.met; }); }
   function baselineStatus() { return standardStatus(1); }
   function baselineMet() { return standardMet(1); }
+  // The whole journey in one row: Foundation, Phases 1 to 3, then Ironclad.
+  function stageRow() {
+    var ph = state.settings.phase, found = foundationActive(), iron = ph === 3 && standardMet(3);
+    var h = '<div class="phase-select stage-select">';
+    h += '<div class="phase-btn' + (found ? ' active' : ' done') + '" data-action="stage-info" data-stage="foundation">' + (found ? '' : '\u2713 ') + 'Foundation</div>';
+    [1,2,3].forEach(function(p) {
+      var act = !found && !iron && ph === p, done = iron || (!found && ph > p);
+      h += '<div class="phase-btn' + (act ? ' active' : '') + (done ? ' done' : '') + '" data-action="set-phase" data-phase="' + p + '">' + (done ? '\u2713 ' : '') + 'Phase ' + p + '</div>';
+    });
+    h += '<div class="phase-btn' + (iron ? ' active' : '') + '" data-action="stage-info" data-stage="ironclad">Ironclad</div>';
+    return h + '</div>';
+  }
   function foundationGaps() {
     var eq = eqKey(), tgt = FOUNDATION_TARGET[eq], out = [];
     Object.keys(tgt).forEach(function(k) {
@@ -2291,6 +2307,8 @@
   function completeStep() {
     var sess = state.session;
     if (setsRemaining(sess.steps[sess.idx], sess.idx) > 0) return; // all sets must be ticked first
+    var miss = stepMissing(sess.steps[sess.idx], sess.idx);
+    if (miss) { state.toast = miss; renderKeepScroll(); setTimeout(function(){ state.toast = null; if (state.session) renderKeepScroll(); }, 4000); return; }
     stopGuided();
     clearRestInterval();
     sess.restTimer = null;
@@ -3271,6 +3289,21 @@
     var lo = parseInt(m[1], 10), hi = m[2] ? parseInt(m[2], 10) : lo;
     return { lo: lo, hi: hi };
   }
+  // What still has to be logged before this exercise can be completed.
+  function stepMissing(step, stepIdx) {
+    var sess = state.session;
+    if (!sess || !step || step.kind !== "exercise" || window.__icSkipLog) return null;
+    if (usesWeight(step)) {
+      var sw = sess.weights[stepIdx], lw = state.settings.lastWeights && state.settings.lastWeights[step.title];
+      var wv = (sw && sw.weight !== undefined && sw.weight !== null) ? sw.weight : (!sess.deload && lw && lw.weight != null ? lw.weight : "");
+      if (wv === "" || isNaN(parseFloat(wv))) return "Enter the weight you used before you complete this exercise.";
+    }
+    if (repsLoggable(step)) {
+      var n = parseSetCount(step.sets), r = (sess.reps && sess.reps[stepIdx]) || [], word = repsUnitWord(step) === "sec" ? "seconds" : "reps";
+      for (var i = 0; i < n; i++) { if (r[i] === undefined || r[i] === null || r[i] === "" || isNaN(parseInt(r[i], 10))) return "Enter the " + word + " you did on every set before you complete this exercise."; }
+    }
+    return null;
+  }
   function setStepReps(stepIdx, setIdx, val) {
     var sess = state.session; if (!sess) return;
     if (!sess.reps) sess.reps = {};
@@ -3341,7 +3374,7 @@
     var html = '<div class="body-scroll">';
 
     if (state.toast) {
-      html += '<div class="banner" style="background:var(--good-bg);color:var(--good)">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
+      html += '<div class="banner toast-fixed">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
     }
     if (!state.persistOk) {
       html += '<div class="banner banner-warn">' + ICONS.warn + '<span>Your log isn’t saving in this view — you can still follow the plan.</span></div>';
@@ -3359,14 +3392,12 @@
     }
 
     if (foundationActive()) {
-      html += '<div class="card"><div class="mn-label">Foundation Stage</div><p class="mn-cardbody" style="margin-bottom:8px">You are building up to the Phase 1 standard. Your sessions use the version of each exercise you can do today, and move you up as you get stronger.</p><ul class="item-list">';
-      foundationGaps().forEach(function(g){ html += '<li>' + esc(LADDER_LABELS[g.key]) + ': now on <strong>' + esc(g.now) + '</strong>, goal ' + esc(g.goal) + '</li>'; });
-      html += '</ul></div>';
+      html += '<div class="card"><div class="mn-label">Foundation Stage</div><p class="mn-cardbody" style="margin-bottom:0">You are building up to Phase 1. Your sessions use the version of each exercise you can do today, and move you up as you get stronger.</p></div>';
     }
     html += '<div class="next-card">' +
       '<div class="nc-eyebrow">NEXT UP · DAY ' + s.nextDayNumber + (deload ? ' · DELOAD' : '') + '</div>' +
       '<div class="nc-title">' + esc(nextLabel) + '</div>' +
-      '<div class="nc-meta">' + esc(getPhases()[s.phase].name) + '</div>' +
+      '<div class="nc-meta">' + esc(foundationActive() ? "Foundation Stage" : getPhases()[s.phase].name) + '</div>' +
       '<button class="btn btn-primary btn-block" data-action="start-next">' + (deload ? 'Start Deload Day ' : 'Start Day ') + s.nextDayNumber + '</button>' +
     '</div>';
 
@@ -3380,12 +3411,8 @@
     }
     html += '</div>';
 
-    html += '<div class="section-label">Phase</div>';
-    html += '<div class="phase-select">';
-    [1,2,3].forEach(function(p){
-      html += '<div class="phase-btn' + (s.phase===p?' active':'') + '" data-action="set-phase" data-phase="' + p + '">Phase ' + p + '</div>';
-    });
-    html += '</div>';
+    html += '<div class="section-label">Your Stage</div>';
+    html += stageRow();
     html += '<p class="ph-note">' + esc(getPhases()[s.phase].timeline) + ' — ' + esc(getPhases()[s.phase].note) + '</p>';
 
     html += '<div class="section-label">Daily habit</div>';
@@ -3441,7 +3468,7 @@
     var html = '<div class="body-scroll">';
 
     if (state.toast) {
-      html += '<div class="banner" style="background:var(--good-bg);color:var(--good)">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
+      html += '<div class="banner toast-fixed">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
     }
 
     html += '<div class="section-label">Your Details</div>';
@@ -3566,7 +3593,7 @@
     var html = '<div class="body-scroll">';
 
     if (state.toast) {
-      html += '<div class="banner" style="background:var(--good-bg);color:var(--good)">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
+      html += '<div class="banner toast-fixed">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
     }
 
     html += '<div class="section-label">Your Details</div>';
@@ -3614,12 +3641,9 @@
     // handles the 4-week cycle on its own and the button has no purpose.
     if (deload) html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Already deloaded elsewhere — skip to full training</span></button>';
 
-    html += '<div class="section-label">Your Phase</div>';
-    html += '<div class="phase-select" style="margin-bottom:8px">';
-    [1,2,3].forEach(function(p){
-      html += '<div class="phase-btn' + (s.phase===p?' active':'') + '" data-action="set-phase" data-phase="' + p + '">Phase ' + p + '</div>';
-    });
-    html += '</div>';
+    html += '<div class="section-label">Your Stage</div>';
+    html += stageRow();
+    html += '<div style="height:8px"></div>';
     html += '<p class="ph-note" style="margin-bottom:14px">' + (foundationActive()
       ? 'You are in the Foundation stage. Reach the Phase 1 standard on every ladder shown on the Home tab before moving on.'
       : 'Each phase has a standard, shown below. The next phase unlocks only when you pass every line of it.') + '</p>';
@@ -4062,7 +4086,7 @@
 
   function renderStepBody(step, stepIdx) {
     var html = '';
-    if (state.toast) html += '<div class="banner" style="background:var(--good-bg);color:var(--good);margin-bottom:14px">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
+    if (state.toast) html += '<div class="banner toast-fixed">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
     if (state.session && state.session.deload) {
       html += '<div class="banner" style="background:var(--warn-bg);color:var(--rust);margin-bottom:14px">' + ICONS.warn + '<span><strong>Deload week</strong> — lighter sets, ~60% weight on the main lift.</span></div>';
     }
@@ -4172,7 +4196,7 @@
         var remaining = setsRemaining(step, stepIdx);
         html += '<p class="set-hint">' + (remaining > 0
           ? 'Tap each set as you finish it — ' + remaining + ' more to go before you can continue'
-          : 'All sets done — you can continue') + '</p>';
+          : (stepMissing(step, stepIdx) || 'All sets done — you can continue')) + '</p>';
         html += renderRestTimer(stepIdx);
       }
     } else if (step.kind === "warmup" || step.kind === "stretch") {
@@ -4357,6 +4381,13 @@
     }
     else if (action === "start-next") { startSession(state.settings.nextDayNumber); }
     else if (action === "start-day") { startSession(parseInt(el.getAttribute("data-day"),10)); }
+    else if (action === "stage-info") {
+      var stg = el.getAttribute("data-stage");
+      state.toast = stg === "foundation"
+        ? (foundationActive() ? "You are in the Foundation stage. Keep training: the app moves you into Phase 1 by itself when you reach the starting level on every exercise." : "Foundation is complete. You are past the starting level.")
+        : (state.settings.phase === 3 && standardMet(3) ? "You hold the Ironclad Standard. Keep it." : "Ironclad is the final level. You earn it by passing every line of the Ironclad Standard in Phase 3. See Settings for the list.");
+      render(); setTimeout(function(){ state.toast = null; render(); }, 6000);
+    }
     else if (action === "set-phase") {
       var targetPhase = parseInt(el.getAttribute("data-phase"),10);
       var curPh = state.settings.phase;
