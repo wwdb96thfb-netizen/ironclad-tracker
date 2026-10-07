@@ -665,7 +665,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.12.1";
+  var APP_VERSION = "2.13.0";
 
   /* ============================================================
      DATA
@@ -1015,32 +1015,49 @@
     if (state.settings.ladderPlaced && state.settings.ladderPlaced[eqKey()]) return;
     placeLadders();
   }
-  /* Baseline standard for leaving Phase 1. Push-ups: lower edge of the "Good"
-     band in the CSEP norms (Payne et al., 2000), by age and sex; men on full
-     push-ups, women on knee push-ups, as that test is scored. Plank, squats
-     and rows have no age-banded published norms, so those are conservative
-     practical minimums. Best of the starting test and any logged set counts. */
-  var PUSHUP_GOOD = { male: [22, 17, 13, 10, 8], female: [15, 13, 11, 7, 5] }; // ages 20s,30s,40s,50s,60+
-  function baselineStatus() {
+  /* Standards — one for each phase, set high on purpose. The top one is the
+     army-style mark the owner asked for: 45 push-ups, 10 pull-ups, 45 sit-ups
+     in 2 minutes, 2 miles in 15 minutes. The two below it are steps toward it.
+     Figures are for men under 40; older ages and women are scaled (chosen
+     scaling, not a published table). Best of the test and any logged set. */
+  var STANDARDS = {
+    1: { name: "Phase 1 Standard", push: 25, pull: 4,  row: 12, sit: 30, plank: 90,  squat: 40, run: 19 },
+    2: { name: "Phase 2 Standard", push: 35, pull: 7,  row: 16, sit: 38, plank: 120, squat: 50, run: 17 },
+    3: { name: "Ironclad Standard", push: 45, pull: 10, row: 20, sit: 45, plank: 180, squat: 60, run: 15 }
+  };
+  var STD_AGE = [1, 1, 0.85, 0.7, 0.55];           // ages 20s,30s,40s,50s,60+
+  var STD_FEMALE = { push: 0.6, pull: 0.4, row: 0.7, sit: 1, plank: 1, squat: 1, run: 1.15 };
+  function standardStatus(level) {
+    var S = STANDARDS[level] || STANDARDS[1];
     var pr = state.profile || {}, female = pr.sex === "female", home = pr.equipment === "home";
     var band = Math.max(0, Math.min(4, Math.floor(((pr.age || 30) - 20) / 10)));
     var t = (state.fitTest && !state.fitTest.skipped) ? state.fitTest : {};
+    var need = function(k) {
+      var f = STD_AGE[band], v = S[k];
+      if (k === "run") { v = v / f; if (female) v *= STD_FEMALE.run; return Math.round(v); }
+      v = v * f; if (female) v *= STD_FEMALE[k];
+      return Math.max(1, Math.round(v));
+    };
     var best = function(names, testVal) {
       var b = testVal != null ? testVal : null;
       names.forEach(function(nm) { exHistory(nm).forEach(function(e) { (e.r || []).forEach(function(v) { if (b == null || v > b) b = v; }); }); });
       return b;
     };
     var rows = [
-      { label: female ? "Knee push-ups in one go" : "Push-ups in one go", need: PUSHUP_GOOD[female ? "female" : "male"][band],
-        have: best(female ? ["Knee Push-ups", "Full-Range Push-ups", "Strict Push-ups"] : ["Full-Range Push-ups", "Strict Push-ups"], t.pushups), unit: "" },
-      { label: "Forearm plank", need: 60, have: best(["Forearm Plank"], t.plank), unit: " sec" },
-      { label: "Bodyweight squats in one go", need: 20, have: best(["Slow Bodyweight Squat"], t.squats), unit: "" }
+      { label: "Push-ups in one go", need: need("push"), have: best(["Full-Range Push-ups", "Strict Push-ups"], t.pushups), unit: "" },
+      home ? { label: "Table rows in one go", need: need("row"), have: best(["Table Row", "Feet-Raised Table Row"], t.pulls), unit: "" }
+           : { label: "Pull-ups in one go", need: need("pull"), have: best(["Strict Pull-ups"], t.pulls), unit: "" },
+      { label: "Sit-ups in 2 minutes", need: need("sit"), have: t.situps != null ? t.situps : null, unit: "" },
+      { label: "Forearm plank", need: need("plank"), have: best(["Forearm Plank"], t.plank), unit: " sec" },
+      { label: "Bodyweight squats in one go", need: need("squat"), have: best(["Slow Bodyweight Squat"], t.squats), unit: "" },
+      { label: "2-mile (3.2 km) run", need: need("run"), have: t.run != null && t.run > 0 ? t.run : null, unit: " min", lower: true }
     ];
-    if (home) rows.push({ label: "Table rows in one go", need: 8, have: best(["Table Row", "Feet-Raised Table Row"], t.pulls), unit: "" });
-    rows.forEach(function(r) { r.met = r.have != null && r.have >= r.need; });
+    rows.forEach(function(r) { r.met = r.have != null && (r.lower ? r.have <= r.need : r.have >= r.need); });
     return rows;
   }
-  function baselineMet() { return baselineStatus().every(function(r) { return r.met; }); }
+  function standardMet(level) { return standardStatus(level).every(function(r) { return r.met; }); }
+  function baselineStatus() { return standardStatus(1); }
+  function baselineMet() { return standardMet(1); }
   function foundationGaps() {
     var eq = eqKey(), tgt = FOUNDATION_TARGET[eq], out = [];
     Object.keys(tgt).forEach(function(k) {
@@ -3138,14 +3155,16 @@
     return [
       ["pushups", "Push-ups", "Most you can do in one go, chest to the floor", "reps"],
       ["pulls", home ? "Table rows" : "Pull-ups", home ? "Most in one go, chest to the table edge" : "Most in one go, from a full hang. 0 is fine", "reps"],
-      ["squats", "Bodyweight squats", "Most in one go, thighs to parallel. Stop at 30", "reps"],
+      ["squats", "Bodyweight squats", "Most in one go, thighs to parallel. Stop at 60", "reps"],
+      ["situps", "Sit-ups in 2 minutes", "Feet held or hooked, shoulder blades touch the floor each rep", "reps"],
       ["plank", "Forearm plank", "Longest hold with a straight body", "seconds"],
-      ["hang", "Dead hang", "Longest hang from a bar. Leave blank if you have no bar", "seconds"]
+      ["hang", "Dead hang", "Longest hang from a bar. Leave blank if you have no bar", "seconds"],
+      ["run", "2-mile (3.2 km) run", "Your time in whole minutes, rounded up. Leave blank if you have not timed it yet", "minutes"]
     ];
   }
   function renderFitTest() {
     var d = state.fitDraft || (state.fitDraft = {});
-    var html = '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Starting Test</div><div class="tb-sub">ABOUT 10 MINUTES</div></div></div>';
+    var html = '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Starting Test</div><div class="tb-sub">ABOUT 30 MINUTES</div></div></div>';
     html += '<div class="body-scroll"><div class="onb-wrap">';
     html += '<div class="onb-head">Where Are You Today?</div>';
     html += '<p class="onb-sub">Warm up for a few minutes, then try each test once and enter your honest number. Zero is a fine answer. Rest 2 to 3 minutes between tests. The app uses this to track your progress from where you really are.</p>';
@@ -3586,11 +3605,12 @@
     html += '</div>';
     html += '<p class="ph-note" style="margin-bottom:14px">' + (foundationActive()
       ? 'You are in the Foundation stage. Reach the Phase 1 standard on every ladder shown on the Home tab before moving on.'
-      : 'Move to the next phase when you have finished its months and passed its test in the Manual. Moving to Phase 3 asks you to confirm the test.') + '</p>';
-    if (s.phase === 1) {
-      html += '<div class="section-label">Baseline Standard to Leave Phase 1</div><div class="card" style="padding:4px 16px">';
-      baselineStatus().forEach(function(r){ html += '<div class="settings-row"><span class="sr-k">' + (r.met ? '\u2713 ' : '') + esc(r.label) + '</span><span class="sr-v">' + (r.have != null ? esc(r.have) : '\u2014') + ' / ' + r.need + r.unit + '</span></div>'; });
-      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the starting test and from the reps you log. The push-up number is the published fitness norm for your age and sex; the others are practical minimums. Phase 2 stays locked until every line is met.</p>';
+      : 'Each phase has a standard, shown below. The next phase unlocks only when you pass every line of it.') + '</p>';
+    if (!foundationActive()) {
+      var stdLv = s.phase, stdRows = standardStatus(stdLv);
+      html += '<div class="section-label">' + esc(STANDARDS[stdLv].name) + (stdLv < 3 ? ' — Pass to Unlock Phase ' + (stdLv + 1) : ' — The Final Test') + '</div><div class="card" style="padding:4px 16px">';
+      stdRows.forEach(function(r){ html += '<div class="settings-row"><span class="sr-k">' + (r.met ? '✓ ' : '') + esc(r.label) + '</span><span class="sr-v">' + (r.have != null ? esc(r.have) : '—') + ' / ' + r.need + r.unit + (r.lower ? ' or less' : '') + '</span></div>'; });
+      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the Starting Test (retake it any time, below) and from the reps you log. Sit-ups and the run count only from the test. The standards are set high on purpose and climb each phase up to the Ironclad Standard: 45 push-ups, 10 pull-ups, 45 sit-ups and 2 miles in 15 minutes for a man under 40. They are scaled for age and for women.' + (stdLv < 3 ? ' Phase ' + (stdLv + 1) + ' stays locked until every line is met.' : '') + '</p>';
     }
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
@@ -4317,9 +4337,9 @@
     else if (action === "start-day") { startSession(parseInt(el.getAttribute("data-day"),10)); }
     else if (action === "set-phase") {
       var targetPhase = parseInt(el.getAttribute("data-phase"),10);
-      if (targetPhase > 1 && state.settings.phase === 1 && !foundationActive() && !baselineMet()) { state.toast = "You have not met the baseline standard yet. See the list under Your Phase. Log the numbers in your sessions or retake the starting test."; render(); setTimeout(function(){ state.toast = null; render(); }, 6000); }
-      else if (targetPhase > 1 && foundationActive()) { state.toast = "Finish the Foundation stage first: reach the Phase 1 standard on every ladder shown on the Home tab."; render(); setTimeout(function(){ state.toast = null; render(); }, 5000); }
-      else if (targetPhase === 3 && state.settings.phase !== 3) openPhase3GateConfirm();
+      var curPh = state.settings.phase;
+      if (targetPhase > curPh && foundationActive()) { state.toast = "Finish the Foundation stage first: reach the Phase 1 standard on every ladder shown on the Home tab."; render(); setTimeout(function(){ state.toast = null; render(); }, 5000); }
+      else if (targetPhase > curPh && !standardMet(targetPhase - 1)) { state.toast = "Phase " + targetPhase + " is locked. You must pass every line of the " + STANDARDS[targetPhase - 1].name + " first. See the list under Your Phase."; render(); setTimeout(function(){ state.toast = null; render(); }, 6000); }
       else setPhase(targetPhase);
     }
     else if (action === "start-guided") { startGuided(parseInt(el.getAttribute("data-step"),10)); }
