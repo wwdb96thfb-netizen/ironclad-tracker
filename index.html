@@ -659,7 +659,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.10.0";
+  var APP_VERSION = "2.10.1";
 
   /* ============================================================
      DATA
@@ -1699,6 +1699,9 @@
   // exercise has one, the Manual simply shows nothing for that section
   // (no tan body-diagram placeholder anymore).
   var EX_MUSCLE_PHOTOS = ["Barbell Back Squat", "Bulgarian Split Squat", "Flat Bench Press", "Assisted Pull-ups", "Farmer's Walk", "Forearm Plank", "Calf Raise", "Band Pull-Apart", "Conventional Deadlift", "Standing Overhead Press", "Strict Push-ups", "Banded Lateral Walk", "Bent-Over Barbell Row", "Dragon Flags", "Face Pull (band or cable)", "Front Lever Progressions", "Front Squat", "Handstand Push-ups", "Hanging Knee Raises", "Heavy Sandbag Cleans", "Heavy Sled Push/Pull", "Hollow Body Hold", "Kettlebell Swings", "L-Sit Progressions", "Lateral Bound, Stick the Landing", "Muscle-Up Progressions", "Pallof Press", "Pistol Squats", "Push Press", "Weighted Dips", "Sandbag Bear-Hug Carry", "Romanian Deadlift", "Single-Arm DB Row", "Weighted Pull-ups", "Suitcase Carries", "Strict Pull-ups"];
+  // Home / bodyweight exercises that have pictures so far.
+  ["Bear Crawl", "Bear Crawl Sprint", "Crab Walk", "Explosive Table Row", "Feet-Raised Pike Push-ups", "Feet-Raised Push-ups", "Feet-Raised Table Row", "Full-Range Push-ups", "Lying Leg Raises", "One-Arm Towel Door Row", "Pike Push-ups", "Prone Y-Raise", "Reverse Nordic Curl", "Side Plank", "Side-Lying Leg Raise", "Single-Leg Calf Raise", "Single-Leg Glute Bridge", "Single-Leg Hip Thrust", "Slow Bodyweight Squat", "Squat Jumps", "Table Reverse Hyper", "Table Row", "Table Row Hold", "Towel Door Row"].forEach(function(n){ if (EX_PHOTOS.indexOf(n) === -1) EX_PHOTOS.push(n); });
+  ["Bear Crawl", "Bear Crawl Sprint", "Crab Walk", "Explosive Table Row", "Feet-Raised Pike Push-ups", "Feet-Raised Push-ups", "Feet-Raised Table Row", "Full-Range Push-ups", "Lying Leg Raises", "One-Arm Table Row", "One-Arm Towel Door Row", "Pike Push-ups", "Prone Y-Raise", "Reverse Nordic Curl", "Side Plank", "Side-Lying Leg Raise", "Single-Leg Calf Raise", "Single-Leg Glute Bridge", "Single-Leg Hip Thrust", "Slow Bodyweight Squat", "Squat Jumps", "Table Reverse Hyper", "Table Row", "Table Row Hold", "Towel Door Row"].forEach(function(n){ if (EX_MUSCLE_PHOTOS.indexOf(n) === -1) EX_MUSCLE_PHOTOS.push(n); });
   function musclePhotoPath(name) { return 'muscles/' + photoSlug(name) + '.jpg'; }
 
   // ------------------------------------------------------------------
