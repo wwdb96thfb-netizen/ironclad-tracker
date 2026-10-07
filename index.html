@@ -669,7 +669,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.15.0";
+  var APP_VERSION = "2.16.0";
 
   /* ============================================================
      DATA
@@ -718,7 +718,7 @@
             {name:"Conventional Deadlift", sets:"2×5", rest:"3m", main:true},
             {name:"Standing Overhead Press", sets:"3×5–8", rest:"2–3m"},
             {name:"Bent-Over Barbell Row", sets:"3×8–10", rest:"2m"},
-            {name:"Strict Push-ups", sets:"3×AMRAP", rest:"90s"},
+            {name:"Strict Push-ups", sets:"3×Max", rest:"90s"},
             {name:"Hanging Knee Raises", sets:"3×8–12", rest:"60s"},
             {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
             {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
@@ -835,7 +835,7 @@
             {name:"Conventional Deadlift", sets:"2×5", rest:"3m", main:true},
             {name:"Standing Overhead Press", sets:"3×6–10", rest:"2–3m"},
             {name:"Bent-Over Barbell Row", sets:"3×8–10", rest:"2m"},
-            {name:"Strict Push-ups", sets:"3×AMRAP", rest:"90s"},
+            {name:"Strict Push-ups", sets:"3×Max", rest:"90s"},
             {name:"Hanging Knee Raises", sets:"3×8–12", rest:"60s"},
             {name:"Banded Lateral Walk", sets:"2×15", rest:"45s"},
             {name:"Pallof Press", sets:"3×10/side", rest:"45s"}
@@ -942,7 +942,7 @@
   ============================================================ */
   var LADDERS = {
     push: { home: [["Wall Push-ups","3×10–15"],["Incline Push-ups","3×8–12"],["Knee Push-ups","3×8–12"],["Full-Range Push-ups","3×6–12"],["Feet-Raised Push-ups","3×6–10"],["Archer Push-ups","3×6–8/side"]],
-            gym:  [["Wall Push-ups","3×10–15"],["Incline Push-ups","3×8–12"],["Knee Push-ups","3×8–12"],["Strict Push-ups","3×AMRAP"]] },
+            gym:  [["Wall Push-ups","3×10–15"],["Incline Push-ups","3×8–12"],["Knee Push-ups","3×8–12"],["Strict Push-ups","3×Max"]] },
     pull: { home: [["Bent-Knee Table Row","3×6–10"],["Table Row","3×8–10"],["Feet-Raised Table Row","3×5–8"],["One-Arm Table Row","3×5/arm"]],
             gym:  [["Dead Hang","3×15–30s"],["Assisted Pull-ups","3×8–10"],["Negative Pull-ups","3×3–5"],["Strict Pull-ups","3×5–8"],["Weighted Pull-ups","3×5"]] },
     squat: { home: [["Chair Sit-to-Stand","3×8–12"],["Slow Bodyweight Squat","3×10–15"]], gym: [["Chair Sit-to-Stand","3×8–12"],["Slow Bodyweight Squat","3×10–15"]] },
@@ -1025,12 +1025,12 @@
      Figures are for men under 40; older ages and women are scaled (chosen
      scaling, not a published table). Best of the test and any logged set. */
   var STANDARDS = {
-    1: { name: "Phase 1 Standard", push: 30, pull: 6,  row: 14, sit: 35, plank: 120, squat: 45, run: 18 },
-    2: { name: "Phase 2 Standard", push: 45, pull: 10, row: 20, sit: 45, plank: 180, squat: 55, run: 15 },
-    3: { name: "Ironclad Standard", push: 60, pull: 18, row: 28, sit: 60, plank: 220, squat: 70, run: 14 }
+    1: { name: "Phase 1 Standard", push: 30, pull: 6,  row: 14, plank: 120, squat: 45, run: 18 },
+    2: { name: "Phase 2 Standard", push: 45, pull: 10, row: 20, plank: 180, squat: 55, run: 15 },
+    3: { name: "Ironclad Standard", push: 60, pull: 18, row: 28, plank: 220, squat: 70, run: 14 }
   };
   var STD_AGE = [1, 1, 0.85, 0.7, 0.55];           // ages 20s,30s,40s,50s,60+
-  var STD_FEMALE = { push: 0.6, pull: 0.4, row: 0.7, sit: 1, plank: 1, squat: 1, run: 1.15 };
+  var STD_FEMALE = { push: 0.6, pull: 0.4, row: 0.7, plank: 1, squat: 1, run: 1.15 };
   function standardStatus(level) {
     var S = STANDARDS[level] || STANDARDS[1];
     var pr = state.profile || {}, female = pr.sex === "female", home = pr.equipment === "home";
@@ -1051,7 +1051,6 @@
       { label: "Push-ups in one go", need: need("push"), have: best(["Full-Range Push-ups", "Strict Push-ups"], t.pushups), unit: "" },
       home ? { label: "Table rows in one go", need: need("row"), have: best(["Table Row", "Feet-Raised Table Row"], t.pulls), unit: "" }
            : { label: "Pull-ups in one go", need: need("pull"), have: best(["Strict Pull-ups"], t.pulls), unit: "" },
-      { label: "Sit-ups in 2 minutes", need: need("sit"), have: best(["Sit-ups"], t.situps), unit: "" },
       { label: "Forearm plank", need: need("plank"), have: best(["Forearm Plank"], t.plank), unit: " sec" },
       { label: "Bodyweight squats in one go", need: need("squat"), have: best(["Slow Bodyweight Squat"], t.squats), unit: "" },
       { label: "2-mile (3.2 km) run", need: need("run"), have: (function() { var a = t.run > 0 ? t.run : null, b2 = state.settings.bestRun || null; return a && b2 ? Math.min(a, b2) : (a || b2); })(), unit: " min", lower: true }
@@ -1066,10 +1065,10 @@
   function stageRow() {
     var ph = state.settings.phase, found = foundationActive(), iron = ph === 3 && standardMet(3);
     var h = '<div class="phase-select stage-select">';
-    h += '<div class="phase-btn' + (found ? ' active' : ' done') + '" data-action="stage-info" data-stage="foundation">' + (found ? '' : '\u2713 ') + 'Foundation</div>';
+    h += '<div class="phase-btn' + (found ? ' active' : ' done') + '" data-action="stage-info" data-stage="foundation">' + 'Foundation</div>';
     [1,2,3].forEach(function(p) {
       var act = !found && !iron && ph === p, done = iron || (!found && ph > p);
-      h += '<div class="phase-btn' + (act ? ' active' : '') + (done ? ' done' : '') + '" data-action="set-phase" data-phase="' + p + '">' + (done ? '\u2713 ' : '') + 'Phase ' + p + '</div>';
+      h += '<div class="phase-btn' + (act ? ' active' : '') + (done ? ' done' : '') + '" data-action="set-phase" data-phase="' + p + '">' + 'Phase ' + p + '</div>';
     });
     h += '<div class="phase-btn' + (iron ? ' active' : '') + '" data-action="stage-info" data-stage="ironclad">Ironclad</div>';
     return h + '</div>';
@@ -1255,7 +1254,6 @@
     "Flat Bench Press": "Lie on the bench, feet flat on the floor, shoulder blades pulled back and down. Lower the bar to your mid-chest under control, elbows at roughly 45° to your torso, then press it back up to lockout over your shoulders.",
     "Assisted Pull-ups": "Loop a resistance band over the bar and under one knee or foot (or use an assist machine) to remove just enough bodyweight that you can complete every rep in full. Pull your chest toward the bar, then lower all the way to a dead hang each rep — don't stop at the halfway point.",
     "Farmer's Walk": "Pick up a heavy dumbbell, kettlebell, or loaded jug/jerry can in each hand and walk a measured distance with tall posture — shoulders back, core braced. Take controlled steps; don't let the weights pull you into a lean.",
-    "Sit-ups": "Lie on your back, knees bent, feet flat and hooked under something solid or held by a partner. Hands crossed on your chest or fingertips at your ears — never pull on your neck. Curl up until your chest reaches your thighs, then lower with control until your shoulder blades touch the floor. Breathe out on the way up. Keep a steady rhythm rather than rushing the first reps.",
     "Forearm Plank": "Forearms on the floor, elbows under your shoulders, body in one straight line from head to heels. Squeeze your glutes and brace your abs — don't let your hips sag or pike up. Breathe normally through the hold.",
     "Calf Raise": "Standing, rise up onto the balls of your feet as high as you can, pause a beat at the top, then lower slowly until your heels are back on the floor. Keep your legs straight, not locked-stiff.",
     "Band Pull-Apart": "Hold a light resistance band at shoulder height, arms straight out in front of you. Pull it apart by driving your shoulder blades together, hold a second, then return under control. Don't shrug your shoulders up toward your ears.",
@@ -1299,7 +1297,6 @@
     3: { title:"Interval Run", sub:"Fast Repeats", stats:[{v:"6 × 400m",l:"Fast"},{v:"90s",l:"Walk Between"}], note:"Jog easy for 5 to 10 minutes first. Then run 400 meters (one lap of a track, or about 90 seconds) fast, walk 90 seconds, and repeat. Every repeat should be about the same speed. Stop if your pace falls apart." },
     deload: { title:"Easy Run", sub:"Deload", stats:[{v:"15–20",l:"Minutes"}], note:"Light and relaxed. You should finish feeling fresher than when you started." }
   };
-  var SITUP_SETS = { 1: "3×15–25", 2: "3×25–35", 3: "3×35–50" };
   var RUCK_DOSING = {
     1: {load:"10–15%", duration:"30–40m"},
     2: {load:"20–30%", duration:"40–50m"},
@@ -1533,7 +1530,7 @@
     var t = DAY_TYPE[dayNum];
     if (t === "lift") return getPhases()[phase].workouts[liftType].name;
     if (t === "gpp") return gppType === "ruck" ? "GPP — Load Carriage (Ruck)" : "GPP — Speed & Agility";
-    if (t === "cardio") return "Run & Sit-ups";
+    if (t === "cardio") return "Run";
     if (t === "recovery") return "Active Recovery";
     return "Full Rest";
   }
@@ -1567,7 +1564,6 @@
     } else if (t === "cardio") {
       var rp = deload ? RUN_PLAN.deload : RUN_PLAN[phase];
       steps.push({kind:"cardio", title:rp.title, sub:rp.sub, stats:rp.stats, note:rp.note, runLog:true});
-      steps.push({kind:"exercise", title:"Sit-ups", sets: deload ? deloadSetsString(SITUP_SETS[phase]) : SITUP_SETS[phase], rest:"60s", isMainLift:false, swappedFrom:null, ladderKey:null, ladderGoal:null});
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
     } else if (t === "recovery") {
       RECOVERY_ITEMS.forEach(function(r){ steps.push({kind:"recovery", title:r.name, sub:r.dur, text:r.desc, items:r.items}); });
@@ -1658,7 +1654,7 @@
     "Assisted Pull-ups":"PULL", "Bent-Over Barbell Row":"PULL", "Strict Pull-ups":"PULL", "Single-Arm DB Row":"PULL",
     "Muscle-Up Progressions":"PULL", "Weighted Pull-ups":"PULL",
     "Farmer's Walk":"CARRY", "Sandbag Bear-Hug Carry":"CARRY", "Suitcase Carries":"CARRY",
-    "Forearm Plank":"CORE", "Sit-ups":"CORE", "Pallof Press":"CORE", "Hollow Body Hold":"CORE", "L-Sit Progressions":"CORE", "Dragon Flags":"CORE",
+    "Forearm Plank":"CORE", "Pallof Press":"CORE", "Hollow Body Hold":"CORE", "L-Sit Progressions":"CORE", "Dragon Flags":"CORE",
     "Calf Raise":"CALF",
     "Band Pull-Apart":"BAND", "Banded Lateral Walk":"BAND",
     "Kettlebell Swings":"SWING",
@@ -1891,7 +1887,6 @@
     "Assisted Pull-ups": ["lats","biceps","rearDelts","forearms"],
     "Farmer's Walk": ["forearms","traps","abs","obliques"],
     "Forearm Plank": ["abs","obliques","lowerBack"],
-    "Sit-ups": ["abs","obliques"],
     "Calf Raise": ["calves"],
     "Band Pull-Apart": ["rearDelts","traps"],
     "Conventional Deadlift": ["hamstrings","glutes","lowerBack","traps","forearms"],
@@ -2947,7 +2942,7 @@
 
   function openDeleteConfirm(id, headline) {
     if (!id) {
-      state.toast = "Couldn’t identify that session — try reopening the Log tab";
+      state.toast = "Couldn’t identify that session — try reopening the Progress tab";
       render();
       setTimeout(function(){ state.toast = null; render(); }, 3000);
       return;
@@ -3077,6 +3072,7 @@
   // "8–10" / "15" (a plain rep count or range) reads as "8–10 reps"; anything
   // with its own unit already (40m, 30–45s, AMRAP, 10/side) is left as-is.
   function formatSetUnit(unit) {
+    if (unit === "Max") return "as many as you can";
     return /^\d+(\s*[–-]\s*\d+)?$/.test(unit) ? (unit + " reps") : unit;
   }
 
@@ -3191,7 +3187,6 @@
       ["pushups", "Push-ups", "Most you can do in one go, chest to the floor", "reps"],
       ["pulls", home ? "Table rows" : "Pull-ups", home ? "Most in one go, chest to the table edge" : "Most in one go, from a full hang. 0 is fine", "reps"],
       ["squats", "Bodyweight squats", "Most in one go, thighs to parallel. Stop at 60", "reps"],
-      ["situps", "Sit-ups in 2 minutes", "Feet held or hooked, shoulder blades touch the floor each rep", "reps"],
       ["plank", "Forearm plank", "Longest hold with a straight body", "seconds"],
       ["hang", "Dead hang", "Longest hang from a bar. Leave blank if you have no bar", "seconds"],
       ["run", "2-mile (3.2 km) run", "Your time in whole minutes, rounded up. Leave blank if you have not timed it yet", "minutes"]
@@ -3211,7 +3206,7 @@
     if (state.fitError) html += '<p class="onb-error">' + esc(state.fitError) + '</p>';
     html += '<button class="btn btn-primary btn-block" data-action="fit-save" style="margin-top:18px">Save My Results</button>';
     html += '<button class="btn btn-ghost btn-block" data-action="fit-skip" style="margin-top:8px">Skip for now</button>';
-    html += '<p class="note-line" style="text-align:center;margin-top:10px">You can take or retake this test any time from Settings.</p>';
+    html += '<p class="note-line" style="text-align:center;margin-top:10px">You can take or retake this test any time from the Progress tab.</p>';
     html += '</div></div>';
     return html;
   }
@@ -3313,7 +3308,7 @@
   function repsHint(step) {
     var last = state.settings.lastReps && state.settings.lastReps[step.title];
     var word = repsUnitWord(step) === "sec" ? "seconds" : "reps";
-    if (!last || !last.reps || !last.reps.length) return "Enter the " + word + " you actually do on each set, even if it is below the target. Your log will show the real numbers.";
+    if (!last || !last.reps || !last.reps.length) return "";
     var r = repsRange(step.sets), txt = "Last time: " + last.reps.join(", ") + ". ";
     if (r) {
       var min = Math.min.apply(null, last.reps);
@@ -3351,7 +3346,7 @@
       return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Day Complete</div></div></div>';
     }
     if (state.screen === "log") {
-      return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Training Log</div></div></div>';
+      return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Progress</div></div></div>';
     }
     if (state.screen === "manual") {
       return '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Field Manual</div></div></div>';
@@ -3387,17 +3382,10 @@
       html += '<div class="banner banner-warn">' + ICONS.warn + '<span><strong>Deload week</strong> — Day ' + (doneSoFar+1) + ' of ' + DELOAD_WEEK_SESSIONS + '. Every session is automatically lighter (~60% weight, fewer sets) until the week is done — this can\'t be skipped.</span></div>';
     }
 
-    if (s.phase === 1 && state.profile && LEVEL_TIPS[state.profile.level]) {
-      html += '<div class="banner">' + ICONS.check + '<span>' + esc(homeWords(LEVEL_TIPS[state.profile.level])) + '</span></div>';
-    }
-
-    if (foundationActive()) {
-      html += '<div class="card"><div class="mn-label">Foundation Stage</div><p class="mn-cardbody" style="margin-bottom:0">You are building up to Phase 1. Your sessions use the version of each exercise you can do today, and move you up as you get stronger.</p></div>';
-    }
     html += '<div class="next-card">' +
       '<div class="nc-eyebrow">NEXT UP · DAY ' + s.nextDayNumber + (deload ? ' · DELOAD' : '') + '</div>' +
       '<div class="nc-title">' + esc(nextLabel) + '</div>' +
-      '<div class="nc-meta">' + esc(foundationActive() ? "Foundation Stage" : getPhases()[s.phase].name) + '</div>' +
+      '<div class="nc-meta">' + esc(foundationActive() ? "Foundation Stage — building up to Phase 1" : getPhases()[s.phase].name) + '</div>' +
       '<button class="btn btn-primary btn-block" data-action="start-next">' + (deload ? 'Start Deload Day ' : 'Start Day ') + s.nextDayNumber + '</button>' +
     '</div>';
 
@@ -3411,10 +3399,6 @@
     }
     html += '</div>';
 
-    html += '<div class="section-label">Your Stage</div>';
-    html += stageRow();
-    html += '<p class="ph-note">' + esc(getPhases()[s.phase].timeline) + ' — ' + esc(getPhases()[s.phase].note) + '</p>';
-
     html += '<div class="section-label">Daily habit</div>';
     html += '<div class="banner" style="margin-bottom:0">Grip: hang from a bar, 30–60s total, any time today — broken into as many short hangs as you like.</div>';
 
@@ -3425,17 +3409,41 @@
   function renderBottomNav() {
     return '<div class="bottomnav">' +
       '<button class="' + (state.screen==='home'?'active':'') + '" data-action="go-home">' + ICONS.home + '<span>Home</span></button>' +
-      '<button class="' + (state.screen==='log'?'active':'') + '" data-action="go-log">' + ICONS.log + '<span>Log</span></button>' +
+      '<button class="' + (state.screen==='log'?'active':'') + '" data-action="go-log">' + ICONS.log + '<span>Progress</span></button>' +
       '<button class="' + (state.screen==='manual'?'active':'') + '" data-action="go-manual">' + ICONS.manual + '<span>Manual</span></button>' +
       '<button class="' + (state.screen==='profile'?'active':'') + '" data-action="go-profile">' + ICONS.profile + '<span>Body</span></button>' +
       '<button class="' + (state.screen==='settings'?'active':'') + '" data-action="go-settings">' + ICONS.gear + '<span>Settings</span></button>' +
     '</div>';
   }
 
+  // Everything about where you stand: stage, the standard to pass, the test.
+  function renderProgressTop() {
+    var s = state.settings, html = '';
+    html += '<div class="section-label" style="margin-top:0">Your Stage</div>' + stageRow();
+    if (foundationActive()) {
+      html += '<p class="ph-note" style="margin:8px 0 14px">You are in the Foundation stage. Your sessions use the version of each exercise you can do today and move you up as you get stronger. Phase 1 starts by itself when you are ready.</p>';
+    } else {
+      var stdLv = s.phase, stdRows = standardStatus(stdLv);
+      html += '<p class="ph-note" style="margin:8px 0 14px">' + esc(getPhases()[s.phase].timeline) + ' — ' + esc(getPhases()[s.phase].note) + '</p>';
+      html += '<div class="section-label">' + esc(STANDARDS[stdLv].name) + '</div><div class="card" style="padding:4px 16px">';
+      stdRows.forEach(function(r){ html += '<div class="settings-row"><span class="sr-k">' + (r.met ? '\u2713 ' : '') + esc(r.label) + '</span><span class="sr-v">' + (r.have != null ? esc(r.have) : '\u2014') + ' / ' + r.need + r.unit + (r.lower ? ' or less' : '') + '</span></div>'; });
+      html += '</div><p class="ph-note" style="margin-bottom:10px">Your best / the standard. ' + (stdLv < 3 ? 'Pass every line to unlock Phase ' + (stdLv + 1) + '.' : 'Pass every line to earn Ironclad.') + ' Your best comes from the test and from what you log.</p>';
+    }
+    var tested = state.fitTest && !state.fitTest.skipped;
+    html += '<button class="btn btn-ghost btn-block" data-action="fit-retake" style="margin-bottom:6px"><span>' + (tested ? 'Retake the Fitness Test' : 'Take the Fitness Test') + '</span></button>';
+    if (tested) html += '<p class="ph-note" style="text-align:center;margin-bottom:14px">Last taken ' + esc(fmtDate(state.fitTest.date)) + '</p>';
+    var deload = deloadModeActive();
+    html += '<div class="card" style="padding:4px 16px;margin-top:8px"><div class="settings-row"><span class="sr-k">Deload week</span><span class="sr-v">' + (deload ? 'On now: day ' + ((s.deloadSessionsDone||0)+1) + ' of ' + DELOAD_WEEK_SESSIONS : 'Automatic, every 4 weeks') + '</span></div></div>';
+    if (deload) html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Already deloaded elsewhere — skip to full training</span></button>';
+    return html;
+  }
   function renderLog() {
     var html = '<div class="body-scroll">';
+    if (state.toast) html += '<div class="banner toast-fixed">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
     var entries = state.logEntries || [];
     var streak = computeStreak(entries);
+    html += renderProgressTop();
+    html += '<div class="section-label">Training Log</div>';
     html += '<div class="stat-row">' +
       '<div class="stat-tile"><div class="st-n">' + entries.length + '</div><div class="st-l">Sessions</div></div>' +
       '<div class="stat-tile"><div class="st-n">' + streak + '</div><div class="st-l">Day Streak</div></div>' +
@@ -3480,141 +3488,6 @@
     html += '<div class="settings-row"><span class="sr-k">Equipment</span><span class="sr-v">' + esc(EQUIPMENT_LABELS[state.profile && state.profile.equipment] || "—") + '</span></div>';
     html += '</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-edit-profile-confirm" style="margin-bottom:14px">' + ICONS.profile + '<span>Edit My Details</span></button>';
-    html += '<div class="section-label">Starting Test</div>';
-    if (state.fitTest && !state.fitTest.skipped) {
-      html += '<div class="card" style="padding:4px 16px">';
-      fitTestFields().forEach(function(f){ if (state.fitTest[f[0]] != null) html += '<div class="settings-row"><span class="sr-k">' + esc(f[1]) + '</span><span class="sr-v">' + esc(state.fitTest[f[0]]) + ' ' + (f[3] === "seconds" ? "sec" : "reps") + '</span></div>'; });
-      html += '<div class="settings-row"><span class="sr-k">Taken</span><span class="sr-v">' + esc(fmtDate(state.fitTest.date)) + '</span></div></div>';
-    } else {
-      html += '<p class="ph-note">You have not taken the starting test yet.</p>';
-    }
-    html += '<button class="btn btn-ghost btn-block" data-action="fit-retake" style="margin-bottom:14px"><span>' + (state.fitTest && !state.fitTest.skipped ? 'Retake the Test' : 'Take the Test') + '</span></button>';
-
-    html += '<div class="section-label">Your Progress</div>';
-    html += '<div class="card" style="padding:4px 16px">';
-    html += '<div class="settings-row"><span class="sr-k">Phase</span><span class="sr-v">' + s.phase + ' — ' + esc(getPhases()[s.phase].name.split('—')[1] ? getPhases()[s.phase].name.split('—')[1].trim() : getPhases()[s.phase].name) + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Next day</span><span class="sr-v">Day ' + s.nextDayNumber + '</span></div>';
-    html += '</div>';
-
-    html += '<div class="section-label">Deload Cycle</div>';
-    html += '<div class="card" style="padding:4px 16px">';
-    html += '<div class="settings-row"><span class="sr-k">Weeks since last deload</span><span class="sr-v">Week ' + weeksIn + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Status</span><span class="sr-v">' + esc(deloadStatus) + '</span></div>';
-    html += '</div>';
-    html += '<p class="ph-note" style="margin-bottom:12px">' + (deload
-      ? ('Deload is locked in — every session you start right now is automatically lighter (fewer sets, ~60% weight) until all ' + DELOAD_WEEK_SESSIONS + ' days are done. The cycle then restarts on its own.')
-      : 'Every 4 weeks the app automatically switches your next sessions to a lighter deload week and won’t let you skip it — no need to track this yourself.') + '</p>';
-    // Only offered once a deload is actually locked in — before that the app
-    // handles the 4-week cycle on its own and the button has no purpose.
-    if (deload) html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Already deloaded elsewhere — skip to full training</span></button>';
-
-    html += '<div class="section-label">Plan</div>';
-    html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
-    html += '<p class="ph-note">Takes you back to Day 1, Phase 1, Workout A / Ruck, and restarts the deload clock. Your training log and body measurements are not touched.</p>';
-
-    html += '<p class="ph-note" style="text-align:center;margin-top:24px;font-family:\'Barlow Condensed\',sans-serif;color:var(--ink-faint)">Ironclad &middot; Version ' + esc(APP_VERSION) + '</p>';
-    html += '<p class="ph-note" style="text-align:center;margin-top:4px;font-size:11px;color:var(--ink-faint)">&copy; 2026 Syed Iftikhar Shah. All rights reserved.</p>';
-
-    html += '</div>';
-    return html + renderBottomNav();
-  }
-
-  function renderProfile() {
-    var html = '<div class="body-scroll">';
-    var entries = state.measurements || [];
-
-    html += '<p class="note-line">Log your own measurements here whenever you take them — nothing is required, and nothing here feeds into the training plan. It’s just a private record of how your body is changing.</p>';
-
-    if (state.measureError) {
-      html += '<div class="banner banner-warn">' + ICONS.warn + '<span>Couldn’t load your measurements (' + esc(state.measureError) + ').</span></div>';
-    }
-
-    html += '<div class="section-label">Add a Measurement</div>';
-    html += '<div class="card">';
-    html += '<div class="field-row"><label>Weight (kg)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-weight" placeholder="e.g. 94.5"></div>';
-    html += '<div class="field-grid">';
-    html += '<div class="field-row"><label>Waist (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-waist" placeholder="—"></div>';
-    html += '<div class="field-row"><label>Chest (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-chest" placeholder="—"></div>';
-    html += '<div class="field-row"><label>Arms (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-arms" placeholder="—"></div>';
-    html += '<div class="field-row"><label>Thighs (cm)</label><input class="field-input" type="number" inputmode="decimal" step="0.1" id="pf-thighs" placeholder="—"></div>';
-    html += '</div>';
-    html += '<div class="field-row"><label>Notes</label><textarea class="field-input notes" id="pf-notes" placeholder="Optional"></textarea></div>';
-    html += '<button class="btn btn-primary btn-block" data-action="add-measurement">Save Measurement</button>';
-    html += '</div>';
-
-    html += '<div class="section-label">History</div>';
-    if (!entries.length) {
-      html += '<div class="empty-state">' + ICONS.empty + (state.measurements===null?'<p>Loading…</p>':'<p>No measurements logged yet.</p>') + '</div>';
-    } else {
-      html += '<div class="card" style="padding:4px 16px">';
-      entries.forEach(function(e){
-        var parts = [];
-        if (e.weight != null) parts.push('<b>' + esc(e.weight) + ' kg</b>');
-        if (e.waist != null) parts.push('Waist ' + esc(e.waist) + 'cm');
-        if (e.chest != null) parts.push('Chest ' + esc(e.chest) + 'cm');
-        if (e.arms != null) parts.push('Arms ' + esc(e.arms) + 'cm');
-        if (e.thighs != null) parts.push('Thighs ' + esc(e.thighs) + 'cm');
-        html += '<div class="measure-row"><div class="measure-main"><div class="measure-date">' + fmtDate(e.date) + '</div>' +
-          '<div class="measure-vals">' + (parts.length ? parts.join(' · ') : '—') + '</div>' +
-          (e.notes ? '<div class="measure-vals" style="color:var(--ink-soft);margin-top:2px">' + esc(e.notes) + '</div>' : '') + '</div>' +
-          '<button class="log-del" data-action="open-delete-measurement-confirm" data-id="' + esc(e.id||'') + '" data-date="' + esc(fmtDate(e.date)) + '" aria-label="Delete measurement">' + ICONS.trash + '</button></div>';
-      });
-      html += '</div>';
-    }
-
-    html += '</div>';
-    return html + renderBottomNav();
-  }
-
-  // The Manual screen reads straight off getPhases() / RUCK_DOSING / BALANCE_ITEMS /
-  // RECOVERY_ITEMS — the same data the tracker itself runs on — plus the handful
-  // of reference-only lines in GOLDEN_RULES / getCallouts() above. No second
-  // copy of the plan to drift out of sync, and it opens instantly in-app instead
-  // of jumping to the separate field-manual page.
-  // "Start Here" chapters at the top of the Manual: why the app exists, the
-  // thinking behind it, how it differs from typical gym routines, rules, and
-  // an everyday Pakistani diet guide. Written for any reader — nothing in here
-  // assumes a particular job, background or starting level.
-  var GUIDE_P = function(t){ return '<p class="mn-cardbody" style="margin:0 0 10px">' + esc(t) + '</p>'; };
-  var GUIDE_UL = function(arr){ return '<ul class="item-list" style="margin:0 0 4px">' + arr.map(function(it){ return '<li>' + esc(it) + '</li>'; }).join('') + '</ul>'; };
-  var GUIDE_CARD = function(head, inner){ return '<div class="card" style="margin-bottom:12px"><p class="mn-cardhead">' + esc(head) + '</p>' + inner + '</div>'; };
-  var GUIDE_TABLE = function(heads, rows){
-    return '<table class="guide-table"><tr>' + heads.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr>' +
-      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
-  };
-
-  function renderSettings() {
-    var s = state.settings;
-    var weeksIn = computeWeeksInCycle();
-    var deload = deloadModeActive();
-    var deloadStatus = deload
-      ? "Deload week — Day " + ((s.deloadSessionsDone||0)+1) + "/" + DELOAD_WEEK_SESSIONS
-      : "Not yet due";
-    var html = '<div class="body-scroll">';
-
-    if (state.toast) {
-      html += '<div class="banner toast-fixed">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
-    }
-
-    html += '<div class="section-label">Your Details</div>';
-    html += '<div class="card" style="padding:4px 16px">';
-    html += '<div class="settings-row"><span class="sr-k">Track</span><span class="sr-v">' + (state.profile && state.profile.sex === "female" ? "Women’s" : "Men’s") + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Age</span><span class="sr-v">' + esc(state.profile ? state.profile.age : "—") + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Weight</span><span class="sr-v">' + (state.profile && state.profile.weightKg != null ? esc(state.profile.weightKg) + ' kg' : "—") + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Level</span><span class="sr-v">' + esc(LEVEL_LABELS[state.profile && state.profile.level] || "—") + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Equipment</span><span class="sr-v">' + esc(EQUIPMENT_LABELS[state.profile && state.profile.equipment] || "—") + '</span></div>';
-    html += '</div>';
-    html += '<button class="btn btn-ghost btn-block" data-action="open-edit-profile-confirm" style="margin-bottom:14px">' + ICONS.profile + '<span>Edit My Details</span></button>';
-    html += '<div class="section-label">Starting Test</div>';
-    if (state.fitTest && !state.fitTest.skipped) {
-      html += '<div class="card" style="padding:4px 16px">';
-      fitTestFields().forEach(function(f){ if (state.fitTest[f[0]] != null) html += '<div class="settings-row"><span class="sr-k">' + esc(f[1]) + '</span><span class="sr-v">' + esc(state.fitTest[f[0]]) + ' ' + (f[3] === "seconds" ? "sec" : "reps") + '</span></div>'; });
-      html += '<div class="settings-row"><span class="sr-k">Taken</span><span class="sr-v">' + esc(fmtDate(state.fitTest.date)) + '</span></div></div>';
-    } else {
-      html += '<p class="ph-note">You have not taken the starting test yet.</p>';
-    }
-    html += '<button class="btn btn-ghost btn-block" data-action="fit-retake" style="margin-bottom:14px"><span>' + (state.fitTest && !state.fitTest.skipped ? 'Retake the Test' : 'Take the Test') + '</span></button>';
-
     html += '<div class="section-label">Appearance</div>';
     html += '<div class="choice-row">';
     [["auto","Auto"],["light","Light"],["dark","Dark"]].forEach(function(o){
@@ -3623,43 +3496,9 @@
     html += '</div>';
     html += '<p class="ph-note">Auto follows your phone’s light or dark setting.</p>';
 
-    html += '<div class="section-label">Your Progress</div>';
-    html += '<div class="card" style="padding:4px 16px">';
-    html += '<div class="settings-row"><span class="sr-k">Phase</span><span class="sr-v">' + s.phase + ' — ' + esc(getPhases()[s.phase].name.split('—')[1] ? getPhases()[s.phase].name.split('—')[1].trim() : getPhases()[s.phase].name) + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Next day</span><span class="sr-v">Day ' + s.nextDayNumber + '</span></div>';
-    html += '</div>';
-
-    html += '<div class="section-label">Deload Cycle</div>';
-    html += '<div class="card" style="padding:4px 16px">';
-    html += '<div class="settings-row"><span class="sr-k">Weeks since last deload</span><span class="sr-v">Week ' + weeksIn + '</span></div>';
-    html += '<div class="settings-row"><span class="sr-k">Status</span><span class="sr-v">' + esc(deloadStatus) + '</span></div>';
-    html += '</div>';
-    html += '<p class="ph-note" style="margin-bottom:12px">' + (deload
-      ? ('Deload is locked in — every session you start right now is automatically lighter (fewer sets, ~60% weight) until all ' + DELOAD_WEEK_SESSIONS + ' days are done. The cycle then restarts on its own.')
-      : 'Every 4 weeks the app automatically switches your next sessions to a lighter deload week and won’t let you skip it — no need to track this yourself.') + '</p>';
-    // Only offered once a deload is actually locked in — before that the app
-    // handles the 4-week cycle on its own and the button has no purpose.
-    if (deload) html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Already deloaded elsewhere — skip to full training</span></button>';
-
-    html += '<div class="section-label">Your Stage</div>';
-    html += stageRow();
-    html += '<div style="height:8px"></div>';
-    html += '<p class="ph-note" style="margin-bottom:14px">' + (foundationActive()
-      ? 'You are in the Foundation stage. Reach the Phase 1 standard on every ladder shown on the Home tab before moving on.'
-      : 'Each phase has a standard, shown below. The next phase unlocks only when you pass every line of it.') + '</p>';
-    if (!foundationActive()) {
-      var stdLv = s.phase, stdRows = standardStatus(stdLv);
-      html += '<div class="section-label">' + esc(STANDARDS[stdLv].name) + (stdLv < 3 ? ' — Pass to Unlock Phase ' + (stdLv + 1) : ' — The Final Test') + '</div><div class="card" style="padding:4px 16px">';
-      stdRows.forEach(function(r){ html += '<div class="settings-row"><span class="sr-k">' + (r.met ? '✓ ' : '') + esc(r.label) + '</span><span class="sr-v">' + (r.have != null ? esc(r.have) : '—') + ' / ' + r.need + r.unit + (r.lower ? ' or less' : '') + '</span></div>'; });
-      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the Starting Test (retake it any time, below) and from the reps you log. Sit-ups and the run are trained on Day 4 each week; your run time counts from the test or from a timed 2-mile run entered on Day 4. The standards are set high on purpose and climb each phase up to the Ironclad Standard: 60 push-ups, 18 pull-ups, 60 sit-ups and 2 miles in 14 minutes for a man under 40. That is elite level, drawn from the top US Army score and the Russian Army \u201cexcellent\u201d mark. They are scaled for age and for women.' + (stdLv < 3 ? ' Phase ' + (stdLv + 1) + ' stays locked until every line is met.' : '') + '</p>';
-    }
-    html += '<div class="section-label">Plan</div>';
-    html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
-    html += '<p class="ph-note">Takes you back to Day 1, Phase 1, Workout A / Ruck, and restarts the deload clock. Your training log and body measurements are not touched.</p>';
-
     html += '<div class="section-label">Reset</div>';
-    html += '<button class="btn btn-ghost btn-block" data-action="open-reset-choice">' + ICONS.reset + '<span>Reset App…</span></button>';
-    html += '<p class="ph-note">Choose to erase just your progress, or the whole app so it starts like the first time you opened it.</p>';
+    html += '<button class="btn btn-ghost btn-block" data-action="open-reset-choice">' + ICONS.reset + '<span>Reset…</span></button>';
+    html += '<p class="ph-note">Restart the plan, erase your progress, or erase the whole app. You choose on the next screen.</p>';
 
     html += '<p class="ph-note" style="text-align:center;margin-top:24px;font-family:\'Barlow Condensed\',sans-serif;color:var(--ink-faint)">Ironclad &middot; Version ' + esc(APP_VERSION) + '</p>';
     html += '<p class="ph-note" style="text-align:center;margin-top:4px;font-size:11px;color:var(--ink-faint)">&copy; 2026 Syed Iftikhar Shah. All rights reserved.</p>';
@@ -4172,16 +4011,15 @@
       }
       if (step.ladderKey) {
         var lad = ladderFor(step.ladderKey), li = ladderLevel(step.ladderKey);
-        html += '<div class="instr-card"><div class="mn-label">Your Level</div><p>This is step ' + (li + 1) + ' of your ladder toward <strong>' + esc(step.ladderGoal) + '</strong>. Reach the top of the target on every set, two sessions in a row, and the app moves you up.</p>' +
-          '<div style="display:flex;gap:8px;margin-top:10px">' +
-          (li > 0 ? '<button class="btn btn-ghost" style="flex:1" data-action="ladder-move" data-key="' + step.ladderKey + '" data-d="-1"><span>Too hard</span></button>' : '') +
-          '<button class="btn btn-ghost" style="flex:1" data-action="ladder-move" data-key="' + step.ladderKey + '" data-d="1"><span>Too easy</span></button></div></div>';
+        html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><span class="note-line" style="flex:1;margin:0">Step ' + (li + 1) + ' toward ' + esc(step.ladderGoal) + '</span>' +
+          (li > 0 ? '<button class="btn btn-ghost" style="padding:8px 12px;font-size:13px" data-action="ladder-move" data-key="' + step.ladderKey + '" data-d="-1"><span>Too hard</span></button>' : '') +
+          '<button class="btn btn-ghost" style="padding:8px 12px;font-size:13px" data-action="ladder-move" data-key="' + step.ladderKey + '" data-d="1"><span>Too easy</span></button></div>';
       }
       html += renderExHistory(step, stepIdx);
       var n = parseSetCount(step.sets);
       if (n > 0) {
         var unit = formatSetUnit(parseSetsUnit(step.sets));
-        if (repsLoggable(step) && !state.session.deload) html += '<p class="note-line" style="margin-bottom:8px">' + esc(repsHint(step)) + '</p>';
+        var rh = (repsLoggable(step) && !state.session.deload) ? repsHint(step) : ""; if (rh) html += '<p class="note-line" style="margin-bottom:8px">' + esc(rh) + '</p>';
         html += '<div class="set-rows">';
         for (var i=0;i<n;i++) {
           var filled = state.session.setDots[stepIdx + "_" + i];
@@ -4280,6 +4118,7 @@
       return '<div class="overlay" data-action="close-reset-choice"><div class="overlay-sheet" data-action="noop"><h3>Reset what?</h3>' +
         '<p>Pick one. You will get a final confirmation before anything is deleted.</p>' +
         '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<button class="btn btn-ghost btn-block" data-action="reset-plan-ask"><span>Restart plan from Day 1 (keep my log)</span></button>' +
         '<button class="btn btn-ghost btn-block" data-action="reset-progress-ask"><span>Progress only (keep my profile)</span></button>' +
         '<button class="btn btn-danger btn-block" data-action="reset-all-ask"><span>Complete app (start from scratch)</span></button>' +
         '<button class="btn btn-ghost btn-block" data-action="close-reset-choice"><span>Cancel</span></button></div></div></div>';
@@ -4385,14 +4224,14 @@
       var stg = el.getAttribute("data-stage");
       state.toast = stg === "foundation"
         ? (foundationActive() ? "You are in the Foundation stage. Keep training: the app moves you into Phase 1 by itself when you reach the starting level on every exercise." : "Foundation is complete. You are past the starting level.")
-        : (state.settings.phase === 3 && standardMet(3) ? "You hold the Ironclad Standard. Keep it." : "Ironclad is the final level. You earn it by passing every line of the Ironclad Standard in Phase 3. See Settings for the list.");
+        : (state.settings.phase === 3 && standardMet(3) ? "You hold the Ironclad Standard. Keep it." : "Ironclad is the final level. You earn it by passing every line of the Ironclad Standard in Phase 3.");
       render(); setTimeout(function(){ state.toast = null; render(); }, 6000);
     }
     else if (action === "set-phase") {
       var targetPhase = parseInt(el.getAttribute("data-phase"),10);
       var curPh = state.settings.phase;
-      if (targetPhase > curPh && foundationActive()) { state.toast = "Finish the Foundation stage first: reach the Phase 1 standard on every ladder shown on the Home tab."; render(); setTimeout(function(){ state.toast = null; render(); }, 5000); }
-      else if (targetPhase > curPh && !standardMet(targetPhase - 1)) { state.toast = "Phase " + targetPhase + " is locked. You must pass every line of the " + STANDARDS[targetPhase - 1].name + " first. See the list under Your Phase."; render(); setTimeout(function(){ state.toast = null; render(); }, 6000); }
+      if (targetPhase > curPh && foundationActive()) { state.toast = "You are still in the Foundation stage. Keep training: Phase 1 starts by itself when you are ready."; render(); setTimeout(function(){ state.toast = null; render(); }, 5000); }
+      else if (targetPhase > curPh && !standardMet(targetPhase - 1)) { state.toast = "Phase " + targetPhase + " is locked. You must pass every line of the " + STANDARDS[targetPhase - 1].name + " first. See the list on the Progress tab."; render(); setTimeout(function(){ state.toast = null; render(); }, 6000); }
       else setPhase(targetPhase);
     }
     else if (action === "start-guided") { startGuided(parseInt(el.getAttribute("data-step"),10)); }
@@ -4430,6 +4269,7 @@
     else if (action === "toggle-alt-panel") { var ai = parseInt(el.getAttribute("data-step"), 10); state.altOpen = (state.altOpen === ai) ? null : ai; render(); }
     else if (action === "toggle-ex-swap") { toggleExSwap(el.getAttribute("data-orig")); }
     else if (action === "open-reset-choice") { openResetChoice(); }
+    else if (action === "reset-plan-ask") { state.resetChoice = false; openResetConfirm(); }
     else if (action === "close-reset-choice") { state.resetChoice = false; render(); }
     else if (action === "reset-progress-ask") { openResetProgressConfirm(); }
     else if (action === "reset-all-ask") { openResetAllConfirm(); }
