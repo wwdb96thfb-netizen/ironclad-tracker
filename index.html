@@ -291,6 +291,10 @@
     transition: background 0.15s ease, border-color 0.15s ease;
   }
   .set-row:active { background: var(--surface-2); }
+  .wt-btn { flex: none; width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 700 24px 'Barlow', sans-serif; line-height: 1; cursor: pointer; }
+  .wt-btn:active { background: var(--accent-bg); }
+  .weight-row { gap: 8px; }
+  .weight-row .weight-input { min-width: 0; text-align: center; }
   .rep-in { width: 74px; flex: none; padding: 8px 6px; text-align: center; font: 600 16px 'Barlow', sans-serif; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
   .rep-in::placeholder { font-weight: 500; font-size: 13px; color: var(--ink-faint); }
   .set-row.filled { background: var(--good-bg); border-color: var(--olive); }
@@ -661,7 +665,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.11.0";
+  var APP_VERSION = "2.11.1";
 
   /* ============================================================
      DATA
@@ -1922,6 +1926,7 @@
       state.settings.deloadSessionsDone = saved.deloadSessionsDone || 0;
       state.settings.exSwaps = saved.exSwaps || {};
       state.settings.lastReps = saved.lastReps || {};
+      state.settings.exHistory = saved.exHistory || {};
     }
     state.logEntries = lsGet(LS_LOG_KEY, []);
     state.measurements = lsGet(LS_MEASUREMENTS_KEY, []);
@@ -2087,6 +2092,7 @@
     if (sess.idx < sess.steps.length - 1) {
       sess.idx++;
       state.altOpen = null;
+      state.histOpen = null;
       revealedPhotos = {};
       render();
       var scroller = document.querySelector(".body-scroll");
@@ -2139,6 +2145,24 @@
     });
     if (repsDone) entry.reps = repsDone;
     if (lastReps) patch.lastReps = lastReps;
+    // Per-exercise history: date, weight used and reps done (last 30 kept).
+    var hist = null, wtDone = null;
+    sess.steps.forEach(function(st, i){
+      if (st.kind !== "exercise") return;
+      var rec = { d: todayKey() }, has = false;
+      if (repsDone && repsDone[st.title]) { rec.r = repsDone[st.title]; has = true; }
+      if (usesWeight(st)) {
+        var sw = sess.weights[i], lw = state.settings.lastWeights && state.settings.lastWeights[st.title];
+        var wv = (sw && sw.weight !== undefined && sw.weight !== null && sw.weight !== "") ? parseFloat(sw.weight) : (!sess.deload && lw ? lw.weight : NaN);
+        if (!isNaN(wv)) { rec.w = wv; has = true; if (!wtDone) wtDone = {}; wtDone[st.title] = wv; }
+      }
+      if (!has) return;
+      if (sess.deload) rec.dl = 1;
+      if (!hist) hist = JSON.parse(JSON.stringify(state.settings.exHistory || {}));
+      hist[st.title] = (hist[st.title] || []).concat([rec]).slice(-30);
+    });
+    if (hist) patch.exHistory = hist;
+    if (wtDone) entry.weights = wtDone;
     if (sess.type === "lift") patch.nextLiftType = sess.liftType === "A" ? "B" : "A";
     if (sess.type === "gpp") patch.nextGppType = sess.gppType === "ruck" ? "speed" : "ruck";
 
@@ -2149,7 +2173,7 @@
     if (!sess.deload) {
       var weightUpdates = null;
       sess.steps.forEach(function(st, i){
-        if (!st.isMainLift) return;
+        if (!usesWeight(st)) return;
         var w = sess.weights[i];
         if (!w || w.weight === undefined || w.weight === null || w.weight === "") return;
         var num = parseFloat(w.weight);
@@ -2988,8 +3012,44 @@
   /* ---- Reps log: what was actually done on each set. Offered on every
      exercise except weighted main lifts (they log weight) and distance
      work. ---- */
+  // Gym exercises (other than the main lifts) that use an outside weight.
+  var WEIGHTED_EX = {"Flat Bench Press":1,"Standing Overhead Press":1,"Bent-Over Barbell Row":1,"Farmer's Walk":1,"Weighted Dips":1,"Sandbag Bear-Hug Carry":1,"Single-Arm DB Row":1,"Push Press":1,"Kettlebell Swings":1,"Heavy Sled Push/Pull":1,"Heavy Sandbag Cleans":1,"Weighted Pull-ups":1,"Suitcase Carries":1,"Calf Raise":1,"Bulgarian Split Squat":1,"Conventional Deadlift":1,"Romanian Deadlift":1,"Front Squat":1,"Barbell Back Squat":1};
+  function usesWeight(step) { return !!(step && step.kind === "exercise" && !(state.profile && state.profile.equipment === "home") && (step.isMainLift || WEIGHTED_EX[step.title])); }
+  function weightStepKg(step) { return step.isMainLift ? MAIN_LIFT_STEP_KG : 1; }
+  function adjustStepWeight(stepIdx, dir) {
+    var sess = state.session; if (!sess) return;
+    var step = sess.steps[stepIdx], inp = document.querySelector('.weight-input[data-step="' + stepIdx + '"]');
+    var cur = parseFloat(inp && inp.value); if (isNaN(cur)) cur = 0;
+    var next = Math.max(0, Math.round((cur + dir * weightStepKg(step)) * 100) / 100);
+    setStepWeight(stepIdx, String(next));
+    renderKeepScroll();
+  }
+  function weightAdjRow(stepIdx, curVal) {
+    return '<div class="weight-row"><label>Weight (kg)</label>' +
+      '<button class="wt-btn" data-action="wt-adj" data-step="' + stepIdx + '" data-d="-1" aria-label="Less weight">&minus;</button>' +
+      '<input class="weight-input" type="number" inputmode="decimal" step="0.25" data-step="' + stepIdx + '" data-input="set-weight" value="' + esc(curVal) + '">' +
+      '<button class="wt-btn" data-action="wt-adj" data-step="' + stepIdx + '" data-d="1" aria-label="More weight">+</button></div>';
+  }
+  function exHistory(title) { return (state.settings.exHistory && state.settings.exHistory[title]) || []; }
+  function renderExHistory(step, stepIdx) {
+    var h = exHistory(step.title);
+    if (!h.length) return '';
+    var open = state.histOpen === stepIdx;
+    var html = '<button class="btn btn-ghost btn-block" style="margin:4px 0 10px" data-action="toggle-hist" data-step="' + stepIdx + '"><span>' + (open ? 'Hide' : 'Show') + ' My History (' + h.length + ')</span></button>';
+    if (open) {
+      html += '<div class="card" style="padding:4px 16px;margin-bottom:12px">';
+      h.slice().reverse().forEach(function(e) {
+        var bits = [];
+        if (e.w != null) bits.push(fmtKg(e.w) + ' kg');
+        if (e.r && e.r.length) bits.push(e.r.join(', '));
+        html += '<div class="settings-row"><span class="sr-k">' + esc(fmtDate(e.d)) + (e.dl ? ' · deload' : '') + '</span><span class="sr-v">' + esc(bits.join(' · ')) + '</span></div>';
+      });
+      html += '</div>';
+    }
+    return html;
+  }
   function repsLoggable(step) {
-    if (!step || step.kind !== "exercise" || step.isMainLift) return false;
+    if (!step || step.kind !== "exercise") return false;
     var u = parseSetsUnit(step.sets);
     return parseSetCount(step.sets) > 0 && !/\d\s*m\b/.test(u);
   }
@@ -3013,9 +3073,17 @@
     var r = repsRange(step.sets), txt = "Last time: " + last.reps.join(", ") + ". ";
     if (r) {
       var min = Math.min.apply(null, last.reps);
-      if (min >= r.hi && r.hi > 0) txt += "You reached the top of the target on every set. Move to the harder version in the instructions.";
+      if (min >= r.hi && r.hi > 0) txt += usesWeight(step) ? "You reached the top of the target on every set. Add a little weight today." : "You reached the top of the target on every set. Move to the harder version in the instructions.";
+      else if (min < r.lo && usesWeight(step)) txt += "You were below the target. Keep the same weight or go a little lighter until you reach it.";
       else if (min < r.lo) txt += "You are below the target, and that is fine. Use the easier version in the instructions if there is one, and try to add one " + (word === "seconds" ? "second or two" : "rep") + " today.";
       else txt += "Try to beat it by one " + (word === "seconds" ? "second or two" : "rep") + " on at least one set.";
+    }
+    // A lower day than before is expected while the body adapts: say so.
+    var h = exHistory(step.title).filter(function(e){ return !e.dl && e.r && e.r.length; });
+    if (h.length >= 2) {
+      var sum = function(a){ return a.reduce(function(x, y){ return x + y; }, 0); };
+      var lastSum = sum(h[h.length - 1].r), best = Math.max.apply(null, h.slice(0, -1).map(function(e){ return sum(e.r); }));
+      if (lastSum < best) txt += " Your last session was lower than an earlier one. That is normal, especially in the first weeks while your muscles adapt. It is not a step backward.";
     }
     return txt;
   }
@@ -3137,7 +3205,7 @@
     } else {
       html += '<div class="card" style="padding:4px 16px">';
       entries.forEach(function(e){
-        html += '<div class="log-row"><div class="log-dot ' + e.type + '"></div><div class="log-main"><div class="log-title">' + esc(e.headline) + (e.deload ? ' <span style="font-size:10px;font-weight:700;color:var(--rust)">· DELOAD</span>' : '') + '</div><div class="log-date">Day ' + e.dayNumber + ' · Phase ' + e.phase + '</div>' + (e.reps ? '<div class="log-date" style="margin-top:4px;line-height:1.5">' + Object.keys(e.reps).map(function(k){ return esc(k) + ': ' + e.reps[k].join(', '); }).join('<br>') + '</div>' : '') + '</div><div class="log-date">' + fmtDate(e.date) + '</div>' +
+        html += '<div class="log-row"><div class="log-dot ' + e.type + '"></div><div class="log-main"><div class="log-title">' + esc(e.headline) + (e.deload ? ' <span style="font-size:10px;font-weight:700;color:var(--rust)">· DELOAD</span>' : '') + '</div><div class="log-date">Day ' + e.dayNumber + ' · Phase ' + e.phase + '</div>' + ((e.reps || e.weights) ? '<div class="log-date" style="margin-top:4px;line-height:1.5">' + Object.keys(Object.assign({}, e.weights || {}, e.reps || {})).map(function(k){ return esc(k) + ': ' + [(e.weights && e.weights[k] != null) ? fmtKg(e.weights[k]) + ' kg' : null, (e.reps && e.reps[k]) ? e.reps[k].join(', ') : null].filter(Boolean).join(' · '); }).join('<br>') + '</div>' : '') + '</div><div class="log-date">' + fmtDate(e.date) + '</div>' +
           '<button class="log-del" data-action="open-delete-confirm" data-id="' + esc(e.id||'') + '" data-headline="' + esc(e.headline) + '" aria-label="Delete session">' + ICONS.trash + '</button></div>';
       });
       html += '</div>';
@@ -3831,13 +3899,22 @@
         }
         html += '<div class="weight-card">';
         html += '<div class="weight-hint">' + esc(hint) + '</div>';
-        html += '<div class="weight-row"><label>Weight (kg)</label><input class="weight-input" type="number" inputmode="decimal" step="0.25" data-step="' + stepIdx + '" data-input="set-weight" value="' + esc(curVal) + '"></div>';
+        html += weightAdjRow(stepIdx, curVal);
         html += '<div class="hitall-toggle">' +
           '<button class="hitall-btn' + (hitAllVal===true?' active yes':'') + '" data-action="set-hitall" data-step="' + stepIdx + '" data-val="yes">' + ICONS.check + '<span>Hit all reps</span></button>' +
           '<button class="hitall-btn' + (hitAllVal===false?' active no':'') + '" data-action="set-hitall" data-step="' + stepIdx + '" data-val="no"><span>Missed a rep</span></button>' +
         '</div>';
         html += '</div>';
       }
+      if (!step.isMainLift && usesWeight(step)) {
+        var lw = state.settings.lastWeights && state.settings.lastWeights[step.title];
+        var sw2 = state.session.weights[stepIdx] || {};
+        var cv = (sw2.weight !== undefined && sw2.weight !== null) ? sw2.weight : (lw && lw.weight != null ? lw.weight : "");
+        html += '<div class="weight-card"><div class="weight-hint">' + esc(lw && lw.weight != null
+          ? "Last time you used " + fmtKg(lw.weight) + "kg. Use + or \u2212 to change it."
+          : "Enter the weight you use today. Next time it will be filled in for you.") + '</div>' + weightAdjRow(stepIdx, cv) + '</div>';
+      }
+      html += renderExHistory(step, stepIdx);
       var n = parseSetCount(step.sets);
       if (n > 0) {
         var unit = formatSetUnit(parseSetsUnit(step.sets));
@@ -4053,6 +4130,8 @@
     else if (action === "dismiss-confirm") { state.confirm = null; render(); }
     else if (action === "confirm-action") { runConfirm(); }
     else if (action === "open-reset-confirm") { openResetConfirm(); }
+    else if (action === "wt-adj") { adjustStepWeight(parseInt(el.getAttribute("data-step"),10), parseInt(el.getAttribute("data-d"),10)); }
+    else if (action === "toggle-hist") { var hi = parseInt(el.getAttribute("data-step"),10); state.histOpen = (state.histOpen === hi) ? null : hi; renderKeepScroll(); }
     else if (action === "fit-save") { saveFitTest(false); }
     else if (action === "fit-skip") { saveFitTest(true); }
     else if (action === "fit-retake") { state.fitDraft = {}; state.retest = true; state.screen = "home"; render(); }
