@@ -659,7 +659,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.10.2";
+  var APP_VERSION = "2.10.3";
 
   /* ============================================================
      DATA
@@ -1018,7 +1018,12 @@
     }
     state.altOpen = null;
     revealedPhotos = {};
+    var others = names.length - 1;
+    state.toast = turnOn
+      ? ("Swapped to " + GYM_ALT[orig].swap + (others > 0 ? ". Your other exercises that need " + grp + " are swapped too" : ""))
+      : ("Back to " + orig + (others > 0 ? " and your other exercises that need " + grp : ""));
     render();
+    setTimeout(function(){ state.toast = null; render(); }, 4000);
   }
 
   // Plain-language setup/execution/cue for every named lift and accessory
@@ -3666,20 +3671,11 @@
       }
       if (state.profile && state.profile.equipment !== "home") {
         if (step.swappedFrom) {
-          html += '<div class="instr-card"><div class="mn-label">Swapped Exercise</div><p>This replaces ' + esc(step.swappedFrom) + ' because you don\u2019t have ' + esc(eqGroupOf(step.swappedFrom) || 'the equipment') + '. The app will keep using it until you switch back.' + (eqGroupOf(step.swappedFrom) ? ' Switching back also restores your other exercises that need ' + esc(eqGroupOf(step.swappedFrom)) + '.' : '') + '</p>' +
-            '<button class="btn btn-ghost btn-block" style="margin-top:10px" data-action="toggle-ex-swap" data-orig="' + esc(step.swappedFrom) + '"><span>Switch back to ' + esc(step.swappedFrom) + '</span></button></div>';
+          html += '<p class="note-line" style="margin-bottom:8px">Alternative to ' + esc(step.swappedFrom) + '.</p>' +
+            '<button class="btn btn-ghost btn-block" style="margin-bottom:12px" data-action="toggle-ex-swap" data-orig="' + esc(step.swappedFrom) + '">' + ICONS.reset + '<span>Switch back to ' + esc(step.swappedFrom) + '</span></button>';
         } else if (GYM_ALT[step.title]) {
-          var alt = GYM_ALT[step.title];
-          if (state.altOpen === stepIdx) {
-            html += '<div class="instr-card"><div class="mn-label">No Equipment For This?</div>' +
-              (alt.tip ? '<p style="margin-bottom:10px">' + esc(alt.tip) + '</p>' : '') +
-              '<p>' + (alt.tip ? 'Or swap' : 'Swap') + ' it for a bodyweight exercise that trains the same movement: <strong>' + esc(alt.swap) + '</strong>, ' + esc(alt.sets) + '.</p>' +
-              (eqGroupOf(step.title) ? '<p style="margin-top:10px">This also swaps every other exercise in your plan that needs ' + esc(eqGroupOf(step.title)) + ', so you won\u2019t be asked again.</p>' : '') +
-              '<button class="btn btn-primary btn-block" style="margin-top:12px" data-action="toggle-ex-swap" data-orig="' + esc(step.title) + '"><span>Swap to ' + esc(alt.swap) + '</span></button>' +
-              '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-action="toggle-alt-panel" data-step="' + stepIdx + '"><span>Keep ' + esc(step.title) + '</span></button></div>';
-          } else {
-            html += '<button class="btn btn-ghost btn-block" style="margin-bottom:12px" data-action="toggle-alt-panel" data-step="' + stepIdx + '"><span>Don\u2019t have this equipment?</span></button>';
-          }
+          html += '<button class="btn btn-ghost btn-block" style="margin-bottom:6px" data-action="toggle-ex-swap" data-orig="' + esc(step.title) + '"><span>No equipment? Swap to ' + esc(GYM_ALT[step.title].swap) + '</span></button>' +
+            '<p class="note-line" style="margin-bottom:12px">A bodyweight exercise that trains the same movement.</p>';
         }
       }
       html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
