@@ -665,7 +665,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.13.0";
+  var APP_VERSION = "2.13.1";
 
   /* ============================================================
      DATA
@@ -1021,9 +1021,9 @@
      Figures are for men under 40; older ages and women are scaled (chosen
      scaling, not a published table). Best of the test and any logged set. */
   var STANDARDS = {
-    1: { name: "Phase 1 Standard", push: 25, pull: 4,  row: 12, sit: 30, plank: 90,  squat: 40, run: 19 },
-    2: { name: "Phase 2 Standard", push: 35, pull: 7,  row: 16, sit: 38, plank: 120, squat: 50, run: 17 },
-    3: { name: "Ironclad Standard", push: 45, pull: 10, row: 20, sit: 45, plank: 180, squat: 60, run: 15 }
+    1: { name: "Phase 1 Standard", push: 30, pull: 6,  row: 14, sit: 35, plank: 120, squat: 45, run: 18 },
+    2: { name: "Phase 2 Standard", push: 45, pull: 10, row: 20, sit: 45, plank: 180, squat: 55, run: 15 },
+    3: { name: "Ironclad Standard", push: 60, pull: 18, row: 28, sit: 60, plank: 220, squat: 70, run: 14 }
   };
   var STD_AGE = [1, 1, 0.85, 0.7, 0.55];           // ages 20s,30s,40s,50s,60+
   var STD_FEMALE = { push: 0.6, pull: 0.4, row: 0.7, sit: 1, plank: 1, squat: 1, run: 1.15 };
@@ -3610,7 +3610,7 @@
       var stdLv = s.phase, stdRows = standardStatus(stdLv);
       html += '<div class="section-label">' + esc(STANDARDS[stdLv].name) + (stdLv < 3 ? ' — Pass to Unlock Phase ' + (stdLv + 1) : ' — The Final Test') + '</div><div class="card" style="padding:4px 16px">';
       stdRows.forEach(function(r){ html += '<div class="settings-row"><span class="sr-k">' + (r.met ? '✓ ' : '') + esc(r.label) + '</span><span class="sr-v">' + (r.have != null ? esc(r.have) : '—') + ' / ' + r.need + r.unit + (r.lower ? ' or less' : '') + '</span></div>'; });
-      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the Starting Test (retake it any time, below) and from the reps you log. Sit-ups and the run count only from the test. The standards are set high on purpose and climb each phase up to the Ironclad Standard: 45 push-ups, 10 pull-ups, 45 sit-ups and 2 miles in 15 minutes for a man under 40. They are scaled for age and for women.' + (stdLv < 3 ? ' Phase ' + (stdLv + 1) + ' stays locked until every line is met.' : '') + '</p>';
+      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the Starting Test (retake it any time, below) and from the reps you log. Sit-ups and the run count only from the test. The standards are set high on purpose and climb each phase up to the Ironclad Standard: 60 push-ups, 18 pull-ups, 60 sit-ups and 2 miles in 14 minutes for a man under 40. That is elite level, drawn from the top US Army score and the Russian Army \u201cexcellent\u201d mark. They are scaled for age and for women.' + (stdLv < 3 ? ' Phase ' + (stdLv + 1) + ' stays locked until every line is met.' : '') + '</p>';
     }
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
