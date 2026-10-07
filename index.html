@@ -669,7 +669,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.16.0";
+  var APP_VERSION = "2.16.1";
 
   /* ============================================================
      DATA
@@ -3382,10 +3382,16 @@
       html += '<div class="banner banner-warn">' + ICONS.warn + '<span><strong>Deload week</strong> — Day ' + (doneSoFar+1) + ' of ' + DELOAD_WEEK_SESSIONS + '. Every session is automatically lighter (~60% weight, fewer sets) until the week is done — this can\'t be skipped.</span></div>';
     }
 
+    if (s.phase === 1 && state.profile && LEVEL_TIPS[state.profile.level]) {
+      html += '<div class="banner">' + ICONS.check + '<span>' + esc(homeWords(LEVEL_TIPS[state.profile.level])) + '</span></div>';
+    }
+    if (foundationActive()) {
+      html += '<div class="card"><div class="mn-label">Foundation Stage</div><p class="mn-cardbody" style="margin-bottom:0">You are building up to Phase 1. Your sessions use the version of each exercise you can do today, and move you up as you get stronger.</p></div>';
+    }
     html += '<div class="next-card">' +
       '<div class="nc-eyebrow">NEXT UP · DAY ' + s.nextDayNumber + (deload ? ' · DELOAD' : '') + '</div>' +
       '<div class="nc-title">' + esc(nextLabel) + '</div>' +
-      '<div class="nc-meta">' + esc(foundationActive() ? "Foundation Stage — building up to Phase 1" : getPhases()[s.phase].name) + '</div>' +
+      '<div class="nc-meta">' + esc(foundationActive() ? "Foundation Stage" : getPhases()[s.phase].name) + '</div>' +
       '<button class="btn btn-primary btn-block" data-action="start-next">' + (deload ? 'Start Deload Day ' : 'Start Day ') + s.nextDayNumber + '</button>' +
     '</div>';
 
