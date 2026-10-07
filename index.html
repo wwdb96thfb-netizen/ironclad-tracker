@@ -665,7 +665,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.13.1";
+  var APP_VERSION = "2.14.0";
 
   /* ============================================================
      DATA
@@ -1047,10 +1047,10 @@
       { label: "Push-ups in one go", need: need("push"), have: best(["Full-Range Push-ups", "Strict Push-ups"], t.pushups), unit: "" },
       home ? { label: "Table rows in one go", need: need("row"), have: best(["Table Row", "Feet-Raised Table Row"], t.pulls), unit: "" }
            : { label: "Pull-ups in one go", need: need("pull"), have: best(["Strict Pull-ups"], t.pulls), unit: "" },
-      { label: "Sit-ups in 2 minutes", need: need("sit"), have: t.situps != null ? t.situps : null, unit: "" },
+      { label: "Sit-ups in 2 minutes", need: need("sit"), have: best(["Sit-ups"], t.situps), unit: "" },
       { label: "Forearm plank", need: need("plank"), have: best(["Forearm Plank"], t.plank), unit: " sec" },
       { label: "Bodyweight squats in one go", need: need("squat"), have: best(["Slow Bodyweight Squat"], t.squats), unit: "" },
-      { label: "2-mile (3.2 km) run", need: need("run"), have: t.run != null && t.run > 0 ? t.run : null, unit: " min", lower: true }
+      { label: "2-mile (3.2 km) run", need: need("run"), have: (function() { var a = t.run > 0 ? t.run : null, b2 = state.settings.bestRun || null; return a && b2 ? Math.min(a, b2) : (a || b2); })(), unit: " min", lower: true }
     ];
     rows.forEach(function(r) { r.met = r.have != null && (r.lower ? r.have <= r.need : r.have >= r.need); });
     return rows;
@@ -1239,6 +1239,7 @@
     "Flat Bench Press": "Lie on the bench, feet flat on the floor, shoulder blades pulled back and down. Lower the bar to your mid-chest under control, elbows at roughly 45° to your torso, then press it back up to lockout over your shoulders.",
     "Assisted Pull-ups": "Loop a resistance band over the bar and under one knee or foot (or use an assist machine) to remove just enough bodyweight that you can complete every rep in full. Pull your chest toward the bar, then lower all the way to a dead hang each rep — don't stop at the halfway point.",
     "Farmer's Walk": "Pick up a heavy dumbbell, kettlebell, or loaded jug/jerry can in each hand and walk a measured distance with tall posture — shoulders back, core braced. Take controlled steps; don't let the weights pull you into a lean.",
+    "Sit-ups": "Lie on your back, knees bent, feet flat and hooked under something solid or held by a partner. Hands crossed on your chest or fingertips at your ears — never pull on your neck. Curl up until your chest reaches your thighs, then lower with control until your shoulder blades touch the floor. Breathe out on the way up. Keep a steady rhythm rather than rushing the first reps.",
     "Forearm Plank": "Forearms on the floor, elbows under your shoulders, body in one straight line from head to heels. Squeeze your glutes and brace your abs — don't let your hips sag or pike up. Breathe normally through the hold.",
     "Calf Raise": "Standing, rise up onto the balls of your feet as high as you can, pause a beat at the top, then lower slowly until your heels are back on the floor. Keep your legs straight, not locked-stiff.",
     "Band Pull-Apart": "Hold a light resistance band at shoulder height, arms straight out in front of you. Pull it apart by driving your shoulder blades together, hold a second, then return under control. Don't shrug your shoulders up toward your ears.",
@@ -1273,6 +1274,16 @@
     "Lateral Bound, Stick the Landing": "Standing on one leg, jump sideways onto the other leg, landing as softly and quietly as possible — knee bent, tracking straight over your toes, not caving inward. Hold that landing for a full second or two before the next bound; control on landing matters more than distance."
   };
 
+  /* Day 4 run and sit-up work, building toward the standards (2-mile run and
+     sit-ups in 2 minutes). Simple, widely used progression: easy running
+     first, then steady hard running, then fast repeats. */
+  var RUN_PLAN = {
+    1: { title:"Easy Run", sub:"Build the Base", stats:[{v:"20–30",l:"Minutes"}], note:"Jog at a pace where you can still talk. Walk breaks are fine: jog 2 minutes, walk 1, and cut the walking week by week until you jog the whole time. No running where you live? Brisk walking, cycling or swimming still counts." },
+    2: { title:"Tempo Run", sub:"Hard but Steady", stats:[{v:"2 miles",l:"Distance (3.2 km)"},{v:"5 min",l:"Easy Jog First"}], note:"Jog easy for 5 minutes, then run 2 miles at a pace that feels hard but that you can hold the whole way. You should manage only a few words at a time. Walk 5 minutes to cool down." },
+    3: { title:"Interval Run", sub:"Fast Repeats", stats:[{v:"6 × 400m",l:"Fast"},{v:"90s",l:"Walk Between"}], note:"Jog easy for 5 to 10 minutes first. Then run 400 meters (one lap of a track, or about 90 seconds) fast, walk 90 seconds, and repeat. Every repeat should be about the same speed. Stop if your pace falls apart." },
+    deload: { title:"Easy Run", sub:"Deload", stats:[{v:"15–20",l:"Minutes"}], note:"Light and relaxed. You should finish feeling fresher than when you started." }
+  };
+  var SITUP_SETS = { 1: "3×15–25", 2: "3×25–35", 3: "3×35–50" };
   var RUCK_DOSING = {
     1: {load:"10–15%", duration:"30–40m"},
     2: {load:"20–30%", duration:"40–50m"},
@@ -1300,7 +1311,7 @@
     {name:"Brisk Walk", dur:"30 min", desc:"Easy, steady pace — not a workout. Helps flush the week's training out of your legs and settles you down before the full rest day."}
   ];
   var DAY_TYPE = {1:"lift", 2:"gpp", 3:"lift", 4:"cardio", 5:"lift", 6:"recovery", 7:"rest"};
-  var DAY_SHORT = {lift:"Lift", gpp:"GPP", cardio:"Cardio", recovery:"Recovery", rest:"Rest"};
+  var DAY_SHORT = {lift:"Lift", gpp:"GPP", cardio:"Run", recovery:"Recovery", rest:"Rest"};
 
   // Deload is a hard gate, not a reminder: the moment DELOAD_DUE_WEEKS is
   // reached, deloadModeActive() flips on and every session startSession()
@@ -1331,8 +1342,11 @@
   function getCallouts() {
     var female = state.profile && state.profile.sex === "female";
     var base = female ? PHASE_CALLOUTS_WOMEN : PHASE_CALLOUTS_MEN;
-    if (state.profile && state.profile.equipment === "home") return homeCallouts(base);
-    return base;
+    var out = (state.profile && state.profile.equipment === "home") ? homeCallouts(base) : JSON.parse(JSON.stringify(base));
+    // The Phase 3 gate is the Phase 2 Standard, the same list the app enforces.
+    out[2] = { label: "Phase 2 Standard — pass every line to unlock Phase 3",
+      items: standardStatus(2).map(function(r) { return r.label + ": " + r.need + r.unit + (r.lower ? " or less" : ""); }) };
+    return out;
   }
 
   /* ============================================================
@@ -1503,7 +1517,7 @@
     var t = DAY_TYPE[dayNum];
     if (t === "lift") return getPhases()[phase].workouts[liftType].name;
     if (t === "gpp") return gppType === "ruck" ? "GPP — Load Carriage (Ruck)" : "GPP — Speed & Agility";
-    if (t === "cardio") return "Cardio";
+    if (t === "cardio") return "Run & Sit-ups";
     if (t === "recovery") return "Active Recovery";
     return "Full Rest";
   }
@@ -1535,9 +1549,9 @@
       }
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
     } else if (t === "cardio") {
-      steps.push({kind:"cardio", title:"Cardio", sub:"Easy Pace",
-        stats:[{v:"20–30",l:"Minutes"}],
-        note:"Walk, jog, cycle, or swim. Keep it conversational — you should be able to talk, not gasp."});
+      var rp = deload ? RUN_PLAN.deload : RUN_PLAN[phase];
+      steps.push({kind:"cardio", title:rp.title, sub:rp.sub, stats:rp.stats, note:rp.note, runLog:true});
+      steps.push({kind:"exercise", title:"Sit-ups", sets: deload ? deloadSetsString(SITUP_SETS[phase]) : SITUP_SETS[phase], rest:"60s", isMainLift:false, swappedFrom:null, ladderKey:null, ladderGoal:null});
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
     } else if (t === "recovery") {
       RECOVERY_ITEMS.forEach(function(r){ steps.push({kind:"recovery", title:r.name, sub:r.dur, text:r.desc, items:r.items}); });
@@ -1628,7 +1642,7 @@
     "Assisted Pull-ups":"PULL", "Bent-Over Barbell Row":"PULL", "Strict Pull-ups":"PULL", "Single-Arm DB Row":"PULL",
     "Muscle-Up Progressions":"PULL", "Weighted Pull-ups":"PULL",
     "Farmer's Walk":"CARRY", "Sandbag Bear-Hug Carry":"CARRY", "Suitcase Carries":"CARRY",
-    "Forearm Plank":"CORE", "Pallof Press":"CORE", "Hollow Body Hold":"CORE", "L-Sit Progressions":"CORE", "Dragon Flags":"CORE",
+    "Forearm Plank":"CORE", "Sit-ups":"CORE", "Pallof Press":"CORE", "Hollow Body Hold":"CORE", "L-Sit Progressions":"CORE", "Dragon Flags":"CORE",
     "Calf Raise":"CALF",
     "Band Pull-Apart":"BAND", "Banded Lateral Walk":"BAND",
     "Kettlebell Swings":"SWING",
@@ -1861,6 +1875,7 @@
     "Assisted Pull-ups": ["lats","biceps","rearDelts","forearms"],
     "Farmer's Walk": ["forearms","traps","abs","obliques"],
     "Forearm Plank": ["abs","obliques","lowerBack"],
+    "Sit-ups": ["abs","obliques"],
     "Calf Raise": ["calves"],
     "Band Pull-Apart": ["rearDelts","traps"],
     "Conventional Deadlift": ["hamstrings","glutes","lowerBack","traps","forearms"],
@@ -2110,6 +2125,7 @@
       state.settings.exSwaps = saved.exSwaps || {};
       state.settings.lastReps = saved.lastReps || {};
       state.settings.exHistory = saved.exHistory || {};
+      state.settings.bestRun = saved.bestRun || null;
       state.settings.ladder = saved.ladder || {};
       state.settings.ladderStreak = saved.ladderStreak || {};
       state.settings.ladderStart = saved.ladderStart || 0;
@@ -2333,6 +2349,7 @@
       }
     });
     if (repsDone) entry.reps = repsDone;
+    if (sess.runMin) { entry.runMin = sess.runMin; if (!state.settings.bestRun || sess.runMin < state.settings.bestRun) patch.bestRun = sess.runMin; }
     if (lastReps) patch.lastReps = lastReps;
     // Per-exercise history: date, weight used and reps done (last 30 kept).
     var hist = null, wtDone = null;
@@ -3610,7 +3627,7 @@
       var stdLv = s.phase, stdRows = standardStatus(stdLv);
       html += '<div class="section-label">' + esc(STANDARDS[stdLv].name) + (stdLv < 3 ? ' — Pass to Unlock Phase ' + (stdLv + 1) : ' — The Final Test') + '</div><div class="card" style="padding:4px 16px">';
       stdRows.forEach(function(r){ html += '<div class="settings-row"><span class="sr-k">' + (r.met ? '✓ ' : '') + esc(r.label) + '</span><span class="sr-v">' + (r.have != null ? esc(r.have) : '—') + ' / ' + r.need + r.unit + (r.lower ? ' or less' : '') + '</span></div>'; });
-      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the Starting Test (retake it any time, below) and from the reps you log. Sit-ups and the run count only from the test. The standards are set high on purpose and climb each phase up to the Ironclad Standard: 60 push-ups, 18 pull-ups, 60 sit-ups and 2 miles in 14 minutes for a man under 40. That is elite level, drawn from the top US Army score and the Russian Army \u201cexcellent\u201d mark. They are scaled for age and for women.' + (stdLv < 3 ? ' Phase ' + (stdLv + 1) + ' stays locked until every line is met.' : '') + '</p>';
+      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the Starting Test (retake it any time, below) and from the reps you log. Sit-ups and the run are trained on Day 4 each week; your run time counts from the test or from a timed 2-mile run entered on Day 4. The standards are set high on purpose and climb each phase up to the Ironclad Standard: 60 push-ups, 18 pull-ups, 60 sit-ups and 2 miles in 14 minutes for a man under 40. That is elite level, drawn from the top US Army score and the Russian Army \u201cexcellent\u201d mark. They are scaled for age and for women.' + (stdLv < 3 ? ' Phase ' + (stdLv + 1) + ' stays locked until every line is met.' : '') + '</p>';
     }
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
@@ -4193,10 +4210,15 @@
       html += renderGuidedStart(step, stepIdx);
       html += renderNamedItemList(expandNamedLines(step.items, BALANCE_LINE_MAP), "balance" + stepIdx);
     } else if (step.kind === "cardio") {
-      html += '<div class="step-kind">Cardio · ' + esc(step.sub) + '</div>';
-      html += '<h2 class="step-title">Cardio</h2>';
+      html += '<div class="step-kind">Run · ' + esc(step.sub) + '</div>';
+      html += '<h2 class="step-title">' + esc(step.title || "Cardio") + '</h2>';
       html += renderStats(step.stats);
       if (step.note) html += '<p class="note-line">' + esc(step.note) + '</p>';
+      if (step.runLog) {
+        var brun = state.settings.bestRun, srun = state.session && state.session.runMin;
+        html += '<div class="instr-card"><p><b>Once a month: 2-mile test.</b> Instead of today\u2019s run, warm up and run 2 miles (3.2 km) as fast as you can. Enter your time below in whole minutes, rounded up.' + (brun ? ' Your best so far: ' + brun + ' min.' : '') + '</p>' +
+          '<input class="field-input" type="number" inputmode="numeric" min="5" max="60" data-input="run-time" placeholder="2-mile time in minutes (optional)" value="' + esc(srun != null ? srun : "") + '" style="margin-top:10px"></div>';
+      }
     } else if (step.kind === "recovery") {
       html += '<div class="step-kind">Recovery · ' + esc(step.sub) + '</div>';
       html += '<h2 class="step-title">' + esc(step.title) + '</h2>';
@@ -4401,6 +4423,8 @@
       setStepWeight(parseInt(el.getAttribute("data-step"),10), el.value);
     } else if (kind === "set-reps") {
       setStepReps(parseInt(el.getAttribute("data-step"),10), parseInt(el.getAttribute("data-i"),10), el.value);
+    } else if (kind === "run-time") {
+      if (state.session) { var rv = parseInt(el.value, 10); state.session.runMin = (!isNaN(rv) && rv >= 5 && rv <= 60) ? rv : null; }
     } else if (kind === "fit") {
       if (!state.fitDraft) state.fitDraft = {};
       state.fitDraft[el.getAttribute("data-k")] = el.value;
