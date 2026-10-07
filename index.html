@@ -452,6 +452,23 @@
   .mn-calloutlabel { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; }
 
   .manual-workout { padding: 0; overflow: hidden; margin-bottom: 14px; }
+  .mchap { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 10px; overflow: hidden; }
+  .mchap > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+  .mchap > summary::-webkit-details-marker, .mlib > summary::-webkit-details-marker { display: none; }
+  .mchap .mc-n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 15px; }
+  .mchap .mc-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mchap .mc-t b { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 18px; font-weight: 700; }
+  .mchap .mc-t i { font-style: normal; font-size: 12.5px; color: var(--ink-faint); }
+  .mchap .mc-a { font-size: 22px; color: var(--ink-faint); transition: transform .15s; }
+  .mchap[open] .mc-a { transform: rotate(90deg); }
+  .mchap[open] > summary { border-bottom: 1px solid var(--line); }
+  .mchap[open] .mc-n { background: var(--accent); color: #141416; }
+  .mchap .mc-body { padding: 14px; background: var(--bg); }
+  .mchap .mc-body > .section-label:first-child { margin-top: 0; }
+  .mlib { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+  .mlib > summary { list-style: none; padding: 12px 14px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 16px; cursor: pointer; }
+  .mlib[open] > summary { background: var(--surface-2); }
+  .mlib .mw-body { padding: 12px 14px; }
   .manual-workout .mw-head { background: var(--surface-2); padding: 11px 14px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 15px; }
   .manual-workout .mw-body { padding: 14px; }
 
@@ -669,7 +686,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.16.2";
+  var APP_VERSION = "2.17.0";
 
   /* ============================================================
      DATA
@@ -3625,7 +3642,7 @@
       'Main lifts go up about 1.25 kg a week. Miss your reps? Repeat the weight. Always finish with about 2 reps still in the tank.',
       'Every 4 weeks a lighter deload week (about 60% of your working weights and fewer sets) switches on automatically. You finish it before normal training resumes — it cannot be skipped.',
       'Tendon prep before working sets, daily grip hangs and a 5-minute deep squat keep joints and connective tissue up with the muscles.',
-      'One weekly conditioning day alternates between rucking (loaded walking) and sprints and agility, and a cardio day keeps your engine ticking.'
+      'One weekly conditioning day alternates between rucking (loaded walking) and sprints and agility, and a weekly run builds toward the 2-mile test.'
     ]));
 
     // ---- How to read a workout ----
@@ -3634,6 +3651,9 @@
       ['3×5–8', '3 sets of 5 to 8 reps. Work within that range; the top of the range is the goal.'],
       ['Rest 2m', 'Rest 2 minutes between sets. On heavy lifts, take the full time — it is part of the workout.'],
       ['Reps in reserve', 'How many more reps you could still have done. Stop about 2 short of failure.'],
+      ['3×Max', '3 sets, each one as many clean reps as you can.'],
+      ['Reps and weight boxes', 'Type what you really did on every set, and the weight you used. The app will not let you complete the exercise until these are filled in. Your numbers are what unlock the next phase.'],
+      ['Picture and how-to', 'Each exercise shows its picture. Tap “Show How To Do It & Muscles Worked” for the instructions and the muscles picture.'],
       ['Hit all reps / Missed a rep', 'After a main lift, tell the app honestly. Hit them all and it suggests a small increase next time (about 1.25 kg). Missed one and it suggests repeating the same weight.']
     ]));
     h += GUIDE_CARD('Small glossary', GUIDE_UL([
@@ -3754,132 +3774,110 @@
 
   function renderManual() {
     var html = '<div class="body-scroll">';
-
     html += '<div class="manual-hero">' +
       '<div class="mh-title">Operation Ironclad</div>' +
-      '<div class="mh-sub">12-Month Functional Strength &amp; GPP Protocol</div>' +
-      '<div class="mh-stats">FUNCTIONAL STRENGTH · GENERAL PHYSICAL PREPAREDNESS · GENERAL REFERENCE</div>' +
+      '<div class="mh-sub">Field Manual</div>' +
+      '<div class="mh-stats">TAP A CHAPTER TO OPEN IT</div>' +
     '</div>';
 
-    html += '<div class="manual-nav">';
-    [["m-why","Why"],["m-phil","Philosophy"],["m-vs","vs. Gym"],["m-how","How Built"],["m-read","Read a Workout"],["m-rules","Do &amp; Avoid"],["m-safe","Safety"],["m-miss","Missed Days"],["m-diet","Diet"],["m-sch","Week"],["m-gpp","GPP"],["m-p1","Phase 1"],["m-p2","Phase 2"],["m-p3","Phase 3"],["m-rec","Recovery"],["m-lib","Exercise Library"]].forEach(function(n){
-      html += '<button class="mn-chip" data-action="manual-jump" data-target="' + n[0] + '">' + n[1] + '</button>';
-    });
-    html += '</div>';
+    // The long guide text is written as one block; cut it into its sections.
+    var G = {}, parts = renderManualGuide().split(/<div class="section-label" id="(m-[a-z0-9]+)">[^<]*<\/div>/);
+    for (var gi = 1; gi < parts.length; gi += 2) G[parts[gi]] = parts[gi + 1];
+    var home = state.profile && state.profile.equipment === "home";
+    var chap = function(n, title, sub, body) {
+      return '<details class="mchap" name="mchap"><summary><span class="mc-n">' + n + '</span><span class="mc-t"><b>' + title + '</b><i>' + sub + '</i></span><span class="mc-a">›</span></summary><div class="mc-body">' + body + '</div></details>';
+    };
+    var stdList = function(lv) {
+      return '<ul class="item-list" style="margin:4px 0 0">' + standardStatus(lv).map(function(r){ return '<li>' + esc(r.label) + ': <strong>' + r.need + esc(r.unit) + (r.lower ? ' or less' : '') + '</strong></li>'; }).join('') + '</ul>';
+    };
 
-    html += renderManualGuide();
-
-    html += '<div class="section-label" id="m-sch">Weekly Schedule</div>';
-    html += '<p class="note-line">Three lifting days, one GPP day, one cardio day, one active-recovery day, one full rest day. Never two lifting days back to back.</p>';
-    html += '<div class="day-chips" style="margin-bottom:14px">';
-    for (var d=1; d<=7; d++) {
-      var t = DAY_TYPE[d];
-      html += '<div class="day-chip ' + t + '"><div class="dc-n">D' + d + '</div><div class="dc-t">' + DAY_SHORT[t] + '</div></div>';
-    }
-    html += '</div>';
-    html += '<div class="banner" style="margin-bottom:20px">GPP day: odd weeks ruck, even weeks sprints &amp; agility. Deload one lighter week (~60%) every 4–6 weeks. Grip hangs, daily.</div>';
-
-    html += '<div class="section-label" id="m-gpp">GPP — Combat Conditioning</div>';
-    html += '<div class="card"><p class="mn-cardhead">Tendon Conditioning · every lift day</p>' +
-      '<p class="mn-cardbody">Hold the day\'s first main lift at mid-range for 20s at ~70% effort. 4 sets, 60s rest — built into every workout below.</p></div>';
-    html += '<div class="card"><p class="mn-cardhead">Load Carriage — Rucking · odd weeks, Day 2</p>';
-    html += '<table class="moves-table"><tr><th>Phase</th><th>Load</th><th>Duration</th></tr>';
-    [1,2,3].forEach(function(p){
-      html += '<tr><td>Phase ' + p + '</td><td>' + esc(RUCK_DOSING[p].load) + ' BW</td><td>' + esc(RUCK_DOSING[p].duration) + '</td></tr>';
-    });
-    html += '</table></div>';
-    html += '<div class="card"><p class="mn-cardhead">Speed &amp; Agility · even weeks, Day 2</p><ul class="item-list" style="margin:0">' +
-      '<li>Sprints: 6–8 × 20–30m, max effort, full recovery between</li><li>Agility: 4–6 sets × 20–30s — two markers 5m apart, sprint-touch-sprint-touch between them, staying low on each turn. Have a ladder or cones? Use your usual drill instead.</li></ul></div>';
-    html += '<div class="card" style="margin-bottom:20px"><p class="mn-cardhead">Balance &amp; Proprioception · Days 2 &amp; 4</p><ul class="item-list" style="margin:0">' +
-      BALANCE_ITEMS.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul></div>';
-
+    // ---- 2. Stages ----
+    var st = '';
+    st += '<p class="note-line">The plan has five stages. You do not choose them by hand: the app moves you up when your logged numbers show you are ready.</p>';
+    st += '<div class="card"><p class="mn-cardhead">1 · Foundation</p><p class="mn-cardbody">For anyone who cannot yet do the starting exercises. Your sessions use an easier version of each move (for example wall or knee push-ups before full push-ups). Reach the top of the target on every set, two sessions in a row, and the app moves you to the next version. If a version is clearly wrong for you, use the Too hard / Too easy buttons. Phase 1 starts by itself when you reach the starting level on every move. If your starting test already shows that level, you skip Foundation.</p></div>';
     [1,2,3].forEach(function(p){
       var ph = getPhases()[p];
-      html += '<div class="section-label" id="m-p' + p + '">' + esc(ph.name) + '</div>';
-      html += '<p class="note-line">' + esc(ph.timeline) + ' — ' + esc(ph.note) + '</p>';
+      st += '<div class="card"><p class="mn-cardhead">' + (p + 1) + ' · ' + esc(ph.name) + '</p><p class="mn-cardbody" style="margin-bottom:8px">' + esc(ph.timeline) + '. ' + (p < 3 ? 'To unlock Phase ' + (p + 1) + ' you must pass every line of the ' + STANDARDS[p].name + ':' : 'The final test is the Ironclad Standard:') + '</p>' + stdList(p) + '</div>';
+    });
+    st += '<div class="card"><p class="mn-cardhead">5 · Ironclad</p><p class="mn-cardbody">The final level. You hold it when you pass every line of the Ironclad Standard in Phase 3. It is elite level, taken from the top score of the US Army fitness test and the “excellent” mark of the Russian Army. Expect it to take well over a year.</p></div>';
+    st += '<div class="card"><p class="mn-cardhead">How your numbers are counted</p><ul class="item-list" style="margin:0"><li>Your best comes from the fitness test and from the reps you log in sessions.</li><li>The run time comes from the fitness test, or from a timed 2-mile run entered on Day 4.</li><li>See where you stand, and retake the test, on the Progress tab.</li><li>The numbers shown are for your age and sex. The full standard is for a man under 40; it is eased for older ages and for women.</li></ul></div>';
+
+    // ---- 3. Week ----
+    var wk = '<p class="note-line">Three lifting days, one conditioning day, one run day, one active-recovery day and one full rest day. Never two lifting days back to back.</p>';
+    wk += '<div class="day-chips" style="margin-bottom:14px">';
+    for (var d=1; d<=7; d++) { var t = DAY_TYPE[d]; wk += '<div class="day-chip ' + t + '"><div class="dc-n">D' + d + '</div><div class="dc-t">' + DAY_SHORT[t] + '</div></div>'; }
+    wk += '</div>';
+    wk += '<div class="card"><ul class="item-list" style="margin:0"><li><strong>Lift (Days 1, 3, 5):</strong> Workouts A and B take turns.</li><li><strong>GPP (Day 2):</strong> rucking one week, sprints and agility the next.</li><li><strong>Run (Day 4):</strong> builds toward the 2-mile test.</li><li><strong>Recovery (Day 6):</strong> mobility and light movement.</li><li><strong>Rest (Day 7):</strong> nothing scheduled.</li><li><strong>Deload:</strong> every 4 weeks the app switches on one lighter week (about 60% weight, fewer sets) by itself.</li><li><strong>Daily:</strong> hang from a bar for 30–60 seconds in total.</li></ul></div>';
+
+    // ---- Phases ----
+    var phaseBody = function(p) {
+      var ph = getPhases()[p], o = '<p class="note-line">' + esc(ph.timeline) + ' — ' + esc(ph.note) + '</p>';
       ["A","B"].forEach(function(w){
-        var wk = ph.workouts[w];
-        html += '<div class="card manual-workout">';
-        html += '<div class="mw-head">' + esc(wk.name) + '</div>';
-        html += '<div class="mw-body">';
-        if (state.profile && state.profile.equipment === "home" && wk.homeAlt) {
-          html += '<p class="mn-label">Your Home Workout</p>';
-          html += '<p class="mn-cardbody" style="margin-bottom:12px">' + esc(wk.homeAlt) + '</p>';
-        }
-        html += '<p class="mn-label">Warm-up</p>';
-        html += '<ul class="item-list" style="margin:0 0 12px">' + wk.warmup.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
-        html += '<p class="mn-label amber">Tendon Prep</p>';
-        html += '<p class="mn-cardbody" style="margin-bottom:12px">' + esc(wk.tendon) + '</p>';
-        html += '<p class="mn-label">Movements</p>';
-        html += '<p class="note-line" style="margin:0 0 10px">Photos &amp; muscles worked for each move are in the Exercise Library tab above.</p>';
-        html += '<div style="margin-bottom:12px">' + wk.exercises.map(function(e){
-          return '<div class="card" style="margin-bottom:10px;padding:12px 14px">' +
-            '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px">' +
-            '<p class="mn-cardhead" style="margin:0">' + esc(e.name) + '</p>' +
-            '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--ink-faint);white-space:nowrap">' + esc(e.sets) + ' · ' + esc(e.rest) + '</span>' +
-            '</div>' +
-            '<p class="mn-cardbody">' + esc(EX_HOWTO[e.name] || '') + '</p>' +
-            '</div>';
-        }).join('') + '</div>';
-        html += '<p class="mn-label olive">Stretch</p>';
-        html += '<ul class="item-list" style="margin:0">' + wk.stretch.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
-        html += '</div></div>';
+        var k = ph.workouts[w];
+        o += '<div class="card manual-workout"><div class="mw-head">' + esc(k.name) + '</div><div class="mw-body">';
+        o += '<p class="mn-label">Warm-up</p><ul class="item-list" style="margin:0 0 12px">' + k.warmup.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
+        o += '<p class="mn-label amber">Tendon Prep</p><p class="mn-cardbody" style="margin-bottom:12px">' + esc(k.tendon) + '</p>';
+        o += '<p class="mn-label">Exercises</p><table class="moves-table" style="margin-bottom:12px"><tr><th>Exercise</th><th>Sets</th><th>Rest</th></tr>' + k.exercises.map(function(e){ return '<tr><td>' + esc(e.name) + '</td><td>' + esc(e.sets.replace("Max", "max")) + '</td><td>' + esc(e.rest) + '</td></tr>'; }).join('') + '</table>';
+        o += '<p class="mn-label olive">Stretch</p><ul class="item-list" style="margin:0">' + k.stretch.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
+        o += '</div></div>';
       });
       var co = getCallouts()[p];
-      if (co) {
-        html += '<div class="banner" style="flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:20px">' +
-          '<strong class="mn-calloutlabel">' + esc(co.label) + '</strong>';
-        if (co.text) html += '<span>' + esc(co.text) + '</span>';
-        if (co.items) html += '<ul class="item-list" style="margin:4px 0 0;width:100%">' + co.items.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul>';
-        html += '</div>';
-      }
-    });
+      if (co && p !== 2 && co.text) o += '<div class="banner" style="flex-direction:column;align-items:flex-start;gap:4px"><strong class="mn-calloutlabel">' + esc(co.label) + '</strong><span>' + esc(co.text) + '</span></div>';
+      o += '<div class="card"><p class="mn-cardhead">' + esc(STANDARDS[p].name) + '</p><p class="mn-cardbody">' + (p < 3 ? 'Pass every line to unlock Phase ' + (p + 1) + '.' : 'Pass every line to earn Ironclad.') + '</p>' + stdList(p) + '</div>';
+      o += '<p class="note-line">How to do each exercise, with pictures, is in the Exercise Library chapter.</p>';
+      return o;
+    };
 
-    html += '<div class="section-label" id="m-rec">Recovery &amp; Active Rest</div>';
+    // ---- Conditioning ----
+    var gp = '<div class="card"><p class="mn-cardhead">Tendon prep · every lift day</p><p class="mn-cardbody">Hold the position shown for 30 seconds at about 70% effort. 4 holds, 60 seconds rest. It is built into every workout, before the working sets.</p></div>';
+    gp += '<div class="card"><p class="mn-cardhead">Rucking · Day 2, every other week</p><table class="moves-table"><tr><th>Phase</th><th>Load</th><th>Duration</th></tr>';
+    [1,2,3].forEach(function(p){ gp += '<tr><td>Phase ' + p + '</td><td>' + esc(RUCK_DOSING[p].load) + ' BW</td><td>' + esc(RUCK_DOSING[p].duration) + '</td></tr>'; });
+    gp += '</table></div>';
+    gp += '<div class="card"><p class="mn-cardhead">Sprints &amp; agility · Day 2, the other weeks</p><ul class="item-list" style="margin:0"><li>Sprints: 6–8 × 20–30m, full effort, full recovery between.</li><li>Agility: 4–6 sets of 20–30 seconds between two markers 5m apart, staying low on each turn.</li></ul></div>';
+    gp += '<div class="card"><p class="mn-cardhead">Run · Day 4</p><table class="moves-table"><tr><th>Phase</th><th>Session</th></tr>';
+    [1,2,3].forEach(function(p){ gp += '<tr><td>Phase ' + p + '</td><td>' + esc(RUN_PLAN[p].title) + ': ' + esc(RUN_PLAN[p].stats.map(function(x){ return x.v + ' ' + x.l.toLowerCase(); }).join(', ')) + '</td></tr>'; });
+    gp += '</table><p class="mn-cardbody" style="margin-top:8px">Once a month, run 2 miles (3.2 km) for time instead and enter it on the Day 4 screen.</p></div>';
+    gp += '<div class="card"><p class="mn-cardhead">Balance · Days 2 &amp; 4</p><ul class="item-list" style="margin:0">' + BALANCE_ITEMS.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul></div>';
+
+    // ---- Recovery ----
+    var rc = '';
     RECOVERY_ITEMS.forEach(function(r){
-      html += '<div class="card"><p class="mn-cardhead">' + esc(r.name) + ' · ' + esc(r.dur) + '</p><p class="mn-cardbody">' + esc(r.desc) + '</p>';
-      if (r.items && r.items.length) {
-        html += '<ol style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-soft)">' + r.items.map(function(it){ return '<li style="margin-bottom:6px">'+esc(it)+'</li>'; }).join('') + '</ol>';
-      }
-      html += '</div>';
+      rc += '<div class="card"><p class="mn-cardhead">' + esc(r.name) + ' · ' + esc(r.dur) + '</p><p class="mn-cardbody">' + esc(r.desc) + '</p>';
+      if (r.items && r.items.length) rc += '<ol style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-soft)">' + r.items.map(function(it){ return '<li style="margin-bottom:6px">'+esc(it)+'</li>'; }).join('') + '</ol>';
+      rc += '</div>';
     });
-    html += '<div class="banner" style="margin-bottom:20px">Sleep 7–8 hours, every night.</div>';
+    rc += '<div class="banner">Sleep 7–8 hours, every night.</div>';
 
-    html += '<div class="section-label" id="m-lib">Exercise Library</div>';
-    html += '<p class="note-line" style="margin-bottom:14px">Every movement in the program, A–Z, with its reference photo and how-to — jump here any time you need a refresher, without digging through the day-by-day plan.</p>';
-    EX_PHOTOS.slice().sort().forEach(function(name){
-      html += '<div class="card manual-workout" style="margin-bottom:10px">';
-      html += '<div class="mw-head">' + esc(name) + '</div>';
-      html += '<div class="mw-body">';
-      html += '<p class="mn-cardbody">' + esc(EX_HOWTO[name] || '') + '</p>';
-      html += '<div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + exercisePhotoPath(name) + '" alt="' + esc(name) + '" loading="lazy"></div>';
-      if (EX_MUSCLE_PHOTOS.indexOf(name) !== -1) {
-        html += '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div><img class="ex-photo" src="' + musclePhotoPath(name) + '" alt="Muscles worked — ' + esc(name) + '" loading="lazy"></div>';
-      }
-      html += '</div></div>';
-    });
+    // ---- Library: one row per exercise, tap to open ----
+    var libItem = function(name, photo, muscle) {
+      var o = '<details class="mlib"><summary>' + esc(name) + '</summary><div class="mw-body">';
+      if (EX_HOWTO[name]) o += '<p class="mn-cardbody">' + esc(EX_HOWTO[name]) + '</p>';
+      if (photo) o += '<div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + photo + '" alt="' + esc(name) + '" loading="lazy"></div>';
+      if (muscle) o += '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div><img class="ex-photo" src="' + muscle + '" alt="Muscles worked — ' + esc(name) + '" loading="lazy"></div>';
+      return o + '</div></details>';
+    };
+    var seen = {}, names = [];
+    [1,2,3].forEach(function(p){ ["A","B"].forEach(function(w){ getPhases()[p].workouts[w].exercises.forEach(function(e){ if (!seen[e.name]) { seen[e.name] = 1; names.push(e.name); } }); }); });
+    Object.keys(LADDERS).forEach(function(k){ (LADDERS[k][home ? "home" : "gym"] || []).forEach(function(r){ if (!seen[r[0]]) { seen[r[0]] = 1; names.push(r[0]); } }); });
+    if (!home) EX_PHOTOS.forEach(function(n){ if (!seen[n] && HOME_EX_NAMES.indexOf(n) === -1) { seen[n] = 1; names.push(n); } });
+    var lb = '<p class="note-line">Every exercise in your plan, A to Z. Tap a name for the instructions and pictures.</p>';
+    names.sort().forEach(function(n){ lb += libItem(n, EX_PHOTOS.indexOf(n) !== -1 ? exercisePhotoPath(n) : null, EX_MUSCLE_PHOTOS.indexOf(n) !== -1 ? musclePhotoPath(n) : null); });
+    lb += '<p class="note-line" style="margin:18px 0 10px">Warm-up drills, holds and stretches:</p>';
+    SUPPORT_MOVEMENTS.slice().sort().forEach(function(n){ var sp = resolvePhotoPath(n); if (sp) lb += libItem(n, sp, null); });
 
-    if (state.profile && state.profile.equipment === "home") {
-      registerHomeMaps();
-      html += '<p class="note-line" style="margin:18px 0 14px">Your home exercises:</p>';
-      HOME_EX_NAMES.slice().sort().forEach(function(name){
-        if (EX_PHOTOS.indexOf(name) !== -1) return;
-        html += '<div class="card manual-workout" style="margin-bottom:10px"><div class="mw-head">' + esc(name) + '</div><div class="mw-body"><p class="mn-cardbody">' + esc(EX_HOWTO[name] || '') + '</p></div></div>';
-      });
-    }
-    html += '<p class="note-line" style="margin:18px 0 14px">Plus every warm-up drill, tendon-prep hold, stretch, balance drill and active-recovery move used throughout the program:</p>';
-    SUPPORT_MOVEMENTS.slice().sort().forEach(function(name){
-      var p = resolvePhotoPath(name);
-      html += '<div class="card manual-workout" style="margin-bottom:10px">';
-      html += '<div class="mw-head">' + esc(name) + '</div>';
-      if (p) {
-        html += '<div class="mw-body"><div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + p + '" alt="' + esc(name) + '" loading="lazy"></div></div>';
-      }
-      html += '</div>';
-    });
-
-    html += '<div class="section-label">Golden Rules</div>';
-    html += '<p class="note-line" style="margin-bottom:8px">' + esc(homeWords(GOLDEN_RULES)) + '</p>';
+    var n = 0;
+    html += chap(++n, 'Start Here', 'What this app is and who it is for', G['m-why'] || '');
+    html += chap(++n, 'Stages &amp; Standards', 'Foundation to Ironclad, and what you must pass', st);
+    html += chap(++n, 'Your Week', 'What happens on each of the 7 days', wk);
+    html += chap(++n, 'Using a Session', 'How to read and log a workout', G['m-read'] || '');
+    [1,2,3].forEach(function(p){ html += chap(++n, 'Phase ' + p + ' Workouts', esc((getPhases()[p].name.split('—')[1] || '').trim()), phaseBody(p)); });
+    html += chap(++n, 'Conditioning', 'Rucking, sprints, running, balance', gp);
+    html += chap(++n, 'Recovery', 'The recovery day and sleep', rc);
+    html += chap(++n, 'Rules &amp; Safety', 'What to do, what to avoid, warning signs', (G['m-rules'] || '') + '<div class="section-label">Safety &amp; Warning Signs</div>' + (G['m-safe'] || '') + '<p class="note-line" style="margin-top:14px">' + esc(homeWords(GOLDEN_RULES)) + '</p>');
+    html += chap(++n, 'Missed Days', 'Illness, travel, Ramadan and restarting', G['m-miss'] || '');
+    html += chap(++n, 'Eating', 'Simple food guidance for the plan', G['m-diet'] || '');
+    html += chap(++n, 'Why It Is Built This Way', 'The thinking behind the plan', (G['m-phil'] || '') + '<div class="section-label">Ironclad vs. Typical Gym Routines</div>' + (G['m-vs'] || '') + '<div class="section-label">How the Plan Was Built</div>' + (G['m-how'] || ''));
+    html += chap(++n, 'Exercise Library', 'Every exercise with instructions and pictures', lb);
 
     html += '</div>';
     return html + renderBottomNav();
