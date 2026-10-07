@@ -291,6 +291,8 @@
     transition: background 0.15s ease, border-color 0.15s ease;
   }
   .set-row:active { background: var(--surface-2); }
+  .rep-in { width: 74px; flex: none; padding: 8px 6px; text-align: center; font: 600 16px 'Barlow', sans-serif; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+  .rep-in::placeholder { font-weight: 500; font-size: 13px; color: var(--ink-faint); }
   .set-row.filled { background: var(--good-bg); border-color: var(--olive); }
   .set-row .sr-check {
     width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line-strong); flex-shrink: 0;
@@ -659,7 +661,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.10.3";
+  var APP_VERSION = "2.11.0";
 
   /* ============================================================
      DATA
@@ -1390,6 +1392,7 @@
   var LS_LOG_KEY = "ironclad_log_v1";
   var LS_MEASUREMENTS_KEY = "ironclad_measurements_v1";
   var LS_PROFILE_KEY = "ironclad_profile_v1";
+  var LS_TEST_KEY = "ironclad_test_v1";
   var restInterval = null, audioCtx = null;
 
   /* ============================================================
@@ -1918,10 +1921,12 @@
       state.settings.lastWeights = saved.lastWeights || {};
       state.settings.deloadSessionsDone = saved.deloadSessionsDone || 0;
       state.settings.exSwaps = saved.exSwaps || {};
+      state.settings.lastReps = saved.lastReps || {};
     }
     state.logEntries = lsGet(LS_LOG_KEY, []);
     state.measurements = lsGet(LS_MEASUREMENTS_KEY, []);
     state.profile = lsGet(LS_PROFILE_KEY, null);
+    state.fitTest = lsGet(LS_TEST_KEY, null);
     state.loading = false;
     render();
     // First-ever load with no stored cycleStartDate — start the deload
@@ -2119,6 +2124,21 @@
     };
     var nextDay = (sess.dayNum % 7) + 1;
     var patch = { nextDayNumber: nextDay };
+    // What was actually done: reps (or seconds) per set, per exercise.
+    var repsDone = null, lastReps = null;
+    sess.steps.forEach(function(st, i){
+      if (!repsLoggable(st) || !sess.reps || !sess.reps[i]) return;
+      var arr = sess.reps[i].map(function(v){ return parseInt(v, 10); }).filter(function(v){ return !isNaN(v) && v >= 0; });
+      if (!arr.length) return;
+      if (!repsDone) repsDone = {};
+      repsDone[st.title] = arr;
+      if (!sess.deload) {
+        if (!lastReps) lastReps = Object.assign({}, state.settings.lastReps || {});
+        lastReps[st.title] = { reps: arr, date: todayKey() };
+      }
+    });
+    if (repsDone) entry.reps = repsDone;
+    if (lastReps) patch.lastReps = lastReps;
     if (sess.type === "lift") patch.nextLiftType = sess.liftType === "A" ? "B" : "A";
     if (sess.type === "gpp") patch.nextGppType = sess.gppType === "ruck" ? "speed" : "ruck";
 
@@ -2744,7 +2764,7 @@
     else if (c.action === "clear-log") clearLog();
     else if (c.action === "delete-measurement") deleteMeasurement(c.payload.id);
     else if (c.action === "edit-profile") resetProfile();
-    else if (c.action === "reset-all") wipeStorage([LS_SETTINGS_KEY, LS_LOG_KEY, LS_MEASUREMENTS_KEY, LS_PROFILE_KEY, LS_THEME_KEY]);
+    else if (c.action === "reset-all") wipeStorage([LS_SETTINGS_KEY, LS_LOG_KEY, LS_MEASUREMENTS_KEY, LS_PROFILE_KEY, LS_THEME_KEY, LS_TEST_KEY]);
     else if (c.action === "reset-progress") wipeStorage([LS_SETTINGS_KEY, LS_LOG_KEY, LS_MEASUREMENTS_KEY]);
   }
 
@@ -2913,6 +2933,93 @@
     return html;
   }
 
+  /* ---- Starting test: what the user can do today. Stored on its own key so
+     editing profile details never loses it. Zero is a valid answer. ---- */
+  function fitTestFields() {
+    var home = state.profile && state.profile.equipment === "home";
+    return [
+      ["pushups", "Push-ups", "Most you can do in one go, chest to the floor", "reps"],
+      ["pulls", home ? "Table rows" : "Pull-ups", home ? "Most in one go, chest to the table edge" : "Most in one go, from a full hang. 0 is fine", "reps"],
+      ["squats", "Bodyweight squats", "Most in one go, thighs to parallel. Stop at 30", "reps"],
+      ["plank", "Forearm plank", "Longest hold with a straight body", "seconds"],
+      ["hang", "Dead hang", "Longest hang from a bar. Leave blank if you have no bar", "seconds"]
+    ];
+  }
+  function renderFitTest() {
+    var d = state.fitDraft || (state.fitDraft = {});
+    var html = '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Starting Test</div><div class="tb-sub">ABOUT 10 MINUTES</div></div></div>';
+    html += '<div class="body-scroll"><div class="onb-wrap">';
+    html += '<div class="onb-head">Where Are You Today?</div>';
+    html += '<p class="onb-sub">Warm up for a few minutes, then try each test once and enter your honest number. Zero is a fine answer. Rest 2 to 3 minutes between tests. The app uses this to track your progress from where you really are.</p>';
+    fitTestFields().forEach(function(f) {
+      html += '<div class="field-row"><label>' + esc(f[1]) + ' (' + f[3] + ')</label>' +
+        '<input class="field-input" type="number" inputmode="numeric" min="0" data-input="fit" data-k="' + f[0] + '" placeholder="0" value="' + esc(d[f[0]] != null ? d[f[0]] : "") + '">' +
+        '<p class="note-line" style="margin:4px 0 0">' + esc(f[2]) + '</p></div>';
+    });
+    if (state.fitError) html += '<p class="onb-error">' + esc(state.fitError) + '</p>';
+    html += '<button class="btn btn-primary btn-block" data-action="fit-save" style="margin-top:18px">Save My Results</button>';
+    html += '<button class="btn btn-ghost btn-block" data-action="fit-skip" style="margin-top:8px">Skip for now</button>';
+    html += '<p class="note-line" style="text-align:center;margin-top:10px">You can take or retake this test any time from Settings.</p>';
+    html += '</div></div>';
+    return html;
+  }
+  function saveFitTest(skip) {
+    var out = { date: todayKey() };
+    if (skip) {
+      // Skipping a retake keeps the earlier results.
+      if (state.fitTest && !state.fitTest.skipped) { state.retest = false; state.fitDraft = null; state.fitError = null; render(); return; }
+      out.skipped = true;
+    } else {
+      var d = state.fitDraft || {}, any = false, bad = false;
+      fitTestFields().forEach(function(f) {
+        var v = d[f[0]];
+        if (v === undefined || v === null || v === "") return;
+        var n = parseInt(v, 10);
+        if (isNaN(n) || n < 0 || n > 3600) { bad = true; return; }
+        out[f[0]] = n; any = true;
+      });
+      if (bad || !any) { state.fitError = "Enter a number for at least one test (0 is allowed), or tap Skip for now."; renderKeepScroll(); return; }
+    }
+    state.fitTest = out; state.fitDraft = null; state.fitError = null; state.retest = false;
+    lsSet(LS_TEST_KEY, out);
+    render();
+  }
+
+  /* ---- Reps log: what was actually done on each set. Offered on every
+     exercise except weighted main lifts (they log weight) and distance
+     work. ---- */
+  function repsLoggable(step) {
+    if (!step || step.kind !== "exercise" || step.isMainLift) return false;
+    var u = parseSetsUnit(step.sets);
+    return parseSetCount(step.sets) > 0 && !/\d\s*m\b/.test(u);
+  }
+  function repsUnitWord(step) { return /\ds\b/.test(parseSetsUnit(step.sets)) ? "sec" : "reps"; }
+  function repsRange(setsStr) {
+    var m = /(\d+)\s*(?:[–-]\s*(\d+))?/.exec(parseSetsUnit(setsStr));
+    if (!m) return null;
+    var lo = parseInt(m[1], 10), hi = m[2] ? parseInt(m[2], 10) : lo;
+    return { lo: lo, hi: hi };
+  }
+  function setStepReps(stepIdx, setIdx, val) {
+    var sess = state.session; if (!sess) return;
+    if (!sess.reps) sess.reps = {};
+    if (!sess.reps[stepIdx]) sess.reps[stepIdx] = [];
+    sess.reps[stepIdx][setIdx] = val;
+  }
+  function repsHint(step) {
+    var last = state.settings.lastReps && state.settings.lastReps[step.title];
+    var word = repsUnitWord(step) === "sec" ? "seconds" : "reps";
+    if (!last || !last.reps || !last.reps.length) return "Enter the " + word + " you actually do on each set, even if it is below the target. Your log will show the real numbers.";
+    var r = repsRange(step.sets), txt = "Last time: " + last.reps.join(", ") + ". ";
+    if (r) {
+      var min = Math.min.apply(null, last.reps);
+      if (min >= r.hi && r.hi > 0) txt += "You reached the top of the target on every set. Move to the harder version in the instructions.";
+      else if (min < r.lo) txt += "You are below the target, and that is fine. Use the easier version in the instructions if there is one, and try to add one " + (word === "seconds" ? "second or two" : "rep") + " today.";
+      else txt += "Try to beat it by one " + (word === "seconds" ? "second or two" : "rep") + " on at least one set.";
+    }
+    return txt;
+  }
+
   function renderTopbar() {
     if (state.screen === "session" && state.session) {
       var sess = state.session, pct = Math.round(((sess.idx+1)/sess.steps.length)*100);
@@ -3030,7 +3137,7 @@
     } else {
       html += '<div class="card" style="padding:4px 16px">';
       entries.forEach(function(e){
-        html += '<div class="log-row"><div class="log-dot ' + e.type + '"></div><div class="log-main"><div class="log-title">' + esc(e.headline) + (e.deload ? ' <span style="font-size:10px;font-weight:700;color:var(--rust)">· DELOAD</span>' : '') + '</div><div class="log-date">Day ' + e.dayNumber + ' · Phase ' + e.phase + '</div></div><div class="log-date">' + fmtDate(e.date) + '</div>' +
+        html += '<div class="log-row"><div class="log-dot ' + e.type + '"></div><div class="log-main"><div class="log-title">' + esc(e.headline) + (e.deload ? ' <span style="font-size:10px;font-weight:700;color:var(--rust)">· DELOAD</span>' : '') + '</div><div class="log-date">Day ' + e.dayNumber + ' · Phase ' + e.phase + '</div>' + (e.reps ? '<div class="log-date" style="margin-top:4px;line-height:1.5">' + Object.keys(e.reps).map(function(k){ return esc(k) + ': ' + e.reps[k].join(', '); }).join('<br>') + '</div>' : '') + '</div><div class="log-date">' + fmtDate(e.date) + '</div>' +
           '<button class="log-del" data-action="open-delete-confirm" data-id="' + esc(e.id||'') + '" data-headline="' + esc(e.headline) + '" aria-label="Delete session">' + ICONS.trash + '</button></div>';
       });
       html += '</div>';
@@ -3062,6 +3169,15 @@
     html += '<div class="settings-row"><span class="sr-k">Equipment</span><span class="sr-v">' + esc(EQUIPMENT_LABELS[state.profile && state.profile.equipment] || "—") + '</span></div>';
     html += '</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-edit-profile-confirm" style="margin-bottom:14px">' + ICONS.profile + '<span>Edit My Details</span></button>';
+    html += '<div class="section-label">Starting Test</div>';
+    if (state.fitTest && !state.fitTest.skipped) {
+      html += '<div class="card" style="padding:4px 16px">';
+      fitTestFields().forEach(function(f){ if (state.fitTest[f[0]] != null) html += '<div class="settings-row"><span class="sr-k">' + esc(f[1]) + '</span><span class="sr-v">' + esc(state.fitTest[f[0]]) + ' ' + (f[3] === "seconds" ? "sec" : "reps") + '</span></div>'; });
+      html += '<div class="settings-row"><span class="sr-k">Taken</span><span class="sr-v">' + esc(fmtDate(state.fitTest.date)) + '</span></div></div>';
+    } else {
+      html += '<p class="ph-note">You have not taken the starting test yet.</p>';
+    }
+    html += '<button class="btn btn-ghost btn-block" data-action="fit-retake" style="margin-bottom:14px"><span>' + (state.fitTest && !state.fitTest.skipped ? 'Retake the Test' : 'Take the Test') + '</span></button>';
 
     html += '<div class="section-label">Your Progress</div>';
     html += '<div class="card" style="padding:4px 16px">';
@@ -3178,6 +3294,15 @@
     html += '<div class="settings-row"><span class="sr-k">Equipment</span><span class="sr-v">' + esc(EQUIPMENT_LABELS[state.profile && state.profile.equipment] || "—") + '</span></div>';
     html += '</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-edit-profile-confirm" style="margin-bottom:14px">' + ICONS.profile + '<span>Edit My Details</span></button>';
+    html += '<div class="section-label">Starting Test</div>';
+    if (state.fitTest && !state.fitTest.skipped) {
+      html += '<div class="card" style="padding:4px 16px">';
+      fitTestFields().forEach(function(f){ if (state.fitTest[f[0]] != null) html += '<div class="settings-row"><span class="sr-k">' + esc(f[1]) + '</span><span class="sr-v">' + esc(state.fitTest[f[0]]) + ' ' + (f[3] === "seconds" ? "sec" : "reps") + '</span></div>'; });
+      html += '<div class="settings-row"><span class="sr-k">Taken</span><span class="sr-v">' + esc(fmtDate(state.fitTest.date)) + '</span></div></div>';
+    } else {
+      html += '<p class="ph-note">You have not taken the starting test yet.</p>';
+    }
+    html += '<button class="btn btn-ghost btn-block" data-action="fit-retake" style="margin-bottom:14px"><span>' + (state.fitTest && !state.fitTest.skipped ? 'Retake the Test' : 'Take the Test') + '</span></button>';
 
     html += '<div class="section-label">Appearance</div>';
     html += '<div class="choice-row">';
@@ -3716,12 +3841,15 @@
       var n = parseSetCount(step.sets);
       if (n > 0) {
         var unit = formatSetUnit(parseSetsUnit(step.sets));
+        if (repsLoggable(step) && !state.session.deload) html += '<p class="note-line" style="margin-bottom:8px">' + esc(repsHint(step)) + '</p>';
         html += '<div class="set-rows">';
         for (var i=0;i<n;i++) {
           var filled = state.session.setDots[stepIdx + "_" + i];
+          var rl = repsLoggable(step), rv = (state.session.reps && state.session.reps[stepIdx] && state.session.reps[stepIdx][i]);
           html += '<div class="set-row' + (filled?' filled':'') + '" data-action="toggle-dot" data-step="' + stepIdx + '" data-i="' + i + '">' +
             '<div class="sr-check">' + (filled ? ICONS.check : '') + '</div>' +
-            '<div class="sr-label">Set ' + (i+1) + ' · ' + esc(unit) + '</div>' +
+            '<div class="sr-label" style="flex:1">Set ' + (i+1) + ' · ' + esc(unit) + '</div>' +
+            (rl ? '<input class="rep-in" type="number" inputmode="numeric" min="0" data-action="noop" data-input="set-reps" data-step="' + stepIdx + '" data-i="' + i + '" placeholder="' + repsUnitWord(step) + '" value="' + esc(rv != null ? rv : "") + '" aria-label="Set ' + (i+1) + ' ' + repsUnitWord(step) + ' done">' : '') +
           '</div>';
         }
         html += '</div>';
@@ -3849,6 +3977,10 @@
       app.innerHTML = '<div class="topbar"><div class="tb-title-wrap"><div class="tb-main">Operation Ironclad</div><div class="tb-sub">TRACKER</div></div></div>' + renderOnboarding();
       return;
     }
+    if (state.screen !== "session" && state.screen !== "summary" && (!state.fitTest || state.retest)) {
+      app.innerHTML = renderFitTest();
+      return;
+    }
     var body;
     if (state.screen === "session") body = renderSession();
     else if (state.screen === "summary") body = renderSummary();
@@ -3921,6 +4053,9 @@
     else if (action === "dismiss-confirm") { state.confirm = null; render(); }
     else if (action === "confirm-action") { runConfirm(); }
     else if (action === "open-reset-confirm") { openResetConfirm(); }
+    else if (action === "fit-save") { saveFitTest(false); }
+    else if (action === "fit-skip") { saveFitTest(true); }
+    else if (action === "fit-retake") { state.fitDraft = {}; state.retest = true; state.screen = "home"; render(); }
     else if (action === "toggle-alt-panel") { var ai = parseInt(el.getAttribute("data-step"), 10); state.altOpen = (state.altOpen === ai) ? null : ai; render(); }
     else if (action === "toggle-ex-swap") { toggleExSwap(el.getAttribute("data-orig")); }
     else if (action === "open-reset-choice") { openResetChoice(); }
@@ -3946,11 +4081,24 @@
     var kind = el.getAttribute("data-input");
     if (kind === "set-weight") {
       setStepWeight(parseInt(el.getAttribute("data-step"),10), el.value);
+    } else if (kind === "set-reps") {
+      setStepReps(parseInt(el.getAttribute("data-step"),10), parseInt(el.getAttribute("data-i"),10), el.value);
+    } else if (kind === "fit") {
+      if (!state.fitDraft) state.fitDraft = {};
+      state.fitDraft[el.getAttribute("data-k")] = el.value;
     } else if (kind === "onb-age") {
       state.onboardDraft.age = el.value;
     } else if (kind === "onb-weight") {
       state.onboardDraft.weight = el.value;
     }
+  });
+
+  // Typing a number into a set's box ticks that set once you leave the box.
+  document.getElementById("app").addEventListener("change", function(e){
+    var el = e.target;
+    if (!el || !el.getAttribute || el.getAttribute("data-input") !== "set-reps" || el.value === "") return;
+    var si = parseInt(el.getAttribute("data-step"),10), i = parseInt(el.getAttribute("data-i"),10);
+    if (state.session && !state.session.setDots[si + "_" + i]) toggleSetDot(si, i);
   });
 
   render();
