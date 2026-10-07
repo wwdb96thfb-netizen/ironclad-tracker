@@ -686,7 +686,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.17.0";
+  var APP_VERSION = "2.17.1";
 
   /* ============================================================
      DATA
@@ -3865,12 +3865,31 @@
     lb += '<p class="note-line" style="margin:18px 0 10px">Warm-up drills, holds and stretches:</p>';
     SUPPORT_MOVEMENTS.slice().sort().forEach(function(n){ var sp = resolvePhotoPath(n); if (sp) lb += libItem(n, sp, null); });
 
+    // ---- Foundation chapter ----
+    var eqk = home ? "home" : "gym", ftgt = FOUNDATION_TARGET[eqk], fd = '';
+    fd += '<p class="note-line">Foundation is the stage before Phase 1. It is for anyone who cannot yet do the starting exercises. You train the normal Phase 1 week, but each hard exercise is replaced by an easier version you can do today.</p>';
+    fd += '<div class="card"><p class="mn-cardhead">How you move up</p><ul class="item-list" style="margin:0"><li>Each movement has steps, easiest first. The app starts you on the right step from your fitness test.</li><li>Reach the top of the target on every set, two sessions in a row, and the app moves you up one step.</li><li>If a step is clearly wrong for you, use the Too hard or Too easy button on the exercise screen.</li><li>When you reach the last step of every movement below, Foundation is finished and Phase 1 starts by itself.</li></ul></div>';
+    Object.keys(ftgt).forEach(function(k){
+      var rungs = LADDERS[k][eqk].slice(0, ftgt[k] + 1);
+      fd += '<div class="card"><p class="mn-cardhead">' + esc(LADDER_LABELS[k]) + '</p><table class="moves-table"><tr><th>Step</th><th>Exercise</th><th>Sets</th></tr>' + rungs.map(function(r, i){ return '<tr><td>' + (i + 1) + '</td><td>' + esc(r[0]) + (i === rungs.length - 1 ? ' <strong>(Phase 1 level)</strong>' : '') + '</td><td>' + esc(r[1].replace("Max", "max")) + '</td></tr>'; }).join('') + '</table></div>';
+    });
+    fd += '<p class="note-line">There is no time limit. Some people leave Foundation in two weeks, others need two or three months. If your fitness test already shows the Phase 1 level on every movement, you skip Foundation.</p>';
+
+    // ---- Ironclad chapter ----
+    var ic = '<p class="note-line">Ironclad is the final level of the plan. It is not a set of new workouts: you keep training Phase 3 until your numbers pass the Ironclad Standard.</p>';
+    ic += '<div class="card"><p class="mn-cardhead">The Ironclad Standard</p><p class="mn-cardbody">You must pass every line:</p>' + stdList(3) + '</div>';
+    ic += '<div class="card"><p class="mn-cardhead">How to attempt it</p><ul class="item-list" style="margin:0"><li>Rest well for two days first.</li><li>Open the Progress tab and tap Retake the Fitness Test. Do each test once, with 2 to 3 minutes of rest between them.</li><li>The run can be done on another day: enter a timed 2-mile run on the Day 4 screen.</li><li>Reps you log in normal sessions count too, so a line can be passed in training.</li><li>When every line shows a tick, the Ironclad stage lights up on the Progress tab.</li></ul></div>';
+    ic += '<div class="card"><p class="mn-cardhead">What it means</p><p class="mn-cardbody">This is elite level. The push-up, plank and run numbers come from the top score of the US Army fitness test, and the pull-up number from the “excellent” mark of the Russian Army. Most people need well over a year of steady training to reach it, and some will not reach every line. The numbers shown are for your age and sex.</p></div>';
+    ic += '<div class="card"><p class="mn-cardhead">After Ironclad</p><p class="mn-cardbody">Keep training Phase 3 and retake the test every few months. The standard is something you hold, not something you pass once.</p></div>';
+
     var n = 0;
     html += chap(++n, 'Start Here', 'What this app is and who it is for', G['m-why'] || '');
-    html += chap(++n, 'Stages &amp; Standards', 'Foundation to Ironclad, and what you must pass', st);
+    html += chap(++n, 'The Five Stages', 'Overview: Foundation, Phases 1 to 3, Ironclad', st);
     html += chap(++n, 'Your Week', 'What happens on each of the 7 days', wk);
     html += chap(++n, 'Using a Session', 'How to read and log a workout', G['m-read'] || '');
-    [1,2,3].forEach(function(p){ html += chap(++n, 'Phase ' + p + ' Workouts', esc((getPhases()[p].name.split('—')[1] || '').trim()), phaseBody(p)); });
+    html += chap(++n, 'Foundation', 'The stage before Phase 1: easier versions, step by step', fd);
+    [1,2,3].forEach(function(p){ html += chap(++n, 'Phase ' + p, esc((getPhases()[p].name.split('—')[1] || '').trim()), phaseBody(p)); });
+    html += chap(++n, 'Ironclad', 'The final level and how to earn it', ic);
     html += chap(++n, 'Conditioning', 'Rucking, sprints, running, balance', gp);
     html += chap(++n, 'Recovery', 'The recovery day and sleep', rc);
     html += chap(++n, 'Rules &amp; Safety', 'What to do, what to avoid, warning signs', (G['m-rules'] || '') + '<div class="section-label">Safety &amp; Warning Signs</div>' + (G['m-safe'] || '') + '<p class="note-line" style="margin-top:14px">' + esc(homeWords(GOLDEN_RULES)) + '</p>');
