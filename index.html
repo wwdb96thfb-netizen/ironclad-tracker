@@ -659,7 +659,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.9.0";
+  var APP_VERSION = "2.9.1";
 
   /* ============================================================
      DATA
@@ -1071,7 +1071,7 @@
            ex: [["Slow Bodyweight Squat","3×10–15"],["Full-Range Push-ups","3×6–12"],["Table Row",null],["Prone Y-Raise","3×12"],["Bear Crawl","3×20m"],["Forearm Plank",null],["Single-Leg Calf Raise","3×15/leg"]] },
       B: { tendon: "Glute Bridge hold: lie on your back, feet flat, hips lifted high and squeezed",
            names: ["Glute Bridge Hold"],
-           ex: [["Single-Leg Glute Bridge","3×8–10/leg"],["Pike Push-ups",null],["Towel Door Row",null],["Reverse Nordic Curl","3×5"],["Lying Leg Raises",null],["Side-Lying Leg Raise","2×15/side"],["Side Plank","3×20–30s/side"]] }
+           ex: [["Single-Leg Glute Bridge","3×8–10/leg"],["Pike Push-ups",null],["Towel Door Row",null],["Reverse Nordic Curl","3×5"],["Lying Leg Raises",null],["Side-Lying Leg Raise","2×15/side"],["Bird-Dog","3×8/side"]] }
     },
     2: {
       A: { tendon: "Split Squat hold, bottom position (alternate legs), 4×30s. Also: Push-up hold, halfway down, 2×30s. Then: Wall Push, 3×6s at full effort.",
@@ -1079,7 +1079,7 @@
            ex: [["Bulgarian Split Squat",null],["Feet-Raised Push-ups","3×6–10"],["Feet-Raised Table Row",null],["Crab Walk","3×20m"],["Hollow Body Hold",null],["Single-Leg Calf Raise","3×15/leg"],["Prone Y-Raise",null]] },
       B: { tendon: "Single-Leg Reach hold, mid-hinge (alternate legs), 4×30s. Then: Towel Pull, 3×6s at full effort.",
            names: ["Single-Leg Reach Hold","Towel Pull"],
-           ex: [["Single-Leg Hip Thrust","3×8/leg"],["One-Arm Towel Door Row",null],["Feet-Raised Pike Push-ups",null],["Squat Jumps","4×10"],["L-Sit Progressions",null],["Side-Lying Leg Raise","2×15/side"],["Side Plank","3×30s/side"]] }
+           ex: [["Single-Leg Hip Thrust","3×8/leg"],["One-Arm Towel Door Row",null],["Feet-Raised Pike Push-ups",null],["Squat Jumps","4×10"],["L-Sit Progressions",null],["Table Reverse Hyper","3×10–12"],["Side Plank","3×30s/side"]] }
     },
     3: {
       A: { tendon: "Pistol Squat hold, bottom position (assisted as needed, alternate legs), 4×30s. Also: Table Row hold at the top, 2×30s. Then: Door-Frame Press, 3×6s at full effort.",
@@ -1108,6 +1108,8 @@
     "Reverse Nordic Curl": "Kneel upright on something soft, shins flat, hips pushed forward. Keeping a straight line from knees to shoulders, lean back slowly as far as you can control, then pull yourself upright with the front of your thighs. Do not bend at the hips. Start with a small lean and go further over the weeks. Stop if you feel sharp knee pain.",
     "Lying Leg Raises": "Lie on your back, hands under your hips, legs straight. Press your lower back into the floor and raise your legs to vertical, then lower them slowly until just above the floor. If your lower back lifts, bend your knees. Have a pull-up bar? Do hanging knee raises instead.",
     "Side-Lying Leg Raise": "Lie on your side, legs straight and stacked, body in one line. Lift the top leg about 45° with toes pointing forward (not up), pause, lower slowly. You should feel the outer hip. Finish all reps, then switch sides. Make it harder: add a 3-second hold at the top.",
+    "Bird-Dog": "Start on your hands and knees, hands under shoulders and knees under hips, back flat. Reach one arm straight forward and the opposite leg straight back until both are level with your body. Hold 2 seconds without letting your hips twist or your lower back sag, then return slowly. Finish all reps on one side, then switch. Make it harder: hold each rep for 5 seconds, or touch elbow to knee under your body between reps.",
+    "Table Reverse Hyper": "Test the table first: it must be heavy and must not tip. Lie face-down on it with your hips right at the edge and your legs hanging off, and hold the far edge or the sides firmly. Keeping your legs straight and together, squeeze your glutes and lift your legs until they are level with your body. Pause for a second, then lower slowly. Do not swing or arch hard at the top. Make it harder: hold the top for 3 seconds, or hold a light backpack between your feet.",
     "Side Plank": "Lie on your side, elbow under your shoulder, feet stacked. Lift your hips so your body is one straight line and hold. Do not let your hips sag or roll forward. Too hard? Keep your bottom knee on the floor. Hold the time on one side, then switch.",
     "Feet-Raised Push-ups": "Put your feet on a chair or step and your hands on the floor under your shoulders, body straight. Lower until your chest nearly touches the floor, then press up. The higher your feet, the harder it is. Make it harder: wear a loaded backpack, or pause 2 seconds at the bottom.",
     "Feet-Raised Table Row": "As for the table row, but with your heels on a chair so your body is horizontal. Test the table first. Pull your chest to the edge, pause, lower under control. Have a pull-up bar? Do strict pull-ups or chin-ups instead.",
@@ -1142,7 +1144,7 @@
     "Bear Crawl": ["abs","frontDelts","quads"], "Single-Leg Calf Raise": ["calves"],
     "Single-Leg Glute Bridge": ["glutes","hamstrings","lowerBack"], "Pike Push-ups": ["frontDelts","triceps","traps"],
     "Towel Door Row": ["lats","biceps","rearDelts","forearms"], "Reverse Nordic Curl": ["quads"],
-    "Lying Leg Raises": ["abs"], "Side-Lying Leg Raise": ["glutes"], "Side Plank": ["obliques","abs"],
+    "Lying Leg Raises": ["abs"], "Side-Lying Leg Raise": ["glutes"], "Bird-Dog": ["lowerBack","glutes","abs","obliques"], "Table Reverse Hyper": ["lowerBack","glutes","hamstrings"], "Side Plank": ["obliques","abs"],
     "Feet-Raised Push-ups": ["chest","frontDelts","triceps"], "Feet-Raised Table Row": ["lats","biceps","rearDelts","forearms"],
     "Crab Walk": ["triceps","glutes","rearDelts"], "Single-Leg Hip Thrust": ["glutes","hamstrings"],
     "One-Arm Towel Door Row": ["lats","biceps","rearDelts","obliques"], "Feet-Raised Pike Push-ups": ["frontDelts","triceps","traps"],
