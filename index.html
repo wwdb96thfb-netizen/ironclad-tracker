@@ -659,7 +659,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.9.1";
+  var APP_VERSION = "2.10.0";
 
   /* ============================================================
      DATA
@@ -921,7 +921,89 @@
     var female = state.profile && state.profile.sex === "female";
     var base = female ? PHASES_WOMEN : PHASES_MEN;
     if (state.profile && state.profile.equipment === "home") return homePhases(female ? "w" : "m", base);
-    return base;
+    return gymPhases(female ? "w" : "m", base);
+  }
+
+  /* Gym users without a piece of equipment: each gym exercise can be swapped
+     for its bodyweight match (same movement pattern). The choice is stored in
+     settings.exSwaps and applied here, so the session, Manual and previews
+     all pick it up. `tip` is a text-only "other equipment" suggestion. */
+  var GYM_ALT = {
+    "Barbell Back Squat": {tip: "Have a dumbbell or kettlebell? Do goblet squats: hold it at your chest and squat the same way.", swap: "Slow Bodyweight Squat", sets: "3×10–15"},
+    "Front Squat": {tip: "Have a dumbbell or kettlebell? Do goblet squats: hold it at your chest and squat the same way.", swap: "Shrimp Squat", sets: "3×5/leg"},
+    "Conventional Deadlift": {tip: "Have dumbbells or a kettlebell? Deadlift those from the floor with the same flat back.", swap: "Single-Leg Glute Bridge", sets: "3×8–10/leg"},
+    "Romanian Deadlift": {tip: "Have dumbbells? Do the same hinge holding one in each hand.", swap: "Table Reverse Hyper", sets: "3×10–12"},
+    "Kettlebell Swings": {tip: "Have a dumbbell? Hold one end with both hands and swing it the same way.", swap: "Squat Jumps", sets: "4×10"},
+    "Heavy Sandbag Cleans": {tip: "Have dumbbells or a weight plate? Clean those from the floor to your shoulders.", swap: "Broad Jumps", sets: "4×5"},
+    "Flat Bench Press": {tip: "Have dumbbells? Do a dumbbell bench press on a bench or on the floor.", swap: "Full-Range Push-ups", sets: "3×6–12"},
+    "Weighted Dips": {tip: "No belt or weights? Do bodyweight dips and slow the lowering to 3 seconds.", swap: "Feet-Raised Push-ups", sets: "3×6–10"},
+    "Standing Overhead Press": {tip: "Have dumbbells? Press those overhead instead of the bar.", swap: "Pike Push-ups", sets: "3×5–8"},
+    "Push Press": {tip: "Have dumbbells? Do the same dip-and-drive with one in each hand.", swap: "Feet-Raised Pike Push-ups", sets: "3×5"},
+    "Bent-Over Barbell Row": {tip: "Have dumbbells? Row those in the same bent-over position.", swap: "Table Row", sets: "3×8–10"},
+    "Single-Arm DB Row": {tip: "No dumbbell? Row one end of a barbell or a cable handle with one arm.", swap: "One-Arm Towel Door Row", sets: "3×8–10/arm"},
+    "Assisted Pull-ups": {tip: "Have a bar but no band or machine? Jump to the top and lower yourself for 5 seconds.", swap: "Table Row", sets: "3×8–10"},
+    "Strict Pull-ups": {tip: "Have a bar but cannot do full reps yet? Jump to the top and lower yourself for 5 seconds.", swap: "Feet-Raised Table Row", sets: "3×5–8"},
+    "Weighted Pull-ups": {tip: "No belt? Wear a loaded backpack, or hold a dumbbell between your feet.", swap: "One-Arm Table Row", sets: "3×5/arm"},
+    "Muscle-Up Progressions": {tip: "Have a bar? Do explosive chest-to-bar pull-ups.", swap: "Explosive Table Row", sets: "4×3–5"},
+    "Front Lever Progressions": {tip: "", swap: "Table Row Hold", sets: "4×10s"},
+    "Face Pull (band or cable)": {tip: "", swap: "Prone Y-Raise", sets: "3×12"},
+    "Band Pull-Apart": {tip: "", swap: "Prone Y-Raise", sets: "2×15"},
+    "Banded Lateral Walk": {tip: "", swap: "Side-Lying Leg Raise", sets: "2×15/side"},
+    "Pallof Press": {tip: "", swap: "Bird-Dog", sets: "3×8/side"},
+    "Hanging Knee Raises": {tip: "", swap: "Lying Leg Raises", sets: "3×8–12"},
+    "Dragon Flags": {tip: "", swap: "Dragon Flag Lowering", sets: "3×5"},
+    "Farmer's Walk": {tip: "No heavy dumbbells? Carry any two heavy objects: weight plates, kettlebells or full water jugs.", swap: "Bear Crawl", sets: "3×20m"},
+    "Suitcase Carries": {tip: "No heavy dumbbell? Carry one heavy plate, kettlebell or full water jug.", swap: "Side Plank Leg Raise", sets: "3×30s/side"},
+    "Sandbag Bear-Hug Carry": {tip: "No sandbag? Hug a heavy weight plate or a packed duffel bag.", swap: "Crab Walk", sets: "3×20m"},
+    "Heavy Sled Push/Pull": {tip: "", swap: "Bear Crawl Sprint", sets: "4×20m"}
+  };
+  var gymCache = {};
+  function gymPhases(track, base) {
+    registerHomeMaps(); // makes the bodyweight how-to text and muscle maps available
+    var sw = (state.settings && state.settings.exSwaps) || {};
+    var on = Object.keys(sw).filter(function(k) { return sw[k] && GYM_ALT[k]; }).sort();
+    if (!on.length) return base;
+    var key = track + "|" + on.join("|");
+    if (gymCache[key]) return gymCache[key];
+    var copy = JSON.parse(JSON.stringify(base));
+    Object.keys(copy).forEach(function(pk) {
+      ["A", "B"].forEach(function(wk) {
+        var w = copy[pk].workouts[wk];
+        w.exercises = w.exercises.map(function(e) {
+          if (on.indexOf(e.name) === -1) return e;
+          var alt = GYM_ALT[e.name];
+          return { name: alt.swap, sets: alt.sets, rest: e.rest, swappedFrom: e.name };
+        });
+      });
+    });
+    gymCache[key] = copy;
+    return copy;
+  }
+  function toggleExSwap(orig) {
+    if (!GYM_ALT[orig]) return;
+    var sw = Object.assign({}, state.settings.exSwaps || {});
+    if (sw[orig]) delete sw[orig]; else sw[orig] = true;
+    state.settings.exSwaps = sw;
+    persistSettings();
+    var sess = state.session;
+    if (sess && sess.steps) {
+      // Rebuild the session's steps so the swap shows straight away; clear
+      // the ticks/weight for any step whose exercise changed.
+      var fresh = buildSteps(sess.dayNum, sess.phase, sess.liftType, sess.gppType, sess.deload);
+      if (fresh.length === sess.steps.length) {
+        fresh.forEach(function(st, i) {
+          if (st.title !== sess.steps[i].title) {
+            Object.keys(sess.setDots).forEach(function(k) { if (k.indexOf(i + "_") === 0) delete sess.setDots[k]; });
+            delete sess.weights[i];
+            if (sess.restTimer && sess.restTimer.stepIdx === i) { clearRestInterval(); sess.restTimer = null; }
+          }
+        });
+        sess.steps = fresh;
+      }
+    }
+    state.altOpen = null;
+    revealedPhotos = {};
+    render();
   }
 
   // Plain-language setup/execution/cue for every named lift and accessory
@@ -1226,7 +1308,7 @@
         steps.push({kind:"homealt", title:"Your Home Workout", text:w.homeAlt});
       }
       steps.push({kind:"tendon", title:"Tendon Prep", sub:"4×30s · 60s rest", text:w.tendon});
-      w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets: deload ? deloadSetsString(e.sets) : e.sets, rest:e.rest, isMainLift:!!e.main}); });
+      w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets: deload ? deloadSetsString(e.sets) : e.sets, rest:e.rest, isMainLift:!!e.main, swappedFrom:e.swappedFrom || null}); });
       steps.push({kind:"stretch", title:"Stretch", sub:"5 min", items:w.stretch});
     } else if (t === "gpp") {
       if (gppType === "ruck") {
@@ -1812,6 +1894,7 @@
       state.settings.cycleStartDate = saved.cycleStartDate || null;
       state.settings.lastWeights = saved.lastWeights || {};
       state.settings.deloadSessionsDone = saved.deloadSessionsDone || 0;
+      state.settings.exSwaps = saved.exSwaps || {};
     }
     state.logEntries = lsGet(LS_LOG_KEY, []);
     state.measurements = lsGet(LS_MEASUREMENTS_KEY, []);
@@ -1975,6 +2058,7 @@
     sess.restTimer = null;
     if (sess.idx < sess.steps.length - 1) {
       sess.idx++;
+      state.altOpen = null;
       revealedPhotos = {};
       render();
       var scroller = document.querySelector(".body-scroll");
@@ -3562,6 +3646,23 @@
           html += '</div>';
         }
       }
+      if (state.profile && state.profile.equipment !== "home") {
+        if (step.swappedFrom) {
+          html += '<div class="instr-card"><div class="mn-label">Swapped Exercise</div><p>This replaces ' + esc(step.swappedFrom) + ' because you don\u2019t have the equipment. The app will keep using it until you switch back.</p>' +
+            '<button class="btn btn-ghost btn-block" style="margin-top:10px" data-action="toggle-ex-swap" data-orig="' + esc(step.swappedFrom) + '"><span>Switch back to ' + esc(step.swappedFrom) + '</span></button></div>';
+        } else if (GYM_ALT[step.title]) {
+          var alt = GYM_ALT[step.title];
+          if (state.altOpen === stepIdx) {
+            html += '<div class="instr-card"><div class="mn-label">No Equipment For This?</div>' +
+              (alt.tip ? '<p style="margin-bottom:10px">' + esc(alt.tip) + '</p>' : '') +
+              '<p>' + (alt.tip ? 'Or swap' : 'Swap') + ' it for a bodyweight exercise that trains the same movement: <strong>' + esc(alt.swap) + '</strong>, ' + esc(alt.sets) + '.</p>' +
+              '<button class="btn btn-primary btn-block" style="margin-top:12px" data-action="toggle-ex-swap" data-orig="' + esc(step.title) + '"><span>Swap to ' + esc(alt.swap) + '</span></button>' +
+              '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-action="toggle-alt-panel" data-step="' + stepIdx + '"><span>Keep ' + esc(step.title) + '</span></button></div>';
+          } else {
+            html += '<button class="btn btn-ghost btn-block" style="margin-bottom:12px" data-action="toggle-alt-panel" data-step="' + stepIdx + '"><span>Don\u2019t have this equipment?</span></button>';
+          }
+        }
+      }
       html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
       if (step.isMainLift) {
         var lastW = state.settings.lastWeights && state.settings.lastWeights[step.title];
@@ -3805,6 +3906,8 @@
     else if (action === "dismiss-confirm") { state.confirm = null; render(); }
     else if (action === "confirm-action") { runConfirm(); }
     else if (action === "open-reset-confirm") { openResetConfirm(); }
+    else if (action === "toggle-alt-panel") { var ai = parseInt(el.getAttribute("data-step"), 10); state.altOpen = (state.altOpen === ai) ? null : ai; render(); }
+    else if (action === "toggle-ex-swap") { toggleExSwap(el.getAttribute("data-orig")); }
     else if (action === "open-reset-choice") { openResetChoice(); }
     else if (action === "close-reset-choice") { state.resetChoice = false; render(); }
     else if (action === "reset-progress-ask") { openResetProgressConfirm(); }
