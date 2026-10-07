@@ -665,7 +665,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.11.1";
+  var APP_VERSION = "2.12.0";
 
   /* ============================================================
      DATA
@@ -926,8 +926,140 @@
   function getPhases() {
     var female = state.profile && state.profile.sex === "female";
     var base = female ? PHASES_WOMEN : PHASES_MEN;
-    if (state.profile && state.profile.equipment === "home") return homePhases(female ? "w" : "m", base);
-    return gymPhases(female ? "w" : "m", base);
+    var plan = (state.profile && state.profile.equipment === "home") ? homePhases(female ? "w" : "m", base) : gymPhases(female ? "w" : "m", base);
+    return applyLadders(plan);
+  }
+
+  /* ============================================================
+     LADDERS — each movement has a ladder of versions, easiest first.
+     The plan's own exercise is the target for that phase. If the user's
+     level on that ladder is below the target, the session shows their
+     current rung instead, and they climb toward the target.
+  ============================================================ */
+  var LADDERS = {
+    push: { home: [["Wall Push-ups","3×10–15"],["Incline Push-ups","3×8–12"],["Knee Push-ups","3×8–12"],["Full-Range Push-ups","3×6–12"],["Feet-Raised Push-ups","3×6–10"],["Archer Push-ups","3×6–8/side"]],
+            gym:  [["Wall Push-ups","3×10–15"],["Incline Push-ups","3×8–12"],["Knee Push-ups","3×8–12"],["Strict Push-ups","3×AMRAP"]] },
+    pull: { home: [["Bent-Knee Table Row","3×6–10"],["Table Row","3×8–10"],["Feet-Raised Table Row","3×5–8"],["One-Arm Table Row","3×5/arm"]],
+            gym:  [["Dead Hang","3×15–30s"],["Assisted Pull-ups","3×8–10"],["Negative Pull-ups","3×3–5"],["Strict Pull-ups","3×5–8"],["Weighted Pull-ups","3×5"]] },
+    squat: { home: [["Chair Sit-to-Stand","3×8–12"],["Slow Bodyweight Squat","3×10–15"]], gym: [["Chair Sit-to-Stand","3×8–12"],["Slow Bodyweight Squat","3×10–15"]] },
+    plank: { home: [["Knee Plank","3×20–30s"],["Forearm Plank","3×30–45s"]], gym: [["Knee Plank","3×20–30s"],["Forearm Plank","3×30–45s"]] }
+  };
+  var LADDER_LABELS = { push: "Push-ups", pull: "Pulling", squat: "Squat", plank: "Plank" };
+  // The rung each ladder must reach before Foundation is complete (Phase 1 standard).
+  var FOUNDATION_TARGET = { home: { push: 3, pull: 1, squat: 1, plank: 1 }, gym: { push: 3, pull: 1, plank: 1 } };
+  function eqKey() { return (state.profile && state.profile.equipment === "home") ? "home" : "gym"; }
+  function ladderFor(key) { return LADDERS[key][eqKey()]; }
+  function ladderLevel(key) { var l = state.settings.ladder; return (l && l[eqKey()] && l[eqKey()][key] != null) ? l[eqKey()][key] : null; }
+  function ladderSlot(name) {
+    var found = null;
+    Object.keys(LADDERS).forEach(function(k) {
+      var arr = ladderFor(k);
+      for (var i = 0; i < arr.length; i++) if (arr[i][0] === name && !found) found = { key: k, idx: i };
+    });
+    return found;
+  }
+  var ladderCache = { src: null, key: null, out: null };
+  function applyLadders(plan) {
+    var lv = state.settings && state.settings.ladder && state.settings.ladder[eqKey()];
+    if (!lv) return plan;
+    var key = eqKey() + JSON.stringify(lv);
+    if (ladderCache.src === plan && ladderCache.key === key) return ladderCache.out;
+    var changed = false, copy = JSON.parse(JSON.stringify(plan));
+    Object.keys(copy).forEach(function(pk) {
+      ["A", "B"].forEach(function(wk) {
+        var w = copy[pk].workouts[wk];
+        w.exercises = w.exercises.map(function(e) {
+          var slot = ladderSlot(e.name);
+          if (!slot || lv[slot.key] == null || lv[slot.key] >= slot.idx) return e;
+          var rung = ladderFor(slot.key)[lv[slot.key]];
+          changed = true;
+          return { name: rung[0], sets: rung[1], rest: e.rest, ladderKey: slot.key, ladderGoal: e.name, swappedFrom: e.swappedFrom };
+        });
+      });
+    });
+    ladderCache = { src: plan, key: key, out: changed ? copy : plan };
+    return ladderCache.out;
+  }
+  // Starting rung for each ladder, from the starting test.
+  function placeLadders() {
+    var t = state.fitTest, eq = eqKey(), lv = {};
+    if (!t) return;
+    if (t.skipped) {
+      // No numbers: beginners start on the easiest rung, everyone else on the plan as written.
+      if (!(state.profile && state.profile.level === "beginner")) { setLadder(eq, null); return; }
+      Object.keys(LADDERS).forEach(function(k) { lv[k] = 0; });
+    } else {
+      var n = function(v) { return v == null ? null : v; };
+      var pu = n(t.pushups), pl = n(t.pulls), sq = n(t.squats), pk = n(t.plank), hg = n(t.hang);
+      if (pu != null) lv.push = pu >= 20 ? 4 : pu >= 5 ? 3 : pu >= 1 ? 2 : 1;
+      if (pl != null) lv.pull = eq === "home" ? (pl >= 10 ? 2 : pl >= 5 ? 1 : 0) : (pl >= 5 ? 3 : pl >= 1 ? 2 : (hg != null && hg < 15 ? 0 : 1));
+      if (sq != null) lv.squat = sq >= 10 ? 1 : 0;
+      if (pk != null) lv.plank = pk >= 20 ? 1 : 0;
+    }
+    Object.keys(lv).forEach(function(k) { lv[k] = Math.min(lv[k], ladderFor(k).length - 1); });
+    setLadder(eq, lv);
+  }
+  function setLadder(eq, lv) {
+    var all = Object.assign({}, state.settings.ladder || {});
+    if (lv) all[eq] = lv; else delete all[eq];
+    state.settings.ladder = all;
+    state.settings.ladderStreak = {};
+    state.settings.ladderStart = Date.now();
+    var pl = Object.assign({}, state.settings.ladderPlaced || {}); pl[eq] = true; state.settings.ladderPlaced = pl;
+    persistSettings();
+  }
+  // Places the ladders once per equipment type (after an update, a progress
+  // reset, or a switch between gym and home).
+  function ensureLadders() {
+    if (!state.profile || !state.fitTest) return;
+    if (state.settings.ladderPlaced && state.settings.ladderPlaced[eqKey()]) return;
+    placeLadders();
+  }
+  function foundationGaps() {
+    var eq = eqKey(), tgt = FOUNDATION_TARGET[eq], out = [];
+    Object.keys(tgt).forEach(function(k) {
+      var lvl = ladderLevel(k);
+      if (lvl != null && lvl < tgt[k]) out.push({ key: k, now: ladderFor(k)[lvl][0], goal: ladderFor(k)[tgt[k]][0] });
+    });
+    return out;
+  }
+  function foundationActive() { return !!(state.settings && state.settings.phase === 1 && foundationGaps().length); }
+  function moveLadder(key, dir, auto) {
+    var eq = eqKey(), lvl = ladderLevel(key);
+    if (lvl == null) return false;
+    var next = Math.max(0, Math.min(ladderFor(key).length - 1, lvl + dir));
+    if (next === lvl) return false;
+    var wasFoundation = foundationActive();
+    var all = JSON.parse(JSON.stringify(state.settings.ladder));
+    all[eq][key] = next;
+    state.settings.ladder = all;
+    var st = Object.assign({}, state.settings.ladderStreak || {}); delete st[eq + ":" + key]; state.settings.ladderStreak = st;
+    persistSettings();
+    var msg = (dir > 0 ? "Moved up to " : "Moved down to ") + ladderFor(key)[next][0];
+    if (wasFoundation && !foundationActive()) msg = "Foundation complete. You have reached the Phase 1 standard.";
+    return msg;
+  }
+  // After a session: two sessions in a row at the top of the target moves a
+  // ladder up; three in a row below it moves it down (never in the first 14 days).
+  function updateLaddersFromSession(sess) {
+    if (sess.deload) return null;
+    var eq = eqKey(), msgs = [];
+    sess.steps.forEach(function(st, i) {
+      if (st.kind !== "exercise" || !st.ladderKey || !sess.reps || !sess.reps[i]) return;
+      var arr = sess.reps[i].map(function(v){ return parseInt(v, 10); }).filter(function(v){ return !isNaN(v); });
+      var r = repsRange(st.sets);
+      if (!arr.length || !r || arr.length < parseSetCount(st.sets)) return;
+      var id = eq + ":" + st.ladderKey, all = Object.assign({}, state.settings.ladderStreak || {});
+      var cur = Object.assign({ up: 0, down: 0 }, all[id] || {}), min = Math.min.apply(null, arr);
+      if (min >= r.hi) { cur.up++; cur.down = 0; } else if (min < r.lo) { cur.down++; cur.up = 0; } else { cur.up = 0; cur.down = 0; }
+      all[id] = cur; state.settings.ladderStreak = all;
+      var settled = (Date.now() - (state.settings.ladderStart || 0)) > 14 * 86400000, m = null;
+      if (cur.up >= 2) m = moveLadder(st.ladderKey, 1, true);
+      else if (cur.down >= 3 && settled) m = moveLadder(st.ladderKey, -1, true);
+      if (m) msgs.push(m);
+    });
+    persistSettings();
+    return msgs.length ? msgs.join(". ") : null;
   }
 
   /* Gym users without a piece of equipment: each gym exercise can be swapped
@@ -1216,6 +1348,14 @@
     "Reverse Nordic Curl": "Kneel upright on something soft, shins flat, hips pushed forward. Keeping a straight line from knees to shoulders, lean back slowly as far as you can control, then pull yourself upright with the front of your thighs. Do not bend at the hips. Start with a small lean and go further over the weeks. Stop if you feel sharp knee pain.",
     "Lying Leg Raises": "Lie on your back, hands under your hips, legs straight. Press your lower back into the floor and raise your legs to vertical, then lower them slowly until just above the floor. If your lower back lifts, bend your knees. Have a pull-up bar? Do hanging knee raises instead.",
     "Side-Lying Leg Raise": "Lie on your side, legs straight and stacked, body in one line. Lift the top leg about 45° with toes pointing forward (not up), pause, lower slowly. You should feel the outer hip. Finish all reps, then switch sides. Make it harder: add a 3-second hold at the top.",
+    "Wall Push-ups": "Stand an arm's length from a wall, hands on it at chest height, a little wider than your shoulders. Keep your body in one straight line and bend your elbows to bring your chest to the wall, then push back. The further your feet are from the wall, the harder it is.",
+    "Incline Push-ups": "Put your hands on the edge of a sturdy table or kitchen counter, a little wider than your shoulders, and walk your feet back until your body is one straight line. Lower your chest to the edge, then push back up. Use a lower surface, such as a chair, as it gets easy.",
+    "Knee Push-ups": "Start in a push-up position with your knees on the floor (use a cushion) and your body straight from knees to head. Lower your chest all the way to the floor, elbows about 45° from your body, then push back up. Do not let your hips sag or stick up.",
+    "Bent-Knee Table Row": "Test the table first: it must be heavy and must not tip. Lie under it, grip the edge with both hands, and bend your knees so your feet are flat on the floor close to your hips. Pull your chest up to the table edge, squeeze your shoulder blades, lower under control. Use your legs only as much as you need to.",
+    "Dead Hang": "Hold a pull-up bar with both hands, a little wider than your shoulders, and hang with straight arms. First let your shoulders relax up toward your ears, then pull your shoulder blades down without bending your arms. Hold for the time. Too hard? Keep your toes lightly on a chair.",
+    "Negative Pull-ups": "Stand on a chair or jump so your chin is above the bar, arms bent. Lift your feet and lower yourself as slowly as you can, aiming for 5 seconds, until your arms are straight. Step back up and repeat. Only the lowering counts.",
+    "Chair Sit-to-Stand": "Sit on the front half of a sturdy chair, feet flat and shoulder-width, arms reaching forward. Lean forward a little and stand up without using your hands, then sit back down slowly, taking 3 seconds. Touch the chair lightly and stand again. Use a lower seat as it gets easy.",
+    "Knee Plank": "Rest on your forearms with elbows under your shoulders and your knees on the floor (use a cushion). Lift your hips so your body is straight from knees to head, tighten your stomach and hold. Do not let your lower back sag.",
     "Bird-Dog": "Start on your hands and knees, hands under shoulders and knees under hips, back flat. Reach one arm straight forward and the opposite leg straight back until both are level with your body. Hold 2 seconds without letting your hips twist or your lower back sag, then return slowly. Finish all reps on one side, then switch. Make it harder: hold each rep for 5 seconds, or touch elbow to knee under your body between reps.",
     "Table Reverse Hyper": "Test the table first: it must be heavy and must not tip. Lie face-down on it with your hips right at the edge and your legs hanging off, and hold the far edge or the sides firmly. Keeping your legs straight and together, squeeze your glutes and lift your legs until they are level with your body. Pause for a second, then lower slowly. Do not swing or arch hard at the top. Make it harder: hold the top for 3 seconds, or hold a light backpack between your feet.",
     "Side Plank": "Lie on your side, elbow under your shoulder, feet stacked. Lift your hips so your body is one straight line and hold. Do not let your hips sag or roll forward. Too hard? Keep your bottom knee on the floor. Hold the time on one side, then switch.",
@@ -1252,7 +1392,7 @@
     "Bear Crawl": ["abs","frontDelts","quads"], "Single-Leg Calf Raise": ["calves"],
     "Single-Leg Glute Bridge": ["glutes","hamstrings","lowerBack"], "Pike Push-ups": ["frontDelts","triceps","traps"],
     "Towel Door Row": ["lats","biceps","rearDelts","forearms"], "Reverse Nordic Curl": ["quads"],
-    "Lying Leg Raises": ["abs"], "Side-Lying Leg Raise": ["glutes"], "Bird-Dog": ["lowerBack","glutes","abs","obliques"], "Table Reverse Hyper": ["lowerBack","glutes","hamstrings"], "Side Plank": ["obliques","abs"],
+    "Lying Leg Raises": ["abs"], "Side-Lying Leg Raise": ["glutes"], "Wall Push-ups": ["chest","frontDelts","triceps"], "Incline Push-ups": ["chest","frontDelts","triceps"], "Knee Push-ups": ["chest","frontDelts","triceps"], "Bent-Knee Table Row": ["lats","biceps","rearDelts"], "Dead Hang": ["forearms","lats"], "Negative Pull-ups": ["lats","biceps","forearms"], "Chair Sit-to-Stand": ["quads","glutes"], "Knee Plank": ["abs","obliques"], "Bird-Dog": ["lowerBack","glutes","abs","obliques"], "Table Reverse Hyper": ["lowerBack","glutes","hamstrings"], "Side Plank": ["obliques","abs"],
     "Feet-Raised Push-ups": ["chest","frontDelts","triceps"], "Feet-Raised Table Row": ["lats","biceps","rearDelts","forearms"],
     "Crab Walk": ["triceps","glutes","rearDelts"], "Single-Leg Hip Thrust": ["glutes","hamstrings"],
     "One-Arm Towel Door Row": ["lats","biceps","rearDelts","obliques"], "Feet-Raised Pike Push-ups": ["frontDelts","triceps","traps"],
@@ -1334,7 +1474,7 @@
         steps.push({kind:"homealt", title:"Your Home Workout", text:w.homeAlt});
       }
       steps.push({kind:"tendon", title:"Tendon Prep", sub:"4×30s · 60s rest", text:w.tendon});
-      w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets: deload ? deloadSetsString(e.sets) : e.sets, rest:e.rest, isMainLift:!!e.main, swappedFrom:e.swappedFrom || null}); });
+      w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets: deload ? deloadSetsString(e.sets) : e.sets, rest:e.rest, isMainLift:!!e.main, swappedFrom:e.swappedFrom || null, ladderKey:e.ladderKey || null, ladderGoal:e.ladderGoal || null}); });
       steps.push({kind:"stretch", title:"Stretch", sub:"5 min", items:w.stretch});
     } else if (t === "gpp") {
       if (gppType === "ruck") {
@@ -1927,11 +2067,16 @@
       state.settings.exSwaps = saved.exSwaps || {};
       state.settings.lastReps = saved.lastReps || {};
       state.settings.exHistory = saved.exHistory || {};
+      state.settings.ladder = saved.ladder || {};
+      state.settings.ladderStreak = saved.ladderStreak || {};
+      state.settings.ladderStart = saved.ladderStart || 0;
+      state.settings.ladderPlaced = saved.ladderPlaced || {};
     }
     state.logEntries = lsGet(LS_LOG_KEY, []);
     state.measurements = lsGet(LS_MEASUREMENTS_KEY, []);
     state.profile = lsGet(LS_PROFILE_KEY, null);
     state.fitTest = lsGet(LS_TEST_KEY, null);
+    ensureLadders();
     state.loading = false;
     render();
     // First-ever load with no stored cycleStartDate — start the deload
@@ -1974,6 +2119,7 @@
     state.onboardDraft = { sex: null, level: null, equipment: null, age: "", weight: "" };
     state.onboardError = null;
     lsSet(LS_PROFILE_KEY, profile);
+    ensureLadders();
     render();
   }
   function resetProfile() {
@@ -2202,11 +2348,13 @@
 
     saveLogEntry(entry);
     saveSettings(patch);
+    var ladderMsg = updateLaddersFromSession(sess);
+    if (ladderMsg) toastMsg += ". " + ladderMsg;
     state.toast = toastMsg;
     state.session = null;
     state.screen = "home";
     render();
-    setTimeout(function(){ state.toast = null; render(); }, 3500);
+    setTimeout(function(){ state.toast = null; render(); }, ladderMsg ? 8000 : 3500);
   }
 
   function toggleSetDot(stepIdx, setIdx) {
@@ -3006,6 +3154,7 @@
     }
     state.fitTest = out; state.fitDraft = null; state.fitError = null; state.retest = false;
     lsSet(LS_TEST_KEY, out);
+    placeLadders();
     render();
   }
 
@@ -3147,6 +3296,11 @@
       html += '<div class="banner">' + ICONS.check + '<span>' + esc(homeWords(LEVEL_TIPS[state.profile.level])) + '</span></div>';
     }
 
+    if (foundationActive()) {
+      html += '<div class="card"><div class="mn-label">Foundation Stage</div><p class="mn-cardbody" style="margin-bottom:8px">You are building up to the Phase 1 standard. Your sessions use the version of each exercise you can do today, and move you up as you get stronger.</p><ul class="item-list">';
+      foundationGaps().forEach(function(g){ html += '<li>' + esc(LADDER_LABELS[g.key]) + ': now on <strong>' + esc(g.now) + '</strong>, goal ' + esc(g.goal) + '</li>'; });
+      html += '</ul></div>';
+    }
     html += '<div class="next-card">' +
       '<div class="nc-eyebrow">NEXT UP · DAY ' + s.nextDayNumber + (deload ? ' · DELOAD' : '') + '</div>' +
       '<div class="nc-title">' + esc(nextLabel) + '</div>' +
@@ -3831,6 +3985,7 @@
 
   function renderStepBody(step, stepIdx) {
     var html = '';
+    if (state.toast) html += '<div class="banner" style="background:var(--good-bg);color:var(--good);margin-bottom:14px">' + ICONS.check + '<span>' + esc(state.toast) + '</span></div>';
     if (state.session && state.session.deload) {
       html += '<div class="banner" style="background:var(--warn-bg);color:var(--rust);margin-bottom:14px">' + ICONS.warn + '<span><strong>Deload week</strong> — lighter sets, ~60% weight on the main lift.</span></div>';
     }
@@ -3913,6 +4068,13 @@
         html += '<div class="weight-card"><div class="weight-hint">' + esc(lw && lw.weight != null
           ? "Last time you used " + fmtKg(lw.weight) + "kg. Use + or \u2212 to change it."
           : "Enter the weight you use today. Next time it will be filled in for you.") + '</div>' + weightAdjRow(stepIdx, cv) + '</div>';
+      }
+      if (step.ladderKey) {
+        var lad = ladderFor(step.ladderKey), li = ladderLevel(step.ladderKey);
+        html += '<div class="instr-card"><div class="mn-label">Your Level</div><p>This is step ' + (li + 1) + ' of your ladder toward <strong>' + esc(step.ladderGoal) + '</strong>. Reach the top of the target on every set, two sessions in a row, and the app moves you up.</p>' +
+          '<div style="display:flex;gap:8px;margin-top:10px">' +
+          (li > 0 ? '<button class="btn btn-ghost" style="flex:1" data-action="ladder-move" data-key="' + step.ladderKey + '" data-d="-1"><span>Too hard</span></button>' : '') +
+          '<button class="btn btn-ghost" style="flex:1" data-action="ladder-move" data-key="' + step.ladderKey + '" data-d="1"><span>Too easy</span></button></div></div>';
       }
       html += renderExHistory(step, stepIdx);
       var n = parseSetCount(step.sets);
@@ -4115,7 +4277,8 @@
     else if (action === "start-day") { startSession(parseInt(el.getAttribute("data-day"),10)); }
     else if (action === "set-phase") {
       var targetPhase = parseInt(el.getAttribute("data-phase"),10);
-      if (targetPhase === 3 && state.settings.phase !== 3) openPhase3GateConfirm();
+      if (targetPhase > 1 && foundationActive()) { state.toast = "Finish the Foundation stage first: reach the Phase 1 standard on every ladder shown on the Home tab."; render(); setTimeout(function(){ state.toast = null; render(); }, 5000); }
+      else if (targetPhase === 3 && state.settings.phase !== 3) openPhase3GateConfirm();
       else setPhase(targetPhase);
     }
     else if (action === "start-guided") { startGuided(parseInt(el.getAttribute("data-step"),10)); }
@@ -4130,6 +4293,21 @@
     else if (action === "dismiss-confirm") { state.confirm = null; render(); }
     else if (action === "confirm-action") { runConfirm(); }
     else if (action === "open-reset-confirm") { openResetConfirm(); }
+    else if (action === "ladder-move") {
+      var lm = moveLadder(el.getAttribute("data-key"), parseInt(el.getAttribute("data-d"),10));
+      if (lm) {
+        var ss = state.session;
+        if (ss && ss.steps) {
+          var fr = buildSteps(ss.dayNum, ss.phase, ss.liftType, ss.gppType, ss.deload);
+          if (fr.length === ss.steps.length) {
+            fr.forEach(function(st2, i2){ if (st2.title !== ss.steps[i2].title) { Object.keys(ss.setDots).forEach(function(k){ if (k.indexOf(i2 + "_") === 0) delete ss.setDots[k]; }); if (ss.reps) delete ss.reps[i2]; } });
+            ss.steps = fr;
+          }
+        }
+        revealedPhotos = {}; state.histOpen = null;
+        state.toast = lm; render(); setTimeout(function(){ state.toast = null; render(); }, 4000);
+      }
+    }
     else if (action === "wt-adj") { adjustStepWeight(parseInt(el.getAttribute("data-step"),10), parseInt(el.getAttribute("data-d"),10)); }
     else if (action === "toggle-hist") { var hi = parseInt(el.getAttribute("data-step"),10); state.histOpen = (state.histOpen === hi) ? null : hi; renderKeepScroll(); }
     else if (action === "fit-save") { saveFitTest(false); }
