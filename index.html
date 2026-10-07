@@ -665,7 +665,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.12.0";
+  var APP_VERSION = "2.12.1";
 
   /* ============================================================
      DATA
@@ -1015,6 +1015,32 @@
     if (state.settings.ladderPlaced && state.settings.ladderPlaced[eqKey()]) return;
     placeLadders();
   }
+  /* Baseline standard for leaving Phase 1. Push-ups: lower edge of the "Good"
+     band in the CSEP norms (Payne et al., 2000), by age and sex; men on full
+     push-ups, women on knee push-ups, as that test is scored. Plank, squats
+     and rows have no age-banded published norms, so those are conservative
+     practical minimums. Best of the starting test and any logged set counts. */
+  var PUSHUP_GOOD = { male: [22, 17, 13, 10, 8], female: [15, 13, 11, 7, 5] }; // ages 20s,30s,40s,50s,60+
+  function baselineStatus() {
+    var pr = state.profile || {}, female = pr.sex === "female", home = pr.equipment === "home";
+    var band = Math.max(0, Math.min(4, Math.floor(((pr.age || 30) - 20) / 10)));
+    var t = (state.fitTest && !state.fitTest.skipped) ? state.fitTest : {};
+    var best = function(names, testVal) {
+      var b = testVal != null ? testVal : null;
+      names.forEach(function(nm) { exHistory(nm).forEach(function(e) { (e.r || []).forEach(function(v) { if (b == null || v > b) b = v; }); }); });
+      return b;
+    };
+    var rows = [
+      { label: female ? "Knee push-ups in one go" : "Push-ups in one go", need: PUSHUP_GOOD[female ? "female" : "male"][band],
+        have: best(female ? ["Knee Push-ups", "Full-Range Push-ups", "Strict Push-ups"] : ["Full-Range Push-ups", "Strict Push-ups"], t.pushups), unit: "" },
+      { label: "Forearm plank", need: 60, have: best(["Forearm Plank"], t.plank), unit: " sec" },
+      { label: "Bodyweight squats in one go", need: 20, have: best(["Slow Bodyweight Squat"], t.squats), unit: "" }
+    ];
+    if (home) rows.push({ label: "Table rows in one go", need: 8, have: best(["Table Row", "Feet-Raised Table Row"], t.pulls), unit: "" });
+    rows.forEach(function(r) { r.met = r.have != null && r.have >= r.need; });
+    return rows;
+  }
+  function baselineMet() { return baselineStatus().every(function(r) { return r.met; }); }
   function foundationGaps() {
     var eq = eqKey(), tgt = FOUNDATION_TARGET[eq], out = [];
     Object.keys(tgt).forEach(function(k) {
@@ -3552,6 +3578,20 @@
     // handles the 4-week cycle on its own and the button has no purpose.
     if (deload) html += '<button class="btn btn-ghost btn-block" data-action="mark-deload-taken" style="margin-bottom:10px">' + ICONS.check + '<span>Already deloaded elsewhere — skip to full training</span></button>';
 
+    html += '<div class="section-label">Your Phase</div>';
+    html += '<div class="phase-select" style="margin-bottom:8px">';
+    [1,2,3].forEach(function(p){
+      html += '<div class="phase-btn' + (s.phase===p?' active':'') + '" data-action="set-phase" data-phase="' + p + '">Phase ' + p + '</div>';
+    });
+    html += '</div>';
+    html += '<p class="ph-note" style="margin-bottom:14px">' + (foundationActive()
+      ? 'You are in the Foundation stage. Reach the Phase 1 standard on every ladder shown on the Home tab before moving on.'
+      : 'Move to the next phase when you have finished its months and passed its test in the Manual. Moving to Phase 3 asks you to confirm the test.') + '</p>';
+    if (s.phase === 1) {
+      html += '<div class="section-label">Baseline Standard to Leave Phase 1</div><div class="card" style="padding:4px 16px">';
+      baselineStatus().forEach(function(r){ html += '<div class="settings-row"><span class="sr-k">' + (r.met ? '\u2713 ' : '') + esc(r.label) + '</span><span class="sr-v">' + (r.have != null ? esc(r.have) : '\u2014') + ' / ' + r.need + r.unit + '</span></div>'; });
+      html += '</div><p class="ph-note" style="margin-bottom:14px">Your best so far / the standard. Your best comes from the starting test and from the reps you log. The push-up number is the published fitness norm for your age and sex; the others are practical minimums. Phase 2 stays locked until every line is met.</p>';
+    }
     html += '<div class="section-label">Plan</div>';
     html += '<button class="btn btn-ghost btn-block" data-action="open-reset-confirm">' + ICONS.reset + '<span>Reset Plan Progress</span></button>';
     html += '<p class="ph-note">Takes you back to Day 1, Phase 1, Workout A / Ruck, and restarts the deload clock. Your training log and body measurements are not touched.</p>';
@@ -4277,7 +4317,8 @@
     else if (action === "start-day") { startSession(parseInt(el.getAttribute("data-day"),10)); }
     else if (action === "set-phase") {
       var targetPhase = parseInt(el.getAttribute("data-phase"),10);
-      if (targetPhase > 1 && foundationActive()) { state.toast = "Finish the Foundation stage first: reach the Phase 1 standard on every ladder shown on the Home tab."; render(); setTimeout(function(){ state.toast = null; render(); }, 5000); }
+      if (targetPhase > 1 && state.settings.phase === 1 && !foundationActive() && !baselineMet()) { state.toast = "You have not met the baseline standard yet. See the list under Your Phase. Log the numbers in your sessions or retake the starting test."; render(); setTimeout(function(){ state.toast = null; render(); }, 6000); }
+      else if (targetPhase > 1 && foundationActive()) { state.toast = "Finish the Foundation stage first: reach the Phase 1 standard on every ladder shown on the Home tab."; render(); setTimeout(function(){ state.toast = null; render(); }, 5000); }
       else if (targetPhase === 3 && state.settings.phase !== 3) openPhase3GateConfirm();
       else setPhase(targetPhase);
     }
