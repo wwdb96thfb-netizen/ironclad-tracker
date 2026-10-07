@@ -669,7 +669,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.16.1";
+  var APP_VERSION = "2.16.2";
 
   /* ============================================================
      DATA
@@ -3382,9 +3382,6 @@
       html += '<div class="banner banner-warn">' + ICONS.warn + '<span><strong>Deload week</strong> — Day ' + (doneSoFar+1) + ' of ' + DELOAD_WEEK_SESSIONS + '. Every session is automatically lighter (~60% weight, fewer sets) until the week is done — this can\'t be skipped.</span></div>';
     }
 
-    if (s.phase === 1 && state.profile && LEVEL_TIPS[state.profile.level]) {
-      html += '<div class="banner">' + ICONS.check + '<span>' + esc(homeWords(LEVEL_TIPS[state.profile.level])) + '</span></div>';
-    }
     if (foundationActive()) {
       html += '<div class="card"><div class="mn-label">Foundation Stage</div><p class="mn-cardbody" style="margin-bottom:0">You are building up to Phase 1. Your sessions use the version of each exercise you can do today, and move you up as you get stronger.</p></div>';
     }
@@ -3938,25 +3935,21 @@
     if (step.kind === "exercise") {
       html += '<div class="step-kind">Exercise</div>';
       html += '<div class="ex-header"><div class="ex-icon">' + EX_ICONS[exerciseIconKey(step.title)] + '</div><h2 class="step-title">' + esc(step.title) + '</h2></div>';
-      if (EX_HOWTO[step.title]) {
-        html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(EX_HOWTO[step.title]) + '</p></div>';
-      }
-      // Reference photo + muscle-target photo: collapsed by default so a
-      // familiar lift doesn't force a scroll past pictures every set, but
-      // one tap away for anything unfamiliar or when a muscle-focus check
-      // helps. Only offered when at least one photo actually exists for
-      // this exercise.
+      // The exercise picture is always shown. How-to text and the muscle
+      // picture sit behind one tap so the screen stays short.
       var hasExPhoto = EX_PHOTOS.indexOf(step.title) !== -1;
       var hasMusclePhoto = EX_MUSCLE_PHOTOS.indexOf(step.title) !== -1;
-      if (hasExPhoto || hasMusclePhoto) {
+      var howto = EX_HOWTO[step.title];
+      if (hasExPhoto) {
+        html += '<div class="sketch-wrap manual-sketch" style="margin-bottom:12px"><img class="ex-photo" src="' + exercisePhotoPath(step.title) + '" alt="' + esc(step.title) + '"></div>';
+      }
+      if (howto || hasMusclePhoto) {
         var revealed = !!revealedPhotos[stepIdx];
-        html += '<button class="btn btn-ghost btn-block photo-reveal-btn" data-action="toggle-photo-reveal" data-step="' + stepIdx + '">' +
-          (revealed ? 'Hide Photo &amp; Muscles Worked' : 'Show Photo &amp; Muscles Worked') + '</button>';
+        var revLabel = howto && hasMusclePhoto ? 'How To Do It &amp; Muscles Worked' : (howto ? 'How To Do It' : 'Muscles Worked');
+        html += '<button class="btn btn-ghost btn-block photo-reveal-btn" data-action="toggle-photo-reveal" data-step="' + stepIdx + '">' + (revealed ? 'Hide ' : 'Show ') + revLabel + '</button>';
         if (revealed) {
           html += '<div class="photo-reveal-panel">';
-          if (hasExPhoto) {
-            html += '<div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + exercisePhotoPath(step.title) + '" alt="' + esc(step.title) + '" loading="lazy"></div>';
-          }
+          if (howto) html += '<div class="instr-card"><div class="mn-label">How To Do It</div><p>' + esc(howto) + '</p></div>';
           if (hasMusclePhoto) {
             html += '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div><img class="ex-photo" src="' + musclePhotoPath(step.title) + '" alt="Muscles worked — ' + esc(step.title) + '" loading="lazy"></div>';
           }
