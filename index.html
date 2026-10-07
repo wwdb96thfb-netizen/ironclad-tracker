@@ -686,7 +686,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.17.2";
+  var APP_VERSION = "2.18.0";
 
   /* ============================================================
      DATA
@@ -1271,6 +1271,8 @@
     "Flat Bench Press": "Lie on the bench, feet flat on the floor, shoulder blades pulled back and down. Lower the bar to your mid-chest under control, elbows at roughly 45° to your torso, then press it back up to lockout over your shoulders.",
     "Assisted Pull-ups": "Loop a resistance band over the bar and under one knee or foot (or use an assist machine) to remove just enough bodyweight that you can complete every rep in full. Pull your chest toward the bar, then lower all the way to a dead hang each rep — don't stop at the halfway point.",
     "Farmer's Walk": "Pick up a heavy dumbbell, kettlebell, or loaded jug/jerry can in each hand and walk a measured distance with tall posture — shoulders back, core braced. Take controlled steps; don't let the weights pull you into a lean.",
+    "Sandbag Shouldering": "Use a sandbag or a backpack packed heavy. Stand over it, feet wide, back flat. Grip it underneath, pull it up to your lap as you squat, then drive your hips forward and roll it up onto one shoulder. Stand tall, lower it under control, and repeat to the other shoulder. Start light: it should feel awkward, not heavy.",
+    "Woodchop": "Hold one weight in both hands: a loaded backpack, a dumbbell or a plate. Start with it outside one knee, knees bent. In one smooth movement stand and turn, swinging it up across your body to above the opposite shoulder, arms long, back foot turning. Return under control. Your hips and trunk do the turning, not your arms.",
     "Forearm Plank": "Forearms on the floor, elbows under your shoulders, body in one straight line from head to heels. Squeeze your glutes and brace your abs — don't let your hips sag or pike up. Breathe normally through the hold.",
     "Calf Raise": "Standing, rise up onto the balls of your feet as high as you can, pause a beat at the top, then lower slowly until your heels are back on the floor. Keep your legs straight, not locked-stiff.",
     "Band Pull-Apart": "Hold a light resistance band at shoulder height, arms straight out in front of you. Pull it apart by driving your shoulder blades together, hold a second, then return under control. Don't shrug your shoulders up toward your ears.",
@@ -1314,6 +1316,9 @@
     3: { title:"Interval Run", sub:"Fast Repeats", stats:[{v:"6 × 400m",l:"Fast"},{v:"90s",l:"Walk Between"}], note:"Jog easy for 5 to 10 minutes first. Then run 400 meters (one lap of a track, or about 90 seconds) fast, walk 90 seconds, and repeat. Every repeat should be about the same speed. Stop if your pace falls apart." },
     deload: { title:"Easy Run", sub:"Deload", stats:[{v:"15–20",l:"Minutes"}], note:"Light and relaxed. You should finish feeling fresher than when you started." }
   };
+  // Day 2: lifting awkward loads and turning under load, the strength that
+  // barbells do not train. Needs only a loaded backpack or sandbag.
+  var TWIST_WORK = [["Sandbag Shouldering", "3×5/side"], ["Woodchop", "3×8/side"]];
   var RUCK_DOSING = {
     1: {load:"10–15%", duration:"30–40m"},
     2: {load:"20–30%", duration:"40–50m"},
@@ -1548,7 +1553,7 @@
     if (t === "lift") return getPhases()[phase].workouts[liftType].name;
     if (t === "gpp") return gppType === "ruck" ? "GPP — Load Carriage (Ruck)" : "GPP — Speed & Agility";
     if (t === "cardio") return "Run";
-    if (t === "recovery") return "Active Recovery";
+    if (t === "recovery") return "Easy Jog & Recovery";
     return "Full Rest";
   }
 
@@ -1562,6 +1567,13 @@
       }
       steps.push({kind:"tendon", title:"Tendon Prep", sub:"4×30s · 60s rest", text:w.tendon});
       w.exercises.forEach(function(e){ steps.push({kind:"exercise", title:e.name, sets: deload ? deloadSetsString(e.sets) : e.sets, rest:e.rest, isMainLift:!!e.main, swappedFrom:e.swappedFrom || null, ladderKey:e.ladderKey || null, ladderGoal:e.ladderGoal || null}); });
+      // Endurance finisher: one all-out bodyweight set, so the high-rep
+      // standards (push-ups, squats) are trained and not only tested.
+      if (!deload && !foundationActive()) {
+        var homeEq = state.profile && state.profile.equipment === "home";
+        var fin = liftType === "A" ? (homeEq ? "Full-Range Push-ups" : "Strict Push-ups") : "Slow Bodyweight Squat";
+        steps.push({kind:"exercise", title:fin, sets:"1×Max", rest:"—", isMainLift:false, swappedFrom:null, ladderKey:null, ladderGoal:null, finisher:true});
+      }
       steps.push({kind:"stretch", title:"Stretch", sub:"5 min", items:w.stretch});
     } else if (t === "gpp") {
       if (gppType === "ruck") {
@@ -1577,12 +1589,15 @@
           stats: deload ? [{v:"3",l:"Sets"},{v:"20–30s",l:"Per Set"}] : [{v:"4–6",l:"Sets"},{v:"20–30s",l:"Per Set"}],
           note:"Set two markers (water bottles, shoes, anything) about 5 meters apart. Sprint to the far one, touch the ground with one hand, sprint back and touch the near one — that's one rep, keep going for the full 20–30s. Stay low and plant hard on each direction change. Full recovery between sets. Have an agility ladder or cones? Use your usual ladder-footwork or cone-shuttle drill instead — this is just the no-equipment default."});
       }
+      TWIST_WORK.forEach(function(x){ steps.push({kind:"exercise", title:x[0], sets: deload ? deloadSetsString(x[1]) : x[1], rest:"60s", isMainLift:false, swappedFrom:null, ladderKey:null, ladderGoal:null}); });
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
     } else if (t === "cardio") {
       var rp = deload ? RUN_PLAN.deload : RUN_PLAN[phase];
       steps.push({kind:"cardio", title:rp.title, sub:rp.sub, stats:rp.stats, note:rp.note, runLog:true});
+      if (!deload) steps.push({kind:"gpp", title:"Strides", sub:"Speed", stats:[{v:"4 × 20s",l:"Fast"},{v:"Walk back",l:"Rest"}], note:"After the run, on flat ground: build up smoothly to about 90% of your top speed, hold it for a few seconds, then ease off. Walk back and repeat. This keeps you fast without tiring you."});
       steps.push({kind:"balance", title:"Balance", sub:"5–8 min", items: BALANCE_ITEMS});
     } else if (t === "recovery") {
+      steps.push({kind:"cardio", title:"Easy Jog", sub:"Second Run of the Week", stats:[{v:"15–20",l:"Minutes"}], note:"Slow enough to hold a conversation. This second, easy run is what builds stamina for the 2-mile test. Legs heavy from the week? Walk briskly instead."});
       RECOVERY_ITEMS.forEach(function(r){ steps.push({kind:"recovery", title:r.name, sub:r.dur, text:r.desc, items:r.items}); });
     } else {
       steps.push({kind:"rest", title:"Full Rest", text:"Nothing scheduled today. Sleep 7–8 hours and let the week's training absorb."});
@@ -1671,7 +1686,7 @@
     "Assisted Pull-ups":"PULL", "Bent-Over Barbell Row":"PULL", "Strict Pull-ups":"PULL", "Single-Arm DB Row":"PULL",
     "Muscle-Up Progressions":"PULL", "Weighted Pull-ups":"PULL",
     "Farmer's Walk":"CARRY", "Sandbag Bear-Hug Carry":"CARRY", "Suitcase Carries":"CARRY",
-    "Forearm Plank":"CORE", "Pallof Press":"CORE", "Hollow Body Hold":"CORE", "L-Sit Progressions":"CORE", "Dragon Flags":"CORE",
+    "Forearm Plank":"CORE", "Sandbag Shouldering":"CORE", "Woodchop":"CORE", "Pallof Press":"CORE", "Hollow Body Hold":"CORE", "L-Sit Progressions":"CORE", "Dragon Flags":"CORE",
     "Calf Raise":"CALF",
     "Band Pull-Apart":"BAND", "Banded Lateral Walk":"BAND",
     "Kettlebell Swings":"SWING",
@@ -1904,6 +1919,8 @@
     "Assisted Pull-ups": ["lats","biceps","rearDelts","forearms"],
     "Farmer's Walk": ["forearms","traps","abs","obliques"],
     "Forearm Plank": ["abs","obliques","lowerBack"],
+    "Sandbag Shouldering": ["glutes","quads","lowerBack","obliques"],
+    "Woodchop": ["obliques","abs","glutes"],
     "Calf Raise": ["calves"],
     "Band Pull-Apart": ["rearDelts","traps"],
     "Conventional Deadlift": ["hamstrings","glutes","lowerBack","traps","forearms"],
@@ -3603,6 +3620,16 @@
       'People with a gym and people training at home — home alternatives are built in.',
       'Busy people: a fixed weekly rhythm so you never have to decide what to do today.'
     ]));
+    h += GUIDE_CARD('A capable body, not a beach body', GUIDE_UL([
+      'Strength: heavy lifts and carries.',
+      'Power: jumps, swings and cleans from Phase 2.',
+      'Stamina: two runs a week and rucking.',
+      'Muscle endurance: an all-out finisher on every lifting day.',
+      'Speed and agility: sprints, strides and shuttle drills.',
+      'Mobility and balance: a recovery day, stretches and balance work.',
+      'Awkward loads and turning: sandbag or backpack work every week.',
+      'Durability: tendon holds, warm-ups and forced deload weeks.'
+    ]));
     h += GUIDE_CARD('What the app does for you', GUIDE_UL([
       'Tells you exactly what to do today, step by step.',
       'Remembers your weights and suggests the next ones.',
@@ -3654,6 +3681,7 @@
       ['3×Max', '3 sets, each one as many clean reps as you can.'],
       ['Reps and weight boxes', 'Type what you really did on every set, and the weight you used. The app will not let you complete the exercise until these are filled in. Your numbers are what unlock the next phase.'],
       ['Picture and how-to', 'Each exercise shows its picture. Tap “Show How To Do It & Muscles Worked” for the instructions and the muscles picture.'],
+      ['Endurance Finisher', 'The last exercise on a lifting day: one set, as many reps as you can. It trains the high-rep push-ups and squats the standards ask for.'],
       ['Hit all reps / Missed a rep', 'After a main lift, tell the app honestly. Hit them all and it suggests a small increase next time (about 1.25 kg). Missed one and it suggests repeating the same weight.']
     ]));
     h += GUIDE_CARD('Small glossary', GUIDE_UL([
@@ -3746,16 +3774,38 @@
       ['Peanuts', '30 g', '~7 g'],
       ['Roti (atta)', '1 roti', '~3 g']
     ]));
+    h += GUIDE_CARD('Desi strength foods', GUIDE_TABLE(['Food', 'A sensible daily amount', 'Why'], [
+      ['Soaked almonds', '8–10, soaked overnight and peeled', 'Good fats, easy to digest'],
+      ['Kala chana, sprouted or boiled', '1 katori, with lemon and a little salt', 'Protein, fibre, slow energy'],
+      ['Milk', '1–2 glasses', 'Protein and calcium'],
+      ['Dahi or unsweetened lassi', '1 katori or 1 glass', 'Protein, good for digestion'],
+      ['Desi ghee', '1–2 teaspoons per meal', 'Energy; a little goes a long way'],
+      ['Dates', '3–4, best before training', 'Quick natural energy'],
+      ['Eggs', '2–4', 'Cheap complete protein'],
+      ['Meat, chicken or fish', '1–2 palm-sized portions', 'The main muscle builder'],
+      ['Seasonal fruit', '2 pieces', 'Vitamins and water'],
+      ['Honey', '1 teaspoon in milk or on roti', 'In place of sugar']
+    ]));
+    h += GUIDE_CARD('Keep it pure and simple', GUIDE_UL([
+      'Eat food cooked at home from whole ingredients: atta, daal, chana, vegetables, meat, milk, eggs, fruit.',
+      'Use desi ghee, mustard oil or olive oil for cooking. Avoid banaspati and food fried again and again in the same oil.',
+      'Choose whole-wheat roti, brown or plain rice and daliya over white bread, bakery items and biscuits.',
+      'Drink water, milk, lassi or fresh lemon water. Leave soft drinks, packet juices and energy drinks.',
+      'Eat vegetables or salad with lunch and dinner, and fruit instead of mithai.',
+      'Keep spices mild and salt moderate. Eat slowly and stop just before you are full.'
+    ]));
+    h += GUIDE_CARD('Pehlwan foods, normal portions', GUIDE_P('Wrestlers are famous for milk, ghee and almonds, and those are good foods. But a pehlwan eats huge amounts because he trains for many hours a day. If you train about an hour a day and eat like that, most of it turns to fat. Take the same pure foods in the amounts shown above.'));
     h += GUIDE_CARD('Carbs and fats', GUIDE_UL([
       'Carbs fuel training: roti, rice, oats or daliya, potatoes, bananas, dates and seasonal fruit. Eat more on lifting and conditioning days, less on rest days.',
       'Fats: 1–2 teaspoons of desi ghee or cooking oil per meal is fine, plus a few nuts. No need to avoid ghee — just do not drown the food in it.'
     ]));
     h += GUIDE_CARD('A sample training day', GUIDE_UL([
+      'On waking: 8–10 soaked almonds and a glass of water.',
       'Breakfast: 2–3 eggs, 1–2 rotis or oats with milk, a banana.',
       'Lunch: chicken or fish (or daal plus chana), 1–2 rotis or a plate of rice, salad, a katori of dahi.',
       '1–2 hours before training: a banana with a few dates and a glass of milk, or a roti with an egg.',
       'After training / dinner: a palm-and-a-half portion of chicken, beef or fish (or daal plus soya), vegetables and roti.',
-      'Evening snack: roasted chana, peanuts, or unsweetened lassi. A glass of milk before bed is a cheap protein top-up.'
+      'Evening snack: a katori of kala chana with lemon, or peanuts, or unsweetened lassi. A glass of milk with a teaspoon of honey before bed is a cheap protein top-up.'
     ]));
     h += GUIDE_CARD('On a budget', GUIDE_P('Eggs, daal, chana, soya chunks, milk and dahi are the cheapest protein for the rupee. You do not need protein powder. Buy fruit in season, and cook in batches to save time and money.'));
     h += GUIDE_CARD('If you eat little or no meat', GUIDE_P('Combine daal with roti or rice, add chana, lobia or rajma, soya chunks, dahi, milk, eggs if you eat them, or paneer. Portions may need to be a bit bigger to reach your protein target.'));
@@ -3807,7 +3857,7 @@
     wk += '<div class="day-chips" style="margin-bottom:14px">';
     for (var d=1; d<=7; d++) { var t = DAY_TYPE[d]; wk += '<div class="day-chip ' + t + '"><div class="dc-n">D' + d + '</div><div class="dc-t">' + DAY_SHORT[t] + '</div></div>'; }
     wk += '</div>';
-    wk += '<div class="card"><ul class="item-list" style="margin:0"><li><strong>Lift (Days 1, 3, 5):</strong> Workouts A and B take turns.</li><li><strong>GPP (Day 2):</strong> rucking one week, sprints and agility the next.</li><li><strong>Run (Day 4):</strong> builds toward the 2-mile test.</li><li><strong>Recovery (Day 6):</strong> mobility and light movement.</li><li><strong>Rest (Day 7):</strong> nothing scheduled.</li><li><strong>Deload:</strong> every 4 weeks the app switches on one lighter week (about 60% weight, fewer sets) by itself.</li><li><strong>Daily:</strong> hang from a bar for 30–60 seconds in total.</li></ul></div>';
+    wk += '<div class="card"><ul class="item-list" style="margin:0"><li><strong>Lift (Days 1, 3, 5):</strong> Workouts A and B take turns. Each ends with one all-out set of push-ups or squats.</li><li><strong>GPP (Day 2):</strong> rucking one week, sprints and agility the next, plus lifting and turning with a sandbag or backpack.</li><li><strong>Run (Day 4):</strong> the main run of the week, then four short fast strides.</li><li><strong>Recovery (Day 6):</strong> an easy 15–20 minute jog, then mobility.</li><li><strong>Rest (Day 7):</strong> nothing scheduled.</li><li><strong>Deload:</strong> every 4 weeks the app switches on one lighter week (about 60% weight, fewer sets) by itself.</li><li><strong>Daily:</strong> hang from a bar for 30–60 seconds in total.</li></ul></div>';
 
     // ---- Phases ----
     var phaseBody = function(p) {
@@ -3837,6 +3887,9 @@
     gp += '<div class="card"><p class="mn-cardhead">Run · Day 4</p><table class="moves-table"><tr><th>Phase</th><th>Session</th></tr>';
     [1,2,3].forEach(function(p){ gp += '<tr><td>Phase ' + p + '</td><td>' + esc(RUN_PLAN[p].title) + ': ' + esc(RUN_PLAN[p].stats.map(function(x){ return x.v + ' ' + x.l.toLowerCase(); }).join(', ')) + '</td></tr>'; });
     gp += '</table><p class="mn-cardbody" style="margin-top:8px">Once a month, run 2 miles (3.2 km) for time instead and enter it on the Day 4 screen.</p></div>';
+    gp += '<div class="card"><p class="mn-cardhead">Awkward loads &amp; turning · Day 2</p><ul class="item-list" style="margin:0">' + TWIST_WORK.map(function(x){ return '<li>' + esc(x[0]) + ': ' + esc(x[1]) + '</li>'; }).join('') + '</ul><p class="mn-cardbody" style="margin-top:8px">Real-life strength means lifting things that are not shaped like a barbell, and turning while you hold them. A loaded backpack is enough.</p></div>';
+    gp += '<div class="card"><p class="mn-cardhead">Second run &amp; strides</p><p class="mn-cardbody">Day 6 starts with an easy 15–20 minute jog. Day 4 ends with 4 fast 20-second strides. Two runs a week, one of them easy, is what builds stamina; the strides keep your speed.</p></div>';
+    gp += '<div class="card"><p class="mn-cardhead">Endurance finisher · every lift day</p><p class="mn-cardbody">One all-out set at the end: push-ups after Workout A, bodyweight squats after Workout B. It starts once you are out of Foundation, and is skipped in deload weeks.</p></div>';
     gp += '<div class="card"><p class="mn-cardhead">Balance · Days 2 &amp; 4</p><ul class="item-list" style="margin:0">' + BALANCE_ITEMS.map(function(it){ return '<li>'+esc(it)+'</li>'; }).join('') + '</ul></div>';
 
     // ---- Recovery ----
@@ -3890,7 +3943,7 @@
     html += chap(++n, 'Foundation', 'The stage before Phase 1: easier versions, step by step', fd);
     [1,2,3].forEach(function(p){ html += chap(++n, 'Phase ' + p, esc((getPhases()[p].name.split('—')[1] || '').trim()), phaseBody(p)); });
     html += chap(++n, 'Ironclad', 'The final level and how to earn it', ic);
-    html += chap(++n, 'Conditioning', 'Rucking, sprints, running, balance', gp);
+    html += chap(++n, 'Conditioning', 'Stamina, speed, awkward loads, balance', gp);
     html += chap(++n, 'Recovery', 'The recovery day and sleep', rc);
     html += chap(++n, 'Rules &amp; Safety', 'What to do, what to avoid, warning signs', (G['m-rules'] || '') + '<div class="section-label">Safety &amp; Warning Signs</div>' + (G['m-safe'] || '') + '<p class="note-line" style="margin-top:14px">' + esc(homeWords(GOLDEN_RULES)) + '</p>');
     html += chap(++n, 'Missed Days', 'Illness, travel, Ramadan and restarting', G['m-miss'] || '');
@@ -3950,7 +4003,7 @@
       html += '<div class="banner" style="background:var(--warn-bg);color:var(--rust);margin-bottom:14px">' + ICONS.warn + '<span><strong>Deload week</strong> — lighter sets, ~60% weight on the main lift.</span></div>';
     }
     if (step.kind === "exercise") {
-      html += '<div class="step-kind">Exercise</div>';
+      html += '<div class="step-kind">' + (step.finisher ? 'Endurance Finisher' : 'Exercise') + '</div>';
       html += '<div class="ex-header"><div class="ex-icon">' + EX_ICONS[exerciseIconKey(step.title)] + '</div><h2 class="step-title">' + esc(step.title) + '</h2></div>';
       // The exercise picture is always shown. How-to text and the muscle
       // picture sit behind one tap so the screen stays short.
@@ -3982,7 +4035,8 @@
             '<p class="note-line" style="margin-bottom:12px">A bodyweight exercise that trains the same movement.</p>';
         }
       }
-      html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
+      if (step.finisher) html += '<p class="note-line" style="margin-bottom:12px">One set, as many clean reps as you can without stopping. Stop when your form breaks. This builds the stamina in the muscle that the standards ask for.</p>';
+      else html += renderStats([{v:step.sets,l:"Sets × Reps"},{v:step.rest,l:"Rest"}]);
       if (step.isMainLift) {
         var lastW = state.settings.lastWeights && state.settings.lastWeights[step.title];
         var sessW = state.session.weights[stepIdx] || {};
