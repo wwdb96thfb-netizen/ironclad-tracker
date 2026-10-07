@@ -659,7 +659,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.10.1";
+  var APP_VERSION = "2.10.2";
 
   /* ============================================================
      DATA
@@ -957,6 +957,20 @@
     "Sandbag Bear-Hug Carry": {tip: "No sandbag? Hug a heavy weight plate or a packed duffel bag.", swap: "Crab Walk", sets: "3×20m"},
     "Heavy Sled Push/Pull": {tip: "", swap: "Bear Crawl Sprint", sets: "4×20m"}
   };
+  // Exercises grouped by the equipment they need: swapping one swaps the
+  // whole group, so nobody is asked about the same missing item twice.
+  var GYM_EQ = {
+    "a barbell": ["Barbell Back Squat", "Front Squat", "Conventional Deadlift", "Romanian Deadlift", "Flat Bench Press", "Standing Overhead Press", "Push Press", "Bent-Over Barbell Row"],
+    "a pull-up bar": ["Assisted Pull-ups", "Strict Pull-ups", "Weighted Pull-ups", "Muscle-Up Progressions", "Front Lever Progressions", "Hanging Knee Raises"],
+    "a resistance band": ["Face Pull (band or cable)", "Band Pull-Apart", "Banded Lateral Walk", "Pallof Press"],
+    "heavy dumbbells": ["Single-Arm DB Row", "Farmer's Walk", "Suitcase Carries"],
+    "a sandbag": ["Heavy Sandbag Cleans", "Sandbag Bear-Hug Carry"]
+  };
+  function eqGroupOf(name) {
+    var found = null;
+    Object.keys(GYM_EQ).forEach(function(k) { if (GYM_EQ[k].indexOf(name) !== -1) found = k; });
+    return found;
+  }
   var gymCache = {};
   function gymPhases(track, base) {
     registerHomeMaps(); // makes the bodyweight how-to text and muscle maps available
@@ -982,7 +996,8 @@
   function toggleExSwap(orig) {
     if (!GYM_ALT[orig]) return;
     var sw = Object.assign({}, state.settings.exSwaps || {});
-    if (sw[orig]) delete sw[orig]; else sw[orig] = true;
+    var grp = eqGroupOf(orig), names = grp ? GYM_EQ[grp] : [orig], turnOn = !sw[orig];
+    names.forEach(function(n) { if (turnOn) sw[n] = true; else delete sw[n]; });
     state.settings.exSwaps = sw;
     persistSettings();
     var sess = state.session;
@@ -3651,7 +3666,7 @@
       }
       if (state.profile && state.profile.equipment !== "home") {
         if (step.swappedFrom) {
-          html += '<div class="instr-card"><div class="mn-label">Swapped Exercise</div><p>This replaces ' + esc(step.swappedFrom) + ' because you don\u2019t have the equipment. The app will keep using it until you switch back.</p>' +
+          html += '<div class="instr-card"><div class="mn-label">Swapped Exercise</div><p>This replaces ' + esc(step.swappedFrom) + ' because you don\u2019t have ' + esc(eqGroupOf(step.swappedFrom) || 'the equipment') + '. The app will keep using it until you switch back.' + (eqGroupOf(step.swappedFrom) ? ' Switching back also restores your other exercises that need ' + esc(eqGroupOf(step.swappedFrom)) + '.' : '') + '</p>' +
             '<button class="btn btn-ghost btn-block" style="margin-top:10px" data-action="toggle-ex-swap" data-orig="' + esc(step.swappedFrom) + '"><span>Switch back to ' + esc(step.swappedFrom) + '</span></button></div>';
         } else if (GYM_ALT[step.title]) {
           var alt = GYM_ALT[step.title];
@@ -3659,6 +3674,7 @@
             html += '<div class="instr-card"><div class="mn-label">No Equipment For This?</div>' +
               (alt.tip ? '<p style="margin-bottom:10px">' + esc(alt.tip) + '</p>' : '') +
               '<p>' + (alt.tip ? 'Or swap' : 'Swap') + ' it for a bodyweight exercise that trains the same movement: <strong>' + esc(alt.swap) + '</strong>, ' + esc(alt.sets) + '.</p>' +
+              (eqGroupOf(step.title) ? '<p style="margin-top:10px">This also swaps every other exercise in your plan that needs ' + esc(eqGroupOf(step.title)) + ', so you won\u2019t be asked again.</p>' : '') +
               '<button class="btn btn-primary btn-block" style="margin-top:12px" data-action="toggle-ex-swap" data-orig="' + esc(step.title) + '"><span>Swap to ' + esc(alt.swap) + '</span></button>' +
               '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-action="toggle-alt-panel" data-step="' + stepIdx + '"><span>Keep ' + esc(step.title) + '</span></button></div>';
           } else {
