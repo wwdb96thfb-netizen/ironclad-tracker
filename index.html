@@ -107,7 +107,11 @@
   .tb-title-wrap .tb-sub { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10.5px; letter-spacing: 0.04em; color: var(--on-accent-soft); margin-top: 1px; }
   /* ---- Home screen's image banner, replacing the plain text topbar ---- */
   .home-banner { flex-shrink: 0; background: var(--olive-deep); padding-top: env(safe-area-inset-top, 0px); border-bottom: 3px solid var(--rust); }
-  .home-banner img { display: block; width: 100%; height: auto; }
+  .home-banner img { display: block; width: 100%; height: auto; aspect-ratio: 1674 / 640; object-fit: cover; }
+  @keyframes screenIn { from { opacity: .35; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .body-scroll.screen-enter { animation: screenIn .18s ease-out; }
+  @media (prefers-reduced-motion: reduce) { .body-scroll.screen-enter { animation: none; } }
+  .bottomnav button { -webkit-tap-highlight-color: transparent; }
   .progress-wrap { flex-shrink: 0; padding: 0 16px 8px; background: var(--olive-deep); }
   .progress-track { height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; overflow: hidden; margin-top: 8px; }
   .progress-fill { height: 100%; background: var(--rust-soft); transition: width 0.25s ease; }
@@ -686,7 +690,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.18.5";
+  var APP_VERSION = "2.19.0";
 
   /* ============================================================
      DATA
@@ -4243,7 +4247,36 @@
     else if (state.screen === "profile") body = renderProfile();
     else if (state.screen === "settings") body = renderSettings();
     else body = renderHome();
-    app.innerHTML = renderTopbar() + body + renderConfirmOverlay() + renderGuidedOverlay();
+    patchApp(app, renderTopbar() + body + renderConfirmOverlay() + renderGuidedOverlay());
+    // A gentle fade when moving to a different screen (not on in-place updates).
+    var key = state.screen + (state.session ? ":" + state.session.idx : "");
+    if (key !== lastScreenKey) {
+      var sc = app.querySelector(".body-scroll");
+      if (sc && lastScreenKey !== null) { sc.classList.remove("screen-enter"); void sc.offsetWidth; sc.classList.add("screen-enter"); }
+      lastScreenKey = key;
+    }
+  }
+  var lastScreenKey = null;
+  // Replace only the top-level parts that actually changed (banner, top bar,
+  // page, bottom bar, overlays). Unchanged parts stay as they are, so the
+  // banner picture and the tab bar do not flicker when switching tabs.
+  function patchApp(app, html) {
+    var tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    var next = Array.prototype.slice.call(tmp.childNodes), cur = Array.prototype.slice.call(app.childNodes);
+    if (!cur.length) { app.innerHTML = html; return; }
+    var i;
+    for (i = 0; i < next.length; i++) {
+      var n = next[i], c = cur[i];
+      if (c && c.nodeType === 1 && n.nodeType === 1 && c.outerHTML === n.outerHTML) continue;
+      // Tab bar: only the highlighted tab changes, so just move the highlight.
+      if (c && c.nodeType === 1 && n.nodeType === 1 && c.className === "bottomnav" && n.className === "bottomnav" && c.children.length === n.children.length) {
+        for (var j = 0; j < n.children.length; j++) c.children[j].className = n.children[j].className;
+        continue;
+      }
+      if (c) app.replaceChild(n, c); else app.appendChild(n);
+    }
+    for (; i < cur.length; i++) app.removeChild(cur[i]);
   }
 
   // For an in-place update (ticking a set, flipping a toggle, picking an
