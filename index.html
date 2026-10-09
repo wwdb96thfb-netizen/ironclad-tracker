@@ -690,7 +690,7 @@
   // Bump this (e.g. 2.3.0 -> 2.4.0) and CACHE_NAME in service-worker.js on every deploy —
   // shown at the bottom of Settings so you can tell at a glance whether a
   // given phone has actually picked up the latest push.
-  var APP_VERSION = "2.19.0";
+  var APP_VERSION = "2.19.1";
 
   /* ============================================================
      DATA
@@ -1996,6 +1996,38 @@
   }
 
   // The full canonical list, A–Z, for the Exercise Library's second section.
+  // Short how-to text for every warm-up drill, hold and stretch (shown in the Manual library).
+  var SUPPORT_HOWTO = {
+      "Ankle Circles": "Stand on one leg (hold a wall if needed) or sit. Lift the other foot and draw slow, big circles with your toes, 10 one way and 10 the other. Swap feet. Keeps the ankles loose for running and squatting.",
+      "Arm Circles": "Stand tall with arms straight out to the sides. Make small circles, then slowly bigger ones, about 10 forward and 10 backward. Keep your shoulders down away from your ears.",
+      "Back Squat Hold": "With the barbell on your upper back, squat down until your thighs are about level with the floor and hold still. Chest up, knees pushed out over your toes, weight through the whole foot. Use a light load at about 70% effort and keep breathing.",
+      "Bulgarian Split Squat Hold": "Rest your back foot on a bench behind you and lower until your front thigh is level with the floor. Hold the bottom, torso upright, front knee over the toes. Swap legs each hold.",
+      "Cat-Cow": "On hands and knees, hands under shoulders and knees under hips. Breathe in and let your belly drop while you lift your head (cow). Breathe out and round your back up toward the ceiling, chin tucked (cat). Move slowly for about 90 seconds.",
+      "Chest/Shoulder Doorway Stretch": "Stand in a doorway with your forearm on the frame, elbow at shoulder height. Step forward gently until you feel a stretch across the chest and front of the shoulder. Hold 20 to 30 seconds, then swap sides. No pain in the shoulder joint.",
+      "Deadlift Hold": "Set up for a deadlift and lift the bar just off the floor to mid-shin, then hold still. Back flat, hips and shoulders rising together, arms straight. Light load, about 70% effort, and keep breathing.",
+      "Deep Squat Hold": "Feet about shoulder-width, toes turned out a little. Sink into the deepest squat you can with heels flat, chest up, elbows pushing your knees out. Relax and breathe. Hold a door frame if you tip backward.",
+      "Forearm Stretch": "Hold one arm straight out, palm up. With the other hand gently pull the fingers back toward you for 20 seconds, then turn the palm down and pull the back of the hand toward you. Swap arms. Good after grip work and hangs.",
+      "Front Squat Hold": "With the barbell resting on the front of your shoulders, elbows high, squat down until your thighs are level with the floor and hold. Torso upright, knees out. Light load, about 70% effort.",
+      "Glute Stretch": "Lie on your back, cross one ankle over the other knee, then pull the bottom leg toward your chest until you feel a stretch in the buttock of the crossed leg. Hold 20 to 30 seconds, then swap.",
+      "Hamstring Stretch": "Sit with one leg straight and the other bent. Keeping your back long, hinge forward from the hips toward the straight leg's foot until you feel a stretch behind the thigh. Hold 20 to 30 seconds per side. Do not bounce.",
+      "Hip Circles": "Stand with hands on hips, feet shoulder-width. Draw big, slow circles with your hips, about 10 each way. Keep your upper body tall and your head still.",
+      "Hip Flexor Stretch": "Kneel on one knee with the other foot flat in front. Squeeze the buttock of the kneeling leg and shift your hips gently forward until you feel a stretch at the front of that hip. Torso upright. Hold 20 to 30 seconds per side.",
+      "Hip/Ankle Mobility Stretch": "From a half-kneeling position, rest your forearm on your front thigh and slowly drive the front knee forward over the toes, heel staying down. Rock in and out 10 times, then hold the last one. Swap sides.",
+      "Lat Stretch": "Hold a door frame or post with one hand at head height. Sit your hips back and away, letting the side of your back stretch from armpit to hip. Hold 20 to 30 seconds, then swap.",
+      "Leg Swings": "Hold a wall for balance. Swing one leg forward and back like a pendulum, 10 to 15 times, getting gradually higher. Then swing it side to side across your body. Swap legs. Keep your upper body still.",
+      "Pistol Squat Hold": "Stand on one leg with the other leg held straight out in front. Squat down on the standing leg as low as you can control and hold. Hold a door frame or post for help as needed. Swap legs each hold.",
+      "Quad Stretch": "Stand tall and hold a wall. Bend one knee and hold that foot behind you, bringing the heel toward your buttock. Keep the knees together and squeeze the buttock. Hold 20 to 30 seconds per side.",
+      "Romanian Deadlift Hold": "Hold the bar at your thighs, soft knees, and push your hips back until the bar is just below your knees with a flat back. Hold still, feeling the stretch in the back of the thighs. Light load, about 70% effort.",
+      "Shoulder Circles": "Stand tall, arms relaxed. Lift your shoulders up toward your ears, roll them back, then down. Do 10 slow circles backward and 10 forward.",
+      "Shoulder Stretch": "Bring one straight arm across your chest and hold it just above the elbow with the other hand. Pull it gently toward you until you feel a stretch at the back of the shoulder. Hold 20 to 30 seconds, then swap.",
+      "Single-Leg Reach": "Stand on one leg, knee soft. Hinge forward with a flat back, reaching both hands toward the floor while the other leg lifts behind you. Return to standing slowly. Do 5 to 8 per side, moving with control.",
+      "Single-Leg Stance": "Stand on one leg for 30 seconds, standing knee soft, arms relaxed. Too easy? Close your eyes or stand on a cushion. Swap legs. Builds ankle and knee stability.",
+      "Standing Forward Fold Roll-Up": "Stand with soft knees and slowly roll down, chin first, one section of the spine at a time, until your hands hang near the floor. Breathe there, then roll back up just as slowly, head last.",
+      "Thoracic Rotations": "On hands and knees, place one hand behind your head. Turn that elbow down toward the other wrist, then rotate it up toward the ceiling, following it with your eyes. Do 8 to 10 slow turns per side.",
+      "Walking Lunges": "Step forward into a lunge until the back knee nearly touches the floor, then drive up and step the back foot through into the next lunge. Torso upright. About 10 steps per leg.",
+      "Weighted Dead-Hang": "Hang from a pull-up bar with straight arms and a light weight (a dumbbell between your feet or a loaded backpack). Pull your shoulders gently down and hold for the time. Keep it light: this prepares the elbows and shoulders, it is not a max effort.",
+      "World's Greatest Stretch": "Step into a long lunge and put both hands on the floor inside the front foot. Drop the front elbow toward the floor, then rotate that arm up toward the ceiling, chest opening. Return and step to the other side. Do 3 to 5 per side, slowly."
+  };
   var SUPPORT_MOVEMENTS = ["Ankle Circles", "Arm Circles", "Back Squat Hold", "Bulgarian Split Squat Hold",
     "Cat-Cow", "Chest/Shoulder Doorway Stretch", "Deadlift Hold", "Deep Squat Hold", "Forearm Stretch",
     "Front Squat Hold", "Glute Stretch", "Hamstring Stretch", "Hip Circles", "Hip Flexor Stretch",
@@ -3908,7 +3940,8 @@
     // ---- Library: one row per exercise, tap to open ----
     var libItem = function(name, photo, muscle) {
       var o = '<details class="mlib"><summary>' + esc(name) + '</summary><div class="mw-body">';
-      if (EX_HOWTO[name]) o += '<p class="mn-cardbody">' + esc(EX_HOWTO[name]) + '</p>';
+      var how = EX_HOWTO[name] || SUPPORT_HOWTO[name] || (HOME_EX_HOWTO && HOME_EX_HOWTO[name]);
+      if (how) o += '<p class="mn-cardbody">' + esc(how) + '</p>';
       if (photo) o += '<div class="sketch-wrap manual-sketch"><img class="ex-photo" src="' + photo + '" alt="' + esc(name) + '" loading="lazy"></div>';
       if (muscle) o += '<div class="sketch-wrap manual-sketch"><div class="mn-label">Muscles Worked</div><img class="ex-photo" src="' + muscle + '" alt="Muscles worked — ' + esc(name) + '" loading="lazy"></div>';
       return o + '</div></details>';
